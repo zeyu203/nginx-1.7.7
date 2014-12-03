@@ -60,14 +60,19 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     /* force localtime update with a new timezone */
 
+	// ngx_timeofday() 是一个宏，创建了一个 ngx_time_t 指针类型变量
     tp = ngx_timeofday();
     tp->sec = 0;
 
+	// 更新 ngx_cached_http_time、ngx_cached_err_log_time
+	// ngx_cached_http_log_time、ngx_cached_http_log_iso8601
+	// ngx_cached_syslog_time
     ngx_time_update();
 
 
     log = old_cycle->log;
 
+	// 创建内存池 16 KB
     pool = ngx_create_pool(NGX_CYCLE_POOL_SIZE, log);
     if (pool == NULL) {
         return NULL;

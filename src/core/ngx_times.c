@@ -42,6 +42,7 @@ volatile ngx_str_t       ngx_cached_syslog_time;
 static ngx_int_t         cached_gmtoff;
 #endif
 
+// 将时间散列到 64 个格子中，防止冲突
 static ngx_time_t        cached_time[NGX_TIME_SLOTS];
 static u_char            cached_err_log_time[NGX_TIME_SLOTS]
                                     [sizeof("1970/09/28 12:00:00")];
@@ -78,16 +79,48 @@ void
 ngx_time_update(void)
 {
     u_char          *p0, *p1, *p2, *p3, *p4;
+
+	/*
+	 * ngx_tm_t 是 struct tm 的别名
+	 * struct tm {
+	 *     int tm_sec;		// 秒–取值区间为[0,59]
+	 * 	   int tm_min;		// 分 - 取值区间为[0,59]
+	 * 	   int tm_hour;		// 时 - 取值区间为[0,23]
+	 * 	   int tm_mday;		// 一个月中的日期 - 取值区间为[1,31]
+	 * 	   int tm_mon;		// 月份（从一月开始，0代表一月） - 取值区间为[0,11]
+	 * 	   int tm_year;		// 年份，其值从1900开始
+	 * 	   int tm_wday;		// 星期–取值区间为[0,6]，其中0代表星期天，1代表星期一，以此类推
+	 * 	   int tm_yday;		// 从每年的1月1日开始的天数–取值区间为[0,365]，其中0代表1月1日，1代表1月2日，以此类推
+	 * 	   int tm_isdst;	// 夏令时标识符，实行夏令时的时候，tm_isdst为正。不实行夏令时的进候，tm_isdst为0；不了解情况时，tm_isdst()为负。
+	 * 	   long int tm_gmtoff;	// 指定了日期变更线东面时区中UTC东部时区正秒数或UTC西部时区的负秒数
+	 * 	   const char *tm_zone;	// 当前时区的名字(与环境变量TZ有关)
+	 * }
+	 */
     ngx_tm_t         tm, gmt;
     time_t           sec;
     ngx_uint_t       msec;
+	/*
+	 * typedef struct {
+	 *     time_t      sec;
+	 *     ngx_uint_t  msec;
+	 *     ngx_int_t   gmtoff;
+	 * } ngx_time_t;        
+	 */
     ngx_time_t      *tp;
+	/*
+	 * struct timeval {
+	 *     long tv_sec;		// seconds
+	 *     long tv_usec;	// and microseconds
+	 * };
+	 */
     struct timeval   tv;
 
     if (!ngx_trylock(&ngx_time_lock)) {
         return;
     }
 
+	// linux 与 windows 分别使用不同的函数获取当前时间
+	// 使用该宏进行封装
     ngx_gettimeofday(&tv);
 
     sec = tv.tv_sec;
@@ -97,6 +130,7 @@ ngx_time_update(void)
 
     tp = &cached_time[slot];
 
+	// 防止1秒内调用两次
     if (tp->sec == sec) {
         tp->msec = msec;
         ngx_unlock(&ngx_time_lock);
@@ -109,21 +143,26 @@ ngx_time_update(void)
         slot++;
     }
 
+	// 每调用一次 ngx_time_update 保存一次时间
     tp = &cached_time[slot];
 
     tp->sec = sec;
     tp->msec = msec;
 
+	// 将 sec 的时间戳转换为 gmt 的结构
     ngx_gmtime(sec, &gmt);
 
 
+	// 把时间转为http格式的时间字符串,p0就设置为诸如“Fri, 27 Jul 2012 01:09:17 GMT”
     p0 = &cached_http_time[slot][0];
 
+	// ngx_sprintf -> ngx_string.c 需要详细了解一下
     (void) ngx_sprintf(p0, "%s, %02d %s %4d %02d:%02d:%02d GMT",
                        week[gmt.ngx_tm_wday], gmt.ngx_tm_mday,
                        months[gmt.ngx_tm_mon - 1], gmt.ngx_tm_year,
                        gmt.ngx_tm_hour, gmt.ngx_tm_min, gmt.ngx_tm_sec);
 
+	// 获取时区带来的时间差
 #if (NGX_HAVE_GETTIMEZONE)
 
     tp->gmtoff = ngx_gettimezone();

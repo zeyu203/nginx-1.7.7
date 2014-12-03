@@ -36,6 +36,7 @@ static ngx_connection_t  dumb;
 /* STUB */
 
 
+/* add by zeyu: 环境初始化 */
 ngx_cycle_t *
 ngx_init_cycle(ngx_cycle_t *old_cycle)
 {

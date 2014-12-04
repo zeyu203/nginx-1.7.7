@@ -18,6 +18,8 @@ ngx_create_pool(size_t size, ngx_log_t *log)
 {
     ngx_pool_t  *p;
 
+	// 对内存分配函数进行封装，不同系统运行不同的函数
+	// 16 位对齐，16 KB
     p = ngx_memalign(NGX_POOL_ALIGNMENT, size, log);
     if (p == NULL) {
         return NULL;

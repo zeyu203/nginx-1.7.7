@@ -54,6 +54,7 @@ ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
     void  *p;
     int    err;
 
+	// size 单位是 byte 而不是 bit
     err = posix_memalign(&p, alignment, size);
 
     if (err) {

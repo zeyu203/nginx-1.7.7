@@ -1,0 +1,17 @@
+2014/12/07 18:04:30 [emerg] 15030#0: bind() to 0.0.0.0:80 failed (13: Permission denied)
+2014/12/07 18:04:35 [emerg] 15033#0: bind() to 0.0.0.0:80 failed (98: Address already in use)
+2014/12/07 18:04:35 [emerg] 15033#0: bind() to 0.0.0.0:80 failed (98: Address already in use)
+2014/12/07 18:04:35 [emerg] 15033#0: bind() to 0.0.0.0:80 failed (98: Address already in use)
+2014/12/07 18:04:35 [emerg] 15033#0: bind() to 0.0.0.0:80 failed (98: Address already in use)
+2014/12/07 18:04:35 [emerg] 15033#0: bind() to 0.0.0.0:80 failed (98: Address already in use)
+2014/12/07 18:04:35 [emerg] 15033#0: still could not bind()
+2014/12/07 18:05:19 [emerg] 15046#0: bind() to 0.0.0.0:80 failed (98: Address already in use)
+2014/12/07 18:05:19 [emerg] 15046#0: bind() to 0.0.0.0:80 failed (98: Address already in use)
+2014/12/07 18:05:19 [emerg] 15046#0: bind() to 0.0.0.0:80 failed (98: Address already in use)
+2014/12/07 18:05:19 [emerg] 15046#0: bind() to 0.0.0.0:80 failed (98: Address already in use)
+2014/12/07 18:05:19 [emerg] 15046#0: bind() to 0.0.0.0:80 failed (98: Address already in use)
+2014/12/07 18:05:19 [emerg] 15046#0: still could not bind()
+2014/12/07 18:08:00 [notice] 15071#0: signal process started
+2014/12/07 18:08:00 [alert] 15071#0: kill(15051, 15) failed (1: Operation not permitted)
+2014/12/07 18:08:03 [notice] 15073#0: signal process started
+2014/12/07 18:34:15 [notice] 15248#0: signal process started

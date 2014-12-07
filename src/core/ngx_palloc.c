@@ -30,6 +30,7 @@ ngx_create_pool(size_t size, ngx_log_t *log)
     p->d.next = NULL;
     p->d.failed = 0;
 
+	// ngx_pool_t 40byte
     size = size - sizeof(ngx_pool_t);
     p->max = (size < NGX_MAX_ALLOC_FROM_POOL) ? size : NGX_MAX_ALLOC_FROM_POOL;
 
@@ -118,6 +119,7 @@ ngx_reset_pool(ngx_pool_t *pool)
 }
 
 
+// 在内存池中分配内存
 void *
 ngx_palloc(ngx_pool_t *pool, size_t size)
 {
@@ -214,6 +216,7 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
 }
 
 
+// 扩大内存池
 static void *
 ngx_palloc_large(ngx_pool_t *pool, size_t size)
 {

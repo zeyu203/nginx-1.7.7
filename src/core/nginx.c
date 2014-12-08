@@ -197,7 +197,9 @@ static char        *ngx_signal;
 
 static char **ngx_os_environ;
 
-
+// ngx_cdecl: 一个未实现的宏，可选为 stdcall 或 cdecl，用来支持跨平台
+// 区别：stdcall 是被调用者清理栈空间，cdecl 是调用者清理栈空间
+// 未显式指定则按编译器默认值
 int ngx_cdecl
 main(int argc, char *const *argv)
 {

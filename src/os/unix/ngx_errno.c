@@ -55,6 +55,7 @@ ngx_strerror_init(void)
      * malloc() is used and possible errors are logged using strerror().
      */
 
+	// ./objs/ngx_auto_config.h:#define NGX_SYS_NERR  135 系统错误个数
     len = NGX_SYS_NERR * sizeof(ngx_str_t);
 
     ngx_sys_errlist = malloc(len);

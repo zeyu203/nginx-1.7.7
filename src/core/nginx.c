@@ -221,6 +221,8 @@ main(int argc, char *const *argv)
     if (ngx_show_version) {
         ngx_write_stderr("nginx version: " NGINX_VER_BUILD NGX_LINEFEED);
 
+		// NGX_LINEFEED: \x0A
+		// NGX_PREFIX: 默认运行目录
         if (ngx_show_help) {
             ngx_write_stderr(
                 "Usage: nginx [-?hvVtq] [-s signal] [-c filename] "

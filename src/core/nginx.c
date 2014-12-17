@@ -281,6 +281,7 @@ main(int argc, char *const *argv)
 
     ngx_pid = ngx_getpid();
 
+	// 初始化log
     log = ngx_log_init(ngx_prefix);
     if (log == NULL) {
         return 1;

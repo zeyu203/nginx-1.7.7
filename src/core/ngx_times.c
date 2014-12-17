@@ -115,6 +115,7 @@ ngx_time_update(void)
 	 */
     struct timeval   tv;
 
+	// 尝试锁住互斥锁
     if (!ngx_trylock(&ngx_time_lock)) {
         return;
     }

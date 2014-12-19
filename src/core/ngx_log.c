@@ -222,7 +222,8 @@ ngx_log_abort(ngx_err_t err, const char *fmt, ...)
                   "%*s", p - errstr, errstr);
 }
 
-
+// void ngx_cdecl ngx_log_stderr(ngx_err_t err, const char *fmt, ...);
+// 标准错误输出 {{{
 void ngx_cdecl
 ngx_log_stderr(ngx_err_t err, const char *fmt, ...)
 {
@@ -250,7 +251,7 @@ ngx_log_stderr(ngx_err_t err, const char *fmt, ...)
     ngx_linefeed(p);
 
     (void) ngx_write_console(ngx_stderr, errstr, p - errstr);
-}
+} // }}}
 
 
 u_char *
@@ -283,6 +284,8 @@ ngx_log_errno(u_char *buf, u_char *last, ngx_err_t err)
 }
 
 
+// ngx_log_t *ngx_log_init(u_char *prefix);
+// 初始化 ngx_log 结构，创建 errlog 文件 {{{
 ngx_log_t *
 ngx_log_init(u_char *prefix)
 {
@@ -308,6 +311,7 @@ ngx_log_init(u_char *prefix)
 
     p = NULL;
 
+	// 判断是否是绝对路径
 #if (NGX_WIN32)
     if (name[1] != ':') {
 #else
@@ -367,6 +371,7 @@ ngx_log_init(u_char *prefix)
 
     return &ngx_log;
 }
+// }}}
 
 
 ngx_int_t

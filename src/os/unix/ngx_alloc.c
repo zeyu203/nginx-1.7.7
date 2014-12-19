@@ -14,6 +14,8 @@ ngx_uint_t  ngx_pagesize_shift;
 ngx_uint_t  ngx_cacheline_size;
 
 
+// void * ngx_alloc(size_t size, ngx_log_t *log)
+// malloc and check and set log {{{
 void *
 ngx_alloc(size_t size, ngx_log_t *log)
 {
@@ -28,7 +30,7 @@ ngx_alloc(size_t size, ngx_log_t *log)
     ngx_log_debug2(NGX_LOG_DEBUG_ALLOC, log, 0, "malloc: %p:%uz", p, size);
 
     return p;
-}
+} // }}}
 
 
 void *

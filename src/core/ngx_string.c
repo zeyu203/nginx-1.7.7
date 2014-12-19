@@ -28,7 +28,8 @@ ngx_strlow(u_char *dst, u_char *src, size_t n)
     }
 }
 
-
+// u_char *ngx_cpystrn(u_char *dst, u_char *src, size_t n)
+// 内存拷贝 {{{
 u_char *
 ngx_cpystrn(u_char *dst, u_char *src, size_t n)
 {
@@ -50,7 +51,7 @@ ngx_cpystrn(u_char *dst, u_char *src, size_t n)
     *dst = '\0';
 
     return dst;
-}
+} // }}}
 
 
 u_char *

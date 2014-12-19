@@ -19,7 +19,6 @@ ngx_create_pool(size_t size, ngx_log_t *log)
     ngx_pool_t  *p;
 
 	// 对内存分配函数进行封装，不同系统运行不同的函数
-	// 16 位对齐，16 KB
     p = ngx_memalign(NGX_POOL_ALIGNMENT, size, log);
     if (p == NULL) {
         return NULL;
@@ -119,7 +118,8 @@ ngx_reset_pool(ngx_pool_t *pool)
 }
 
 
-// 在内存池中分配内存
+// void * ngx_palloc(ngx_pool_t *pool, size_t size)
+// 在内存池中分配内存 {{{
 void *
 ngx_palloc(ngx_pool_t *pool, size_t size)
 {
@@ -147,9 +147,11 @@ ngx_palloc(ngx_pool_t *pool, size_t size)
     }
 
     return ngx_palloc_large(pool, size);
-}
+} // }}}
 
 
+// void * ngx_pnalloc(ngx_pool_t *pool, size_t size)
+// 在内存池中分配内存，不对齐 {{{
 void *
 ngx_pnalloc(ngx_pool_t *pool, size_t size)
 {
@@ -177,7 +179,7 @@ ngx_pnalloc(ngx_pool_t *pool, size_t size)
     }
 
     return ngx_palloc_large(pool, size);
-}
+} // }}}
 
 
 static void *

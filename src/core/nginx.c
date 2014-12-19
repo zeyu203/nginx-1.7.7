@@ -197,6 +197,8 @@ static char        *ngx_signal;
 
 static char **ngx_os_environ;
 
+// int ngx_cdecl main(int argc, char *const *argv);
+// 主进程 {{{
 // ngx_cdecl: 一个未实现的宏，可选为 stdcall 或 cdecl，用来支持跨平台
 // 区别：stdcall 是被调用者清理栈空间，cdecl 是调用者清理栈空间
 // 未显式指定则按编译器默认值
@@ -214,6 +216,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+	// 获取调用参数, 修改全局变量
     if (ngx_get_options(argc, argv) != NGX_OK) {
         return 1;
     }
@@ -282,6 +285,7 @@ main(int argc, char *const *argv)
     ngx_pid = ngx_getpid();
 
 	// 初始化log
+	// 初始化 ngx_log 结构，创建 errlog 文件
     log = ngx_log_init(ngx_prefix);
     if (log == NULL) {
         return 1;
@@ -301,11 +305,14 @@ main(int argc, char *const *argv)
     init_cycle.log = log;
     ngx_cycle = &init_cycle;
 
+	// 创建进程池
+	// 1KB
     init_cycle.pool = ngx_create_pool(1024, log);
     if (init_cycle.pool == NULL) {
         return 1;
     }
 
+	// 保存调用参数到全局变量，init_cycle 只用于提供 log 参数
     if (ngx_save_argv(&init_cycle, argc, argv) != NGX_OK) {
         return 1;
     }
@@ -413,7 +420,7 @@ main(int argc, char *const *argv)
     }
 
     return 0;
-}
+} // }}}
 
 
 static ngx_int_t
@@ -669,6 +676,8 @@ ngx_exec_new_binary(ngx_cycle_t *cycle, char *const *argv)
 }
 
 
+// static ngx_int_t ngx_get_options(int argc, char *const *argv);
+// 获取调用参数 {{{
 static ngx_int_t
 ngx_get_options(int argc, char *const *argv)
 {
@@ -789,9 +798,11 @@ ngx_get_options(int argc, char *const *argv)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static ngx_int_t ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
+// 将调用参数保存到全局变量 ngx_os_argv、ngx_argc、ngx_argv、ngx_os_environ 中 {{{
 static ngx_int_t
 ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
 {
@@ -831,7 +842,7 @@ ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
     ngx_os_environ = environ;
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t

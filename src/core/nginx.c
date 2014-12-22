@@ -865,6 +865,7 @@ ngx_process_options(ngx_cycle_t *cycle)
             p[len++] = '/';
         }
 
+		// 初始化配置文件路径和程序目录路径
         cycle->conf_prefix.len = len;
         cycle->conf_prefix.data = p;
         cycle->prefix.len = len;
@@ -879,6 +880,7 @@ ngx_process_options(ngx_cycle_t *cycle)
             return NGX_ERROR;
         }
 
+		// 用当前程序运行目录作为 nginx 默认目录
         if (ngx_getcwd(p, NGX_MAX_PATH) == 0) {
             ngx_log_stderr(ngx_errno, "[emerg]: " ngx_getcwd_n " failed");
             return NGX_ERROR;
@@ -888,6 +890,7 @@ ngx_process_options(ngx_cycle_t *cycle)
 
         p[len++] = '/';
 
+		// 初始化配置文件路径和程序目录路径
         cycle->conf_prefix.len = len;
         cycle->conf_prefix.data = p;
         cycle->prefix.len = len;

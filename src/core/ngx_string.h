@@ -13,6 +13,7 @@
 #include <ngx_core.h>
 
 
+// string 类型
 typedef struct {
     size_t      len;
     u_char     *data;

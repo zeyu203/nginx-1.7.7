@@ -323,6 +323,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+	// 获取操作系统信息、CPU信息、最大连接数、是否支持非阻塞连接等
     if (ngx_os_init(log) != NGX_OK) {
         return 1;
     }
@@ -331,6 +332,7 @@ main(int argc, char *const *argv)
      * ngx_crc32_table_init() requires ngx_cacheline_size set in ngx_os_init()
      */
 
+	// 对齐校验表
     if (ngx_crc32_table_init() != NGX_OK) {
         return 1;
     }

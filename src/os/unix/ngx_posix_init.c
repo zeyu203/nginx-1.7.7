@@ -29,6 +29,8 @@ ngx_os_io_t ngx_os_io = {
 };
 
 
+// ngx_int_t ngx_os_init(ngx_log_t *log)
+// 获取操作系统信息、CPU信息、最大连接数、是否支持非阻塞连接等 {{{
 ngx_int_t
 ngx_os_init(ngx_log_t *log)
 {
@@ -41,7 +43,7 @@ ngx_os_init(ngx_log_t *log)
     }
 #endif
 
-	// 设置进程名称，将进程名、调用参数、环境变量参数保存到 malloc 的空间中
+	// 设置进程名称，将进程名、调用参数保存到环境变量中
     if (ngx_init_setproctitle(log) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -61,8 +63,16 @@ ngx_os_init(ngx_log_t *log)
         ngx_ncpu = 1;
     }
 
+	// 获取 CPU 缓存等信息
     ngx_cpuinfo();
 
+	// 获取进程能打开的最大文件数
+	//
+	// struct rlmt
+	// {
+	//     rlim_t rlim_cur; /*当前（软）限制*/
+	//     rlim_t rlim_max; /*硬限制*/
+	// }
     if (getrlimit(RLIMIT_NOFILE, &rlmt) == -1) {
         ngx_log_error(NGX_LOG_ALERT, log, errno,
                       "getrlimit(RLIMIT_NOFILE) failed)");
@@ -71,6 +81,7 @@ ngx_os_init(ngx_log_t *log)
 
     ngx_max_sockets = (ngx_int_t) rlmt.rlim_cur;
 
+	// 判断是否支持非阻塞套接字
 #if (NGX_HAVE_INHERITED_NONBLOCK || NGX_HAVE_ACCEPT4)
     ngx_inherited_nonblocking = 1;
 #else
@@ -80,7 +91,7 @@ ngx_os_init(ngx_log_t *log)
     srandom(ngx_time());
 
     return NGX_OK;
-}
+} // }}}
 
 
 void

@@ -102,11 +102,14 @@ uint32_t  ngx_crc32_table256[] = {
 uint32_t *ngx_crc32_table_short = ngx_crc32_table16;
 
 
+// ngx_int_t ngx_crc32_table_init(void)
+// 循环冗余校验表（CRC32）初始化（对齐） {{{
 ngx_int_t
 ngx_crc32_table_init(void)
 {
     void  *p;
 
+	// 已对齐
     if (((uintptr_t) ngx_crc32_table_short
           & ~((uintptr_t) ngx_cacheline_size - 1))
         == (uintptr_t) ngx_crc32_table_short)
@@ -126,4 +129,4 @@ ngx_crc32_table_init(void)
     ngx_crc32_table_short = p;
 
     return NGX_OK;
-}
+} // }}}

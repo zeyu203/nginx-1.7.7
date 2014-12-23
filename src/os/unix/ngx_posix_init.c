@@ -35,11 +35,13 @@ ngx_os_init(ngx_log_t *log)
     ngx_uint_t  n;
 
 #if (NGX_HAVE_OS_SPECIFIC_INIT)
+	// 获取系统类型、发行版本、CPU核心数、TCP缓冲区大小、最大连接数等信息
     if (ngx_os_specific_init(log) != NGX_OK) {
         return NGX_ERROR;
     }
 #endif
 
+	// 设置进程名称，将进程名、调用参数、环境变量参数保存到 malloc 的空间中
     if (ngx_init_setproctitle(log) != NGX_OK) {
         return NGX_ERROR;
     }

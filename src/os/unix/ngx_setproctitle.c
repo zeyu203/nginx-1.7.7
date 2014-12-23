@@ -31,6 +31,8 @@ extern char **environ;
 
 static char *ngx_os_argv_last;
 
+// ngx_int_t ngx_init_setproctitle(ngx_log_t *log)
+// 设置进程名称，将进程名、调用参数、环境变量参数保存到 malloc 的空间中 {{{
 ngx_int_t
 ngx_init_setproctitle(ngx_log_t *log)
 {
@@ -72,7 +74,7 @@ ngx_init_setproctitle(ngx_log_t *log)
     ngx_os_argv_last--;
 
     return NGX_OK;
-}
+} // }}}
 
 
 void

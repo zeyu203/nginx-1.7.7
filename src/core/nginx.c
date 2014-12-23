@@ -199,6 +199,7 @@ static char **ngx_os_environ;
 
 // int ngx_cdecl main(int argc, char *const *argv);
 // 主进程 {{{
+//
 // ngx_cdecl: 一个未实现的宏，可选为 stdcall 或 cdecl，用来支持跨平台
 // 区别：stdcall 是被调用者清理栈空间，cdecl 是调用者清理栈空间
 // 未显式指定则按编译器默认值
@@ -317,6 +318,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
+	// 保存配置文件路径、程序运行路径、调用参数到 cycle
     if (ngx_process_options(&init_cycle) != NGX_OK) {
         return 1;
     }
@@ -800,7 +802,6 @@ ngx_get_options(int argc, char *const *argv)
     return NGX_OK;
 } // }}}
 
-
 // static ngx_int_t ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
 // 将调用参数保存到全局变量 ngx_os_argv、ngx_argc、ngx_argv、ngx_os_environ 中 {{{
 static ngx_int_t
@@ -844,7 +845,8 @@ ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
     return NGX_OK;
 } // }}}
 
-
+// static ngx_int_t ngx_process_options(ngx_cycle_t *cycle)
+// 保存配置文件路径、参数、程序运行路径信息到 cycle {{{
 static ngx_int_t
 ngx_process_options(ngx_cycle_t *cycle)
 {
@@ -920,6 +922,7 @@ ngx_process_options(ngx_cycle_t *cycle)
         return NGX_ERROR;
     }
 
+	// 获取目录后面跟的参数
     for (p = cycle->conf_file.data + cycle->conf_file.len - 1;
          p > cycle->conf_file.data;
          p--)
@@ -936,12 +939,13 @@ ngx_process_options(ngx_cycle_t *cycle)
         cycle->conf_param.data = ngx_conf_params;
     }
 
+	// 测试时降低默认 log 级别
     if (ngx_test_config) {
         cycle->log->log_level = NGX_LOG_INFO;
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 static void *

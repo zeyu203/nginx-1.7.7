@@ -40,7 +40,9 @@ typedef struct {
     ngx_uint_t   exists;
 } sysctl_t;
 
-
+// sysctl_t sysctls[]
+// 供sysctlbyname函数循环调用的参数
+// 用于获取CPU核心数、TCP缓冲区大小、最大连接数等信息 {{{
 sysctl_t sysctls[] = {
     { "hw.ncpu",
       &ngx_darwin_hw_ncpu,
@@ -55,7 +57,7 @@ sysctl_t sysctls[] = {
       sizeof(ngx_darwin_kern_ipc_somaxconn), 0 },
 
     { NULL, NULL, 0, 0 }
-};
+}; // }}}
 
 
 void
@@ -86,6 +88,8 @@ ngx_debug_init(void)
 }
 
 
+// ngx_int_t ngx_os_specific_init(ngx_log_t *log)
+// 获取系统类型、发行版本、CPU核心数、TCP缓冲区大小、最大连接数等信息 {{{
 ngx_int_t
 ngx_os_specific_init(ngx_log_t *log)
 {
@@ -94,16 +98,22 @@ ngx_os_specific_init(ngx_log_t *log)
     ngx_uint_t  i;
 
     size = sizeof(ngx_darwin_kern_ostype);
+	// sysctlbyname:
+	// UNIX 函数，用于获取系统信息，并支持重新set系统信息（参数4、5）
     if (sysctlbyname("kern.ostype", ngx_darwin_kern_ostype, &size, NULL, 0)
         == -1)
     {
         err = ngx_errno;
 
+		// #define NGX_ENOENT        ENOENT
+		// ENOENT: 上级目录不存在
         if (err != NGX_ENOENT) {
 
             ngx_log_error(NGX_LOG_ALERT, log, err,
                           "sysctlbyname(kern.ostype) failed");
 
+			// #define NGX_ENOMEM        ENOMEM 
+			// ENOMEM: 内存不足
             if (err != NGX_ENOMEM) {
                 return NGX_ERROR;
             }
@@ -166,7 +176,7 @@ ngx_os_specific_init(ngx_log_t *log)
     ngx_os_io = ngx_darwin_io;
 
     return NGX_OK;
-}
+} // }}}
 
 
 void

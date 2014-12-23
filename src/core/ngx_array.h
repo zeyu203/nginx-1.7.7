@@ -13,13 +13,15 @@
 #include <ngx_core.h>
 
 
+// struct ngx_array_t
+// nginx 数组结构 {{{
 typedef struct {
-    void        *elts;
-    ngx_uint_t   nelts;
-    size_t       size;
-    ngx_uint_t   nalloc;
-    ngx_pool_t  *pool;
-} ngx_array_t;
+    void        *elts;		// 数组起始位置
+    ngx_uint_t   nelts;		// 数组元素个数
+    size_t       size;		// 单个元素大小
+    ngx_uint_t   nalloc;	// 空间能够容纳元素个数
+    ngx_pool_t  *pool;		// 内存池地址
+} ngx_array_t; // }}}
 
 
 ngx_array_t *ngx_array_create(ngx_pool_t *p, ngx_uint_t n, size_t size);
@@ -28,6 +30,7 @@ void *ngx_array_push(ngx_array_t *a);
 void *ngx_array_push_n(ngx_array_t *a, ngx_uint_t n);
 
 
+// 数组结构初始化
 static ngx_inline ngx_int_t
 ngx_array_init(ngx_array_t *array, ngx_pool_t *pool, ngx_uint_t n, size_t size)
 {

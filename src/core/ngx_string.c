@@ -895,6 +895,8 @@ ngx_filename_cmp(u_char *s1, u_char *s2, size_t n)
 }
 
 
+// ngx_int_t ngx_atoi(u_char *line, size_t n)
+// 字符串转换成数字 {{{
 ngx_int_t
 ngx_atoi(u_char *line, size_t n)
 {
@@ -918,7 +920,7 @@ ngx_atoi(u_char *line, size_t n)
     } else {
         return value;
     }
-}
+} // }}}
 
 
 /* parse a fixed point number, e.g., ngx_atofp("10.5", 4, 2) returns 1050 */

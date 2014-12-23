@@ -180,6 +180,9 @@ ngx_log_error_core(ngx_uint_t level, ngx_log_t *log, ngx_err_t err,
 
 #if !(NGX_HAVE_VARIADIC_MACROS)
 
+// void ngx_cdecl ngx_log_error(ngx_uint_t level, ngx_log_t *log, ngx_err_t err,
+//     const char *fmt, ...)
+// 打印错误日志 {{{
 void ngx_cdecl
 ngx_log_error(ngx_uint_t level, ngx_log_t *log, ngx_err_t err,
     const char *fmt, ...)
@@ -191,7 +194,7 @@ ngx_log_error(ngx_uint_t level, ngx_log_t *log, ngx_err_t err,
         ngx_log_error_core(level, log, err, fmt, args);
         va_end(args);
     }
-}
+} // }}}
 
 
 void ngx_cdecl

@@ -44,6 +44,8 @@ ngx_array_destroy(ngx_array_t *a)
 }
 
 
+// void * ngx_array_push(ngx_array_t *a)
+// 向数组中增加一个元素空间，并返回该空间首地址 {{{
 void *
 ngx_array_push(ngx_array_t *a)
 {
@@ -88,7 +90,7 @@ ngx_array_push(ngx_array_t *a)
     a->nelts++;
 
     return elt;
-}
+} // }}}
 
 
 void *

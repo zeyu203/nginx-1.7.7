@@ -15,6 +15,8 @@
 
 typedef struct ngx_listening_s  ngx_listening_t;
 
+// struct ngx_listening_s
+// socket 详细属性 {{{
 struct ngx_listening_s {
     ngx_socket_t        fd;
 
@@ -84,7 +86,7 @@ struct ngx_listening_s {
     int                 fastopen;
 #endif
 
-};
+}; // }}}
 
 
 typedef enum {

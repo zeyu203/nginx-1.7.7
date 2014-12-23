@@ -427,6 +427,8 @@ main(int argc, char *const *argv)
 } // }}}
 
 
+// static ngx_int_t ngx_add_inherited_sockets(ngx_cycle_t *cycle)
+// 继承环境变量中保留的连接 {{{
 static ngx_int_t
 ngx_add_inherited_sockets(ngx_cycle_t *cycle)
 {
@@ -443,6 +445,7 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0,
                   "using inherited sockets from \"%s\"", inherited);
 
+	// 创建监听数组，默认使用 10 个监听连接
     if (ngx_array_init(&cycle->listening, cycle->pool, 10,
                        sizeof(ngx_listening_t))
         != NGX_OK)
@@ -477,7 +480,7 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
     ngx_inherited = 1;
 
     return ngx_set_inherited_sockets(cycle);
-}
+} // }}}
 
 
 char **

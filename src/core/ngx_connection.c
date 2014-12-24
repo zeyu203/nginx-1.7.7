@@ -90,6 +90,8 @@ ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
 }
 
 
+// ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)
+// 根据继承的连接 fd 获取所有连接相关信息 {{{
 ngx_int_t
 ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 {
@@ -116,6 +118,8 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         }
 
         ls[i].socklen = NGX_SOCKADDRLEN;
+
+		// 根据连接fd获取sock地址结构
         if (getsockname(ls[i].fd, ls[i].sockaddr, &ls[i].socklen) == -1) {
             ngx_log_error(NGX_LOG_CRIT, cycle->log, ngx_socket_errno,
                           "getsockname() of the inherited "
@@ -158,6 +162,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
             return NGX_ERROR;
         }
 
+		// 保存点分十进制字符串的IP地址
         len = ngx_sock_ntop(ls[i].sockaddr, ls[i].socklen,
                             ls[i].addr_text.data, len, 1);
         if (len == 0) {
@@ -170,6 +175,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 
         olen = sizeof(int);
 
+		// 获取接收缓冲区大小
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_RCVBUF, (void *) &ls[i].rcvbuf,
                        &olen)
             == -1)
@@ -183,6 +189,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 
         olen = sizeof(int);
 
+		// 获取发送缓冲区大小
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_SNDBUF, (void *) &ls[i].sndbuf,
                        &olen)
             == -1)
@@ -219,6 +226,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 
         olen = sizeof(int);
 
+		// 获取 TFO
         if (getsockopt(ls[i].fd, IPPROTO_TCP, TCP_FASTOPEN,
                        (void *) &ls[i].fastopen, &olen)
             == -1)
@@ -241,6 +249,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
         ngx_memzero(&af, sizeof(struct accept_filter_arg));
         olen = sizeof(struct accept_filter_arg);
 
+		// 获取服务器是否不等待最后的ACK包而仅仅等待携带数据负载的包
         if (getsockopt(ls[i].fd, SOL_SOCKET, SO_ACCEPTFILTER, &af, &olen)
             == -1)
         {
@@ -298,7 +307,7 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 ngx_int_t
@@ -496,6 +505,8 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 }
 
 
+// void ngx_configure_listening_sockets(ngx_cycle_t *cycle)
+// 根据 cycle->listening 中的连接信息设定连接参数 {{{
 void
 ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 {
@@ -513,6 +524,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
         ls[i].log = *ls[i].logp;
 
         if (ls[i].rcvbuf != -1) {
+			// 设置接收缓冲区
             if (setsockopt(ls[i].fd, SOL_SOCKET, SO_RCVBUF,
                            (const void *) &ls[i].rcvbuf, sizeof(int))
                 == -1)
@@ -524,6 +536,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
         }
 
         if (ls[i].sndbuf != -1) {
+			// 设置发送缓冲区
             if (setsockopt(ls[i].fd, SOL_SOCKET, SO_SNDBUF,
                            (const void *) &ls[i].sndbuf, sizeof(int))
                 == -1)
@@ -534,6 +547,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
             }
         }
 
+		// 设置是否保持长连接
         if (ls[i].keepalive) {
             value = (ls[i].keepalive == 1) ? 1 : 0;
 
@@ -549,6 +563,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 
 #if (NGX_HAVE_KEEPALIVE_TUNABLE)
 
+		// 设置第一次探测连接有效性之前等待的时间间隔
         if (ls[i].keepidle) {
             value = ls[i].keepidle;
 
@@ -566,6 +581,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
             }
         }
 
+		// 设置两次连接有效性探测的时间间隔
         if (ls[i].keepintvl) {
             value = ls[i].keepintvl;
 
@@ -583,6 +599,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
             }
         }
 
+		// 设置断开连接前探测分节的发送数目
         if (ls[i].keepcnt) {
             if (setsockopt(ls[i].fd, IPPROTO_TCP, TCP_KEEPCNT,
                            (const void *) &ls[i].keepcnt, sizeof(int))
@@ -597,6 +614,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 #endif
 
 #if (NGX_HAVE_SETFIB)
+		// 设置关联路由表FIB
         if (ls[i].setfib != -1) {
             if (setsockopt(ls[i].fd, SOL_SOCKET, SO_SETFIB,
                            (const void *) &ls[i].setfib, sizeof(int))
@@ -610,6 +628,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 #endif
 
 #if (NGX_HAVE_TCP_FASTOPEN)
+		// 设置 TFO
         if (ls[i].fastopen != -1) {
             if (setsockopt(ls[i].fd, IPPROTO_TCP, TCP_FASTOPEN,
                            (const void *) &ls[i].fastopen, sizeof(int))
@@ -637,6 +656,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
         }
 #endif
 
+		// 监听连接 fd
         if (ls[i].listen) {
 
             /* change backlog via listen() */
@@ -657,6 +677,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 
 #ifdef SO_ACCEPTFILTER
 
+		// 设置服务器是否不等待最后的ACK包而仅仅等待携带数据负载的包
         if (ls[i].delete_deferred) {
             if (setsockopt(ls[i].fd, SOL_SOCKET, SO_ACCEPTFILTER, NULL, 0)
                 == -1)
@@ -740,7 +761,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
     }
 
     return;
-}
+} // }}}
 
 
 void

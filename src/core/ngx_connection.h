@@ -23,7 +23,7 @@ struct ngx_listening_s {
     struct sockaddr    *sockaddr;
     socklen_t           socklen;    /* size of sockaddr */
     size_t              addr_text_max_len;
-    ngx_str_t           addr_text;
+    ngx_str_t           addr_text; // 点分十进制IP字符串
 
     int                 type;
 

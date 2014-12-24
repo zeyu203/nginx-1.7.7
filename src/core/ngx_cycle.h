@@ -52,8 +52,8 @@ struct ngx_cycle_s {
 
     ngx_array_t               listening;			// 监听数组
     ngx_array_t               paths;				// 路径数组
-    ngx_list_t                open_files;			// 共享内存链表
-    ngx_list_t                shared_memory;
+    ngx_list_t                open_files;			// 已打开文件链表
+    ngx_list_t                shared_memory;		// 共享内存链表
 
     ngx_uint_t                connection_n;			// 连接个数
     ngx_uint_t                files_n;				// 打开文件数

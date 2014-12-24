@@ -58,6 +58,8 @@ static ngx_uint_t argument_number[] = {
 };
 
 
+// char * ngx_conf_param(ngx_conf_t *cf)
+// 获取配置文件中的全部参数 {{{
 char *
 ngx_conf_param(ngx_conf_t *cf)
 {
@@ -94,9 +96,11 @@ ngx_conf_param(ngx_conf_t *cf)
     cf->conf_file = NULL;
 
     return rv;
-}
+} // }}}
 
 
+// char * ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
+// 解析配置文件 {{{
 char *
 ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 {
@@ -277,7 +281,7 @@ done:
     }
 
     return NGX_CONF_OK;
-}
+} // }}}
 
 
 static ngx_int_t

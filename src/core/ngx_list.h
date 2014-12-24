@@ -22,17 +22,20 @@ struct ngx_list_part_s {
 };
 
 
+// typedef struct
+// nginx 链表结构 {{{
 typedef struct {
     ngx_list_part_t  *last;
     ngx_list_part_t   part;
     size_t            size;
     ngx_uint_t        nalloc;
     ngx_pool_t       *pool;
-} ngx_list_t;
+} ngx_list_t; // }}}
 
 
 ngx_list_t *ngx_list_create(ngx_pool_t *pool, ngx_uint_t n, size_t size);
 
+// 链表初始化 {{{
 static ngx_inline ngx_int_t
 ngx_list_init(ngx_list_t *list, ngx_pool_t *pool, ngx_uint_t n, size_t size)
 {
@@ -49,7 +52,7 @@ ngx_list_init(ngx_list_t *list, ngx_pool_t *pool, ngx_uint_t n, size_t size)
     list->pool = pool;
 
     return NGX_OK;
-}
+} // }}}
 
 
 /*

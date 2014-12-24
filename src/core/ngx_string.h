@@ -13,11 +13,12 @@
 #include <ngx_core.h>
 
 
-// string 类型
+// struct ngx_str_t
+// string 类型 {{{
 typedef struct {
     size_t      len;
     u_char     *data;
-} ngx_str_t;
+} ngx_str_t; // }}}
 
 
 typedef struct {

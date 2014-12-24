@@ -306,7 +306,7 @@ main(int argc, char *const *argv)
     init_cycle.log = log;
     ngx_cycle = &init_cycle;
 
-	// 创建进程池
+	// 创建内存池
 	// 1KB
     init_cycle.pool = ngx_create_pool(1024, log);
     if (init_cycle.pool == NULL) {
@@ -318,7 +318,7 @@ main(int argc, char *const *argv)
         return 1;
     }
 
-	// 保存配置文件路径、程序运行路径、调用参数到 cycle
+	// 保存配置文件路径、程序运行路径、调用参数到 init_cycle
     if (ngx_process_options(&init_cycle) != NGX_OK) {
         return 1;
     }

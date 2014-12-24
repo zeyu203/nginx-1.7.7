@@ -13,6 +13,8 @@ static void *ngx_palloc_block(ngx_pool_t *pool, size_t size);
 static void *ngx_palloc_large(ngx_pool_t *pool, size_t size);
 
 
+// ngx_pool_t *ngx_create_pool(size_t size, ngx_log_t *log)
+// 创建内存池 {{{
 ngx_pool_t *
 ngx_create_pool(size_t size, ngx_log_t *log)
 {
@@ -40,9 +42,11 @@ ngx_create_pool(size_t size, ngx_log_t *log)
     p->log = log;
 
     return p;
-}
+} // }}}
 
 
+// void ngx_destroy_pool(ngx_pool_t *pool)
+// 销毁内存池 {{{
 void
 ngx_destroy_pool(ngx_pool_t *pool)
 {
@@ -92,7 +96,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
             break;
         }
     }
-}
+} // }}}
 
 
 void
@@ -218,7 +222,8 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
 }
 
 
-// 扩大内存池
+// static void * ngx_palloc_large(ngx_pool_t *pool, size_t size)
+// 扩大内存池 {{{
 static void *
 ngx_palloc_large(ngx_pool_t *pool, size_t size)
 {
@@ -255,7 +260,7 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
     pool->large = large;
 
     return p;
-}
+} // }}}
 
 
 void *

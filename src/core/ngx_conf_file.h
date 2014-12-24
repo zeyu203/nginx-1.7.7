@@ -136,41 +136,47 @@ struct ngx_module_s {
 };
 
 
+// struct ngx_core_module_t
+// nginx 内核模块 {{{
 typedef struct {
     ngx_str_t             name;
-    void               *(*create_conf)(ngx_cycle_t *cycle);
-    char               *(*init_conf)(ngx_cycle_t *cycle, void *conf);
-} ngx_core_module_t;
+    void               *(*create_conf)(ngx_cycle_t *cycle); // 配置创建回调函数
+    char               *(*init_conf)(ngx_cycle_t *cycle, void *conf); // 配置初始化回调函数
+} ngx_core_module_t; // }}}
 
 
+// struct ngx_conf_file_t
+// 配置文件信息 {{{
 typedef struct {
-    ngx_file_t            file;
-    ngx_buf_t            *buffer;
-    ngx_uint_t            line;
-} ngx_conf_file_t;
+    ngx_file_t            file;		// 文件描述
+    ngx_buf_t            *buffer;	// 文件缓存
+    ngx_uint_t            line;		// 当前读取位置
+} ngx_conf_file_t; // }}}
 
 
 typedef char *(*ngx_conf_handler_pt)(ngx_conf_t *cf,
     ngx_command_t *dummy, void *conf);
 
 
+// struct ngx_conf_s
+// 保存配置文件中指令 {{{
 struct ngx_conf_s {
-    char                 *name;
-    ngx_array_t          *args;
+    char                 *name;			// 指令名称
+    ngx_array_t          *args;			// 指令参数
 
     ngx_cycle_t          *cycle;
-    ngx_pool_t           *pool;
-    ngx_pool_t           *temp_pool;
-    ngx_conf_file_t      *conf_file;
-    ngx_log_t            *log;
+    ngx_pool_t           *pool;			// 内存池
+    ngx_pool_t           *temp_pool;	// 用于解析配置文件的临时内存池
+    ngx_conf_file_t      *conf_file;	// 配置文件
+    ngx_log_t            *log;			// 日志
 
-    void                 *ctx;
-    ngx_uint_t            module_type;
-    ngx_uint_t            cmd_type;
+    void                 *ctx;			// 描述指令的上下文
+    ngx_uint_t            module_type;	// 指令模块类型（core、http、event或mail）
+    ngx_uint_t            cmd_type;		// 指令类型
 
-    ngx_conf_handler_pt   handler;
-    char                 *handler_conf;
-};
+    ngx_conf_handler_pt   handler;		// 处理指令的回调函数
+    char                 *handler_conf;	// 回调函数需要的相关配置
+}; // }}}
 
 
 typedef char *(*ngx_conf_post_handler_pt) (ngx_conf_t *cf,

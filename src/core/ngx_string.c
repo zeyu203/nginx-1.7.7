@@ -17,6 +17,8 @@ static ngx_int_t ngx_decode_base64_internal(ngx_str_t *dst, ngx_str_t *src,
     const u_char *basis);
 
 
+// void ngx_strlow(u_char *dst, u_char *src, size_t n)
+// 内存拷贝，并转换成小写 {{{
 void
 ngx_strlow(u_char *dst, u_char *src, size_t n)
 {
@@ -26,7 +28,7 @@ ngx_strlow(u_char *dst, u_char *src, size_t n)
         src++;
         n--;
     }
-}
+} // }}}
 
 // u_char *ngx_cpystrn(u_char *dst, u_char *src, size_t n)
 // 内存拷贝 {{{
@@ -54,6 +56,8 @@ ngx_cpystrn(u_char *dst, u_char *src, size_t n)
 } // }}}
 
 
+// u_char * ngx_pstrdup(ngx_pool_t *pool, ngx_str_t *src)
+// 字符串复制 {{{
 u_char *
 ngx_pstrdup(ngx_pool_t *pool, ngx_str_t *src)
 {
@@ -67,7 +71,7 @@ ngx_pstrdup(ngx_pool_t *pool, ngx_str_t *src)
     ngx_memcpy(dst, src->data, src->len);
 
     return dst;
-}
+} // }}}
 
 
 /*

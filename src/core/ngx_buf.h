@@ -17,6 +17,8 @@ typedef void *            ngx_buf_tag_t;
 
 typedef struct ngx_buf_s  ngx_buf_t;
 
+// struct ngx_buf_s
+// 内存缓冲区 {{
 struct ngx_buf_s {
     u_char          *pos;
     u_char          *last;
@@ -53,7 +55,7 @@ struct ngx_buf_s {
     unsigned         temp_file:1;
 
     /* STUB */ int   num;
-};
+}; // }}}
 
 
 struct ngx_chain_s {

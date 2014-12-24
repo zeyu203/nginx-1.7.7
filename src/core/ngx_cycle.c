@@ -36,7 +36,7 @@ static ngx_connection_t  dumb;
 /* STUB */
 
 
-/* add by zeyu: 环境初始化 */
+// 环境初始化
 ngx_cycle_t *
 ngx_init_cycle(ngx_cycle_t *old_cycle)
 {
@@ -79,7 +79,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
     pool->log = log;
 
-	// 在内存池中分配空间
+	// 在内存池中分配空间存储新的 cycle
     cycle = ngx_pcalloc(pool, sizeof(ngx_cycle_t));
     if (cycle == NULL) {
         ngx_destroy_pool(pool);
@@ -90,6 +90,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     cycle->log = log;
     cycle->old_cycle = old_cycle;
 
+	// 拷贝配置信息
     cycle->conf_prefix.len = old_cycle->conf_prefix.len;
     cycle->conf_prefix.data = ngx_pstrdup(pool, &old_cycle->conf_prefix);
     if (cycle->conf_prefix.data == NULL) {
@@ -145,6 +146,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         n = 20;
     }
 
+	// 共享文件、内存链表初始化
     if (ngx_list_init(&cycle->open_files, pool, n, sizeof(ngx_open_file_t))
         != NGX_OK)
     {
@@ -171,6 +173,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return NULL;
     }
 
+	// 监听链接数组初始化
     n = old_cycle->listening.nelts ? old_cycle->listening.nelts : 10;
 
     cycle->listening.elts = ngx_pcalloc(pool, n * sizeof(ngx_listening_t));
@@ -185,6 +188,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     cycle->listening.pool = pool;
 
 
+	// nginx 复用连接队列初始化(双链接指针循环队列)
     ngx_queue_init(&cycle->reusable_connections_queue);
 
 
@@ -195,6 +199,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
+	// 获取主机名
     if (gethostname(hostname, NGX_MAXHOSTNAMELEN) == -1) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "gethostname() failed");
         ngx_destroy_pool(pool);
@@ -223,6 +228,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         module = ngx_modules[i]->ctx;
 
         if (module->create_conf) {
+			// 创建模块配置
             rv = module->create_conf(cycle);
             if (rv == NULL) {
                 ngx_destroy_pool(pool);
@@ -238,6 +244,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     ngx_memzero(&conf, sizeof(ngx_conf_t));
     /* STUB: init array ? */
+	// 保存配置文件中所有指令
     conf.args = ngx_array_create(pool, 10, sizeof(ngx_str_t));
     if (conf.args == NULL) {
         ngx_destroy_pool(pool);
@@ -262,12 +269,14 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     log->log_level = NGX_LOG_DEBUG_ALL;
 #endif
 
+	// 获取配置文件中的全部参数
     if (ngx_conf_param(&conf) != NGX_CONF_OK) {
         environ = senv;
         ngx_destroy_cycle_pools(&conf);
         return NULL;
     }
 
+	// 解析配置文件
     if (ngx_conf_parse(&conf, &cycle->conf_file) != NGX_CONF_OK) {
         environ = senv;
         ngx_destroy_cycle_pools(&conf);
@@ -279,6 +288,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
                        cycle->conf_file.data);
     }
 
+	// 初始化所有模块
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_CORE_MODULE) {
             continue;
@@ -301,6 +311,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         return cycle;
     }
 
+	// 获取内核模块配置文件信息
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
 
     if (ngx_test_config) {
@@ -332,11 +343,13 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
+	// 测试文件打开和读写
     if (ngx_test_lockfile(cycle->lock_file.data, log) != NGX_OK) {
         goto failed;
     }
 
 
+	// 创建全部配置文件
     if (ngx_create_paths(cycle, ccf->user) != NGX_OK) {
         goto failed;
     }
@@ -905,6 +918,8 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
 }
 
 
+// ngx_int_t ngx_create_pidfile(ngx_str_t *name, ngx_log_t *log)
+// 创建进程id配置文件 {{{
 ngx_int_t
 ngx_create_pidfile(ngx_str_t *name, ngx_log_t *log)
 {
@@ -947,7 +962,7 @@ ngx_create_pidfile(ngx_str_t *name, ngx_log_t *log)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 void
@@ -1021,6 +1036,8 @@ ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 }
 
 
+// static ngx_int_t ngx_test_lockfile(u_char *file, ngx_log_t *log)
+// 测试文件是否可以读写 {{{
 static ngx_int_t
 ngx_test_lockfile(u_char *file, ngx_log_t *log)
 {
@@ -1049,7 +1066,7 @@ ngx_test_lockfile(u_char *file, ngx_log_t *log)
 #endif
 
     return NGX_OK;
-}
+} // }}}
 
 
 void

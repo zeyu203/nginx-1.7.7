@@ -11,6 +11,8 @@
 
 #if (NGX_HAVE_MAP_ANON)
 
+// ngx_int_t ngx_shm_alloc(ngx_shm_t *shm)
+// 将共享文件映射到共享内存 {{{
 ngx_int_t
 ngx_shm_alloc(ngx_shm_t *shm)
 {
@@ -25,7 +27,7 @@ ngx_shm_alloc(ngx_shm_t *shm)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 void

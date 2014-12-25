@@ -42,6 +42,8 @@ ngx_strerror(ngx_err_t err, u_char *errstr, size_t size)
 }
 
 
+// ngx_int_t ngx_strerror_init(void)
+// 初始化系统错误列表 {{{
 ngx_int_t
 ngx_strerror_init(void)
 {
@@ -85,4 +87,4 @@ failed:
     ngx_log_stderr(0, "malloc(%uz) failed (%d: %s)", len, err, strerror(err));
 
     return NGX_ERROR;
-}
+} // }}}

@@ -560,6 +560,8 @@ ngx_add_path(ngx_conf_t *cf, ngx_path_t **slot)
 }
 
 
+// ngx_int_t ngx_create_paths(ngx_cycle_t *cycle, ngx_uid_t user)
+// 创建目录 {{{
 ngx_int_t
 ngx_create_paths(ngx_cycle_t *cycle, ngx_uid_t user)
 {
@@ -621,7 +623,7 @@ ngx_create_paths(ngx_cycle_t *cycle, ngx_uid_t user)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 ngx_int_t

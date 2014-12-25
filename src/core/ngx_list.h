@@ -15,21 +15,23 @@
 
 typedef struct ngx_list_part_s  ngx_list_part_t;
 
+// struct ngx_list_part_s
+// 链表节点 {{{
 struct ngx_list_part_s {
-    void             *elts;
-    ngx_uint_t        nelts;
-    ngx_list_part_t  *next;
-};
+    void             *elts;		// 节点数组
+    ngx_uint_t        nelts;	// 节点元素个数
+    ngx_list_part_t  *next;		// 下一节点
+}; // }}}
 
 
-// typedef struct
-// nginx 链表结构 {{{
+// typedef struct ngx_list_t
+// nginx 链表结构(以数组为节点) {{{
 typedef struct {
-    ngx_list_part_t  *last;
-    ngx_list_part_t   part;
-    size_t            size;
-    ngx_uint_t        nalloc;
-    ngx_pool_t       *pool;
+    ngx_list_part_t  *last;		// 最后一个节点
+    ngx_list_part_t   part;		// 首个节点
+    size_t            size;		// 单个节点占内存大小
+    ngx_uint_t        nalloc;	// 每个节点中数组的容量
+    ngx_pool_t       *pool;		// 为链表分配的内存池
 } ngx_list_t; // }}}
 
 

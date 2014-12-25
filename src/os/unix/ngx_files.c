@@ -16,6 +16,8 @@ ngx_uint_t  ngx_file_aio = 1;
 #endif
 
 
+// ssize_t ngx_read_file(ngx_file_t *file, u_char *buf, size_t size, off_t offset)
+// 读取文件 {{{
 ssize_t
 ngx_read_file(ngx_file_t *file, u_char *buf, size_t size, off_t offset)
 {
@@ -61,7 +63,7 @@ ngx_read_file(ngx_file_t *file, u_char *buf, size_t size, off_t offset)
     file->offset += n;
 
     return n;
-}
+} // }}}
 
 
 ssize_t

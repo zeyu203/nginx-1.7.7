@@ -13,6 +13,8 @@
 #include <ngx_core.h>
 
 
+// struct ngx_file_s
+// 文件结构 {{{
 struct ngx_file_s {
     ngx_fd_t                   fd;
     ngx_str_t                  name;
@@ -29,7 +31,7 @@ struct ngx_file_s {
 
     unsigned                   valid_info:1;
     unsigned                   directio:1;
-};
+}; // }}}
 
 
 #define NGX_MAX_PATH_LEVEL  3

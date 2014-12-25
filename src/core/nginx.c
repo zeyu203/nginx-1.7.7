@@ -400,6 +400,9 @@ main(int argc, char *const *argv)
         ngx_modules[i]->index = ngx_max_module++;
     }
 
+	// 全部初始化工作，包括时间、内存池、配置文件、共享内存
+	//     、监听连接数组、所有模块的初始化，
+	// 以及配置及log文件创建、连接开启监听
     cycle = ngx_init_cycle(&init_cycle);
     if (cycle == NULL) {
         if (ngx_test_config) {

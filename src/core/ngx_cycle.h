@@ -26,13 +26,17 @@ typedef struct ngx_shm_zone_s  ngx_shm_zone_t;
 
 typedef ngx_int_t (*ngx_shm_zone_init_pt) (ngx_shm_zone_t *zone, void *data);
 
+// struct ngx_shm_zone_s
+// 共享内存空间 {{{
 struct ngx_shm_zone_s {
-    void                     *data;
-    ngx_shm_t                 shm;
-    ngx_shm_zone_init_pt      init;
-    void                     *tag;
-};
+    void                     *data;		// 初始化回调函数所需的参数
+    ngx_shm_t                 shm;		// 共享内存结构
+    ngx_shm_zone_init_pt      init;		// 初始化共享内存调用的回调函数
+    void                     *tag;		// 标记
+}; // }}}
 
+// struct ngx_cycle_s
+// nginx 运行核心结构 {{{
 struct ngx_cycle_s {
     void                  ****conf_ctx;				// 配置上下文数组(含所有模块)
     ngx_pool_t               *pool;					// 内存池起始地址
@@ -70,7 +74,7 @@ struct ngx_cycle_s {
     ngx_str_t                 prefix;				// 程序目录路径
     ngx_str_t                 lock_file;			// 锁文件
     ngx_str_t                 hostname;				// 主机名
-};
+}; // }}}
 
 
 typedef struct {

@@ -355,6 +355,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
+	// 测试 log 是否可以打开
     if (ngx_log_open_default(cycle) != NGX_OK) {
         goto failed;
     }
@@ -370,6 +371,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             if (part->next == NULL) {
                 break;
             }
+			// 链表每个元素都是一个数组，数组满后会创建新的链表元素
             part = part->next;
             file = part->elts;
             i = 0;
@@ -396,6 +398,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
 
 #if !(NGX_WIN32)
+		// 改变已打开文件的性质：如果执行 exec，系统将自动关闭该文件
         if (fcntl(file[i].fd, F_SETFD, FD_CLOEXEC) == -1) {
             ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
                           "fcntl(FD_CLOEXEC) \"%s\" failed",
@@ -414,6 +417,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     part = &cycle->shared_memory.part;
     shm_zone = part->elts;
 
+	// 初始化共享内存
     for (i = 0; /* void */ ; i++) {
 
         if (i >= part->nelts) {
@@ -479,10 +483,12 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             break;
         }
 
+		// 将共享文件映射到共享内存
         if (ngx_shm_alloc(&shm_zone[i].shm) != NGX_OK) {
             goto failed;
         }
 
+		// 初始化共享内存结构
         if (ngx_init_zone_pool(cycle, &shm_zone[i]) != NGX_OK) {
             goto failed;
         }
@@ -982,6 +988,8 @@ ngx_delete_pidfile(ngx_cycle_t *cycle)
 }
 
 
+// ngx_int_t ngx_signal_process(ngx_cycle_t *cycle, char *sig)
+// 根据配置文件中配置的pid发送信号 {{{
 ngx_int_t
 ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 {
@@ -1033,7 +1041,7 @@ ngx_signal_process(ngx_cycle_t *cycle, char *sig)
 
     return ngx_os_signal_process(cycle, sig, pid);
 
-}
+} // }}}
 
 
 // static ngx_int_t ngx_test_lockfile(u_char *file, ngx_log_t *log)

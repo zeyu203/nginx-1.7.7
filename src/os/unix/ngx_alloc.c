@@ -47,9 +47,10 @@ ngx_calloc(size_t size, ngx_log_t *log)
     return p;
 }
 
-
 #if (NGX_HAVE_POSIX_MEMALIGN)
 
+// void * ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
+// 用数据对齐的方式进行内存分配 {{{
 void *
 ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 {
@@ -69,10 +70,12 @@ ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
                    "posix_memalign: %p:%uz @%uz", p, size, alignment);
 
     return p;
-}
+} // }}}
 
 #elif (NGX_HAVE_MEMALIGN)
 
+// void * ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
+// 用数据对齐的方式进行内存分配 {{{
 void *
 ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 {
@@ -88,6 +91,6 @@ ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
                    "memalign: %p:%uz @%uz", p, size, alignment);
 
     return p;
-}
+} // }}}
 
 #endif

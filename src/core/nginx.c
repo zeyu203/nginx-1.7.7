@@ -287,7 +287,6 @@ main(int argc, char *const *argv)
 
     ngx_pid = ngx_getpid();
 
-	// 初始化log
 	// 初始化 ngx_log 结构，创建 errlog 文件
     log = ngx_log_init(ngx_prefix);
     if (log == NULL) {
@@ -295,6 +294,7 @@ main(int argc, char *const *argv)
     }
 
     /* STUB */
+	// for https
 #if (NGX_OPENSSL)
     ngx_ssl_init(log);
 #endif
@@ -308,8 +308,7 @@ main(int argc, char *const *argv)
     init_cycle.log = log;
     ngx_cycle = &init_cycle;
 
-	// 创建内存池
-	// 1KB
+	// 创建内存池 1KB
     init_cycle.pool = ngx_create_pool(1024, log);
     if (init_cycle.pool == NULL) {
         return 1;

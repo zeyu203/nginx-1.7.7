@@ -213,6 +213,7 @@ main(int argc, char *const *argv)
 
     ngx_debug_init();
 
+	// 初始化系统错误列表
     if (ngx_strerror_init() != NGX_OK) {
         return 1;
     }
@@ -277,6 +278,7 @@ main(int argc, char *const *argv)
 
     /* TODO */ ngx_max_sockets = -1;
 
+	// 时间初始化
     ngx_time_init();
 
 #if (NGX_PCRE)

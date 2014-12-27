@@ -60,6 +60,8 @@ static char  *week[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 static char  *months[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
+// void ngx_time_init(void)
+// 初始化时间字符串 {{{
 void
 ngx_time_init(void)
 {
@@ -72,9 +74,11 @@ ngx_time_init(void)
     ngx_cached_time = &cached_time[0];
 
     ngx_time_update();
-}
+} // }}}
 
 
+// void ngx_time_update(void)
+// 更新当前时间结构 {{{
 void
 ngx_time_update(void)
 {
@@ -131,7 +135,7 @@ ngx_time_update(void)
 
     tp = &cached_time[slot];
 
-	// 防止1秒内调用两次
+	// 完全相同则不必更新
     if (tp->sec == sec) {
         tp->msec = msec;
         ngx_unlock(&ngx_time_lock);
@@ -226,7 +230,7 @@ ngx_time_update(void)
     ngx_cached_syslog_time.data = p4;
 
     ngx_unlock(&ngx_time_lock);
-}
+} // }}}
 
 
 #if !(NGX_WIN32)
@@ -336,6 +340,8 @@ ngx_http_cookie_time(u_char *buf, time_t t)
 }
 
 
+// void ngx_gmtime(time_t t, ngx_tm_t *tp)
+// 将时间戳转换为 ngx_tm_t 结构 {{{
 void
 ngx_gmtime(time_t t, ngx_tm_t *tp)
 {
@@ -426,7 +432,7 @@ ngx_gmtime(time_t t, ngx_tm_t *tp)
     tp->ngx_tm_mon = (ngx_tm_mon_t) mon;
     tp->ngx_tm_year = (ngx_tm_year_t) year;
     tp->ngx_tm_wday = (ngx_tm_wday_t) wday;
-}
+} // }}}
 
 
 time_t

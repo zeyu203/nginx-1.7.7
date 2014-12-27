@@ -298,6 +298,8 @@ ngx_log_init(u_char *prefix)
     ngx_log.file = &ngx_log_file;
     ngx_log.log_level = NGX_LOG_NOTICE;
 
+	// NGX_ERROR_LOG_PATH 安装时定义的宏，error log 的路径
+	// 如 /var/log/nginx/error.log
     name = (u_char *) NGX_ERROR_LOG_PATH;
 
     /*

@@ -87,13 +87,16 @@ struct ngx_command_s {
 #define ngx_null_command  { ngx_null_string, 0, NULL, 0, 0, NULL }
 
 
+// struct ngx_open_file_s
+// 打开文件结构 {{{
 struct ngx_open_file_s {
     ngx_fd_t              fd;
     ngx_str_t             name;
 
     void                (*flush)(ngx_open_file_t *file, ngx_log_t *log);
-    void                 *data;
-};
+			// 文件刷新时调用的回调
+    void                 *data;	// 回调函数使用的参数
+}; // }}}
 
 
 #define NGX_MODULE_V1          0, 0, 0, 0, 0, 0, 1

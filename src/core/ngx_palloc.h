@@ -40,10 +40,12 @@ struct ngx_pool_cleanup_s {
 
 typedef struct ngx_pool_large_s  ngx_pool_large_t;
 
+// struct ngx_pool_large_s
+// 大数据块结构 {{{
 struct ngx_pool_large_s {
     ngx_pool_large_t     *next;
     void                 *alloc;
-};
+}; // }}}
 
 
 // struct ngx_pool_data_t
@@ -60,8 +62,8 @@ typedef struct {
 // 内存池结构 {{{
 struct ngx_pool_s {
     ngx_pool_data_t       d;		// 内存池数据块
-    size_t                max;		// 数据块大小，小块内存最大值
-    ngx_pool_t           *current;	// 指向内存可用数据块
+    size_t                max;		// 待分配内存大小
+    ngx_pool_t           *current;	// 指向当前内存池起始位置
     ngx_chain_t          *chain;
     ngx_pool_large_t     *large;	// 指向大块内存分配
     ngx_pool_cleanup_t   *cleanup;	// 析构函数

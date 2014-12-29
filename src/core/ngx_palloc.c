@@ -135,8 +135,10 @@ ngx_palloc(ngx_pool_t *pool, size_t size)
         p = pool->current;
 
         do {
+			// 对齐数据
             m = ngx_align_ptr(p->d.last, NGX_ALIGNMENT);
 
+			// 如果内存池充足，则直接分配空间并返回
             if ((size_t) (p->d.end - m) >= size) {
                 p->d.last = m + size;
 
@@ -147,6 +149,7 @@ ngx_palloc(ngx_pool_t *pool, size_t size)
 
         } while (p);
 
+		// 在内存池列表尾端添加新的内存池
         return ngx_palloc_block(pool, size);
     }
 
@@ -186,6 +189,8 @@ ngx_pnalloc(ngx_pool_t *pool, size_t size)
 } // }}}
 
 
+// static void * ngx_palloc_block(ngx_pool_t *pool, size_t size)
+// 在内存池列表尾端添加新的内存池 {{{
 static void *
 ngx_palloc_block(ngx_pool_t *pool, size_t size)
 {
@@ -193,6 +198,7 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
     size_t       psize;
     ngx_pool_t  *p, *new;
 
+	// 内存池列表的每个元素的大小相同
     psize = (size_t) (pool->d.end - (u_char *) pool);
 
     m = ngx_memalign(NGX_POOL_ALIGNMENT, psize, pool->log);
@@ -211,6 +217,9 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
     new->d.last = m + size;
 
     for (p = pool->current; p->d.next; p = p->d.next) {
+		// 如果连续4次以上分配失败，说明内存池中可用空间已经很小
+		// 则下一次直接用该内存池的下一内存池中的空间开辟新的空间
+		// 而不是浪费时间去检查这个剩余空间很小的内存池是否还有空间
         if (p->d.failed++ > 4) {
             pool->current = p->d.next;
         }
@@ -219,7 +228,7 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
     p->d.next = new;
 
     return m;
-}
+} // }}}
 
 
 // static void * ngx_palloc_large(ngx_pool_t *pool, size_t size)

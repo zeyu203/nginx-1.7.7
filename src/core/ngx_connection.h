@@ -16,7 +16,7 @@
 typedef struct ngx_listening_s  ngx_listening_t;
 
 // struct ngx_listening_s
-// socket 详细属性 {{{
+// socket 属性结构 {{{
 struct ngx_listening_s {
     ngx_socket_t        fd;
 

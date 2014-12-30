@@ -57,7 +57,7 @@ ngx_cpystrn(u_char *dst, u_char *src, size_t n)
 
 
 // u_char * ngx_pstrdup(ngx_pool_t *pool, ngx_str_t *src)
-// 字符串复制 {{{
+// 在内存池中开辟字符串并复制 {{{
 u_char *
 ngx_pstrdup(ngx_pool_t *pool, ngx_str_t *src)
 {

@@ -36,9 +36,9 @@ static ngx_connection_t  dumb;
 /* STUB */
 
 
-// 环境初始化
-ngx_cycle_t *
-ngx_init_cycle(ngx_cycle_t *old_cycle)
+// ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
+// 环境初始化 {{{
+ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
 {
     void                *rv;
     char               **senv, **env;
@@ -56,6 +56,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_core_module_t   *module;
     char                 hostname[NGX_MAXHOSTNAMELEN];
 
+	// 设置系统时区
     ngx_timezone_update();
 
     /* force localtime update with a new timezone */
@@ -70,6 +71,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_time_update();
 
 
+	// 从 init_cycle 中继承 log 的相关配置
     log = old_cycle->log;
 
 	// 创建内存池 16 KB, 16 位对齐
@@ -864,7 +866,7 @@ failed:
     ngx_destroy_cycle_pools(&conf);
 
     return NULL;
-}
+} // }}}
 
 
 static void

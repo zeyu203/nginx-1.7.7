@@ -316,7 +316,8 @@ ngx_pfree(ngx_pool_t *pool, void *p)
     return NGX_DECLINED;
 }
 
-
+// void * ngx_pcalloc(ngx_pool_t *pool, size_t size)
+// 在内存池中分配空间，并初始化为 0 {{{
 void *
 ngx_pcalloc(ngx_pool_t *pool, size_t size)
 {
@@ -328,7 +329,7 @@ ngx_pcalloc(ngx_pool_t *pool, size_t size)
     }
 
     return p;
-}
+} // }}}
 
 
 ngx_pool_cleanup_t *

@@ -126,6 +126,7 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     n = old_cycle->paths.nelts ? old_cycle->paths.nelts : 10;
 
+	// 路径数组复制
     cycle->paths.elts = ngx_pcalloc(pool, n * sizeof(ngx_path_t *));
     if (cycle->paths.elts == NULL) {
         ngx_destroy_pool(pool);
@@ -138,6 +139,7 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
     cycle->paths.pool = pool;
 
 
+	// 打开文件链表初始化
     if (old_cycle->open_files.part.nelts) {
         n = old_cycle->open_files.part.nelts;
         for (part = old_cycle->open_files.part.next; part; part = part->next) {
@@ -148,7 +150,6 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
         n = 20;
     }
 
-	// 共享文件、内存链表初始化
     if (ngx_list_init(&cycle->open_files, pool, n, sizeof(ngx_open_file_t))
         != NGX_OK)
     {
@@ -157,6 +158,7 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
+	// 内存链表初始化
     if (old_cycle->shared_memory.part.nelts) {
         n = old_cycle->shared_memory.part.nelts;
         for (part = old_cycle->shared_memory.part.next; part; part = part->next)

@@ -9,6 +9,8 @@
 #include <ngx_core.h>
 
 
+//ngx_list_t * ngx_list_create(ngx_pool_t *pool, ngx_uint_t n, size_t size)
+// 创建链表结构 {{{
 ngx_list_t *
 ngx_list_create(ngx_pool_t *pool, ngx_uint_t n, size_t size)
 {
@@ -24,7 +26,7 @@ ngx_list_create(ngx_pool_t *pool, ngx_uint_t n, size_t size)
     }
 
     return list;
-}
+} // }}}
 
 
 void *

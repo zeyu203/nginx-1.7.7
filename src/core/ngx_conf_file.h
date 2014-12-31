@@ -102,6 +102,8 @@ struct ngx_open_file_s {
 #define NGX_MODULE_V1          0, 0, 0, 0, 0, 0, 1
 #define NGX_MODULE_V1_PADDING  0, 0, 0, 0, 0, 0, 0, 0
 
+// struct ngx_module_s
+// nginx 模块结构 {{{
 struct ngx_module_s {
     ngx_uint_t            ctx_index;
     ngx_uint_t            index;
@@ -136,7 +138,7 @@ struct ngx_module_s {
     uintptr_t             spare_hook5;
     uintptr_t             spare_hook6;
     uintptr_t             spare_hook7;
-};
+}; // }}}
 
 
 // struct ngx_core_module_t

@@ -379,6 +379,8 @@ ngx_log_init(u_char *prefix)
 // }}}
 
 
+// ngx_int_t ngx_log_open_default(ngx_cycle_t *cycle)
+// 测试所有log文件是否都可以打开 {{{
 ngx_int_t
 ngx_log_open_default(ngx_cycle_t *cycle)
 {
@@ -414,7 +416,7 @@ ngx_log_open_default(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 ngx_int_t

@@ -354,7 +354,7 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
-	// 创建全部配置文件
+	// 创建全部配置文件目录
     if (ngx_create_paths(cycle, ccf->user) != NGX_OK) {
         goto failed;
     }
@@ -370,6 +370,7 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
     part = &cycle->open_files.part;
     file = part->elts;
 
+	// 打开所有配置文件，并加入到已打开文件链表中
     for (i = 0; /* void */ ; i++) {
 
         if (i >= part->nelts) {

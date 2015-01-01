@@ -20,13 +20,15 @@ typedef struct ngx_buf_s  ngx_buf_t;
 // struct ngx_buf_s
 // 内存缓冲区 {{{
 struct ngx_buf_s {
-    u_char          *pos;			// 缓存起始位置
-    u_char          *last;			// 缓存数据终止位置
+    u_char          *pos;			// 当前读取缓存位置
+    u_char          *last;			// 缓存内容终止位置
     off_t            file_pos;		// 缓存在文件中的偏移量
     off_t            file_last;		// 缓存终止位置在文件中的偏移量
 
+	// 内存块指针，内存块值得是缓存中的某一具体数据块，具体意义随应用相关
     u_char          *start;     /* start of buffer */	// 内存块起始地址
     u_char          *end;       /* end of buffer */		// 内存块终止地址
+
     ngx_buf_tag_t    tag;			// 标签
     ngx_file_t      *file;			// 缓存所对应的文件
     ngx_buf_t       *shadow;		// 复制来源

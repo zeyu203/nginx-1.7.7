@@ -1012,6 +1012,8 @@ ngx_process_options(ngx_cycle_t *cycle)
 } // }}}
 
 
+// static void * ngx_core_module_create_conf(ngx_cycle_t *cycle)
+// 内核模块创建函数 {{{
 static void *
 ngx_core_module_create_conf(ngx_cycle_t *cycle)
 {
@@ -1058,9 +1060,10 @@ ngx_core_module_create_conf(ngx_cycle_t *cycle)
     }
 
     return ccf;
-}
+} // }}}
 
-
+// static char * ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
+// 内核模块初始化函数 {{{
 static char *
 ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
 {

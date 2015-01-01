@@ -68,6 +68,7 @@ ngx_conf_param(ngx_conf_t *cf)
     ngx_buf_t         b;
     ngx_conf_file_t   conf_file;
 
+	// 获取系统配置参数
     param = &cf->cycle->conf_param;
 
     if (param->len == 0) {
@@ -136,11 +137,14 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 
         cf->conf_file = &conf_file;
 
+		// #define ngx_fd_info(fd, sb)      fstat(fd, sb)
+		// 获取文件状态
         if (ngx_fd_info(fd, &cf->conf_file->file.info) == NGX_FILE_ERROR) {
             ngx_log_error(NGX_LOG_EMERG, cf->log, ngx_errno,
                           ngx_fd_info_n " \"%s\" failed", filename->data);
         }
 
+		// 创建文件缓存
         cf->conf_file->buffer = &buf;
 
         buf.start = ngx_alloc(NGX_CONF_BUFFER, cf->log);
@@ -431,6 +435,8 @@ invalid:
 }
 
 
+// static ngx_int_t ngx_conf_read_token(ngx_conf_t *cf)
+// 取出并读取每一条配置指令 {{{
 static ngx_int_t
 ngx_conf_read_token(ngx_conf_t *cf)
 {
@@ -508,6 +514,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
             }
 
             if (len) {
+				// 缓存文件内容
                 ngx_memmove(b->start, start, len);
             }
 
@@ -517,6 +524,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 size = b->end - (b->start + len);
             }
 
+			// 原子地读取文件
             n = ngx_read_file(&cf->conf_file->file, b->start + len, size,
                               cf->conf_file->file.offset);
 
@@ -735,7 +743,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
             }
         }
     }
-}
+} // }}}
 
 
 char *

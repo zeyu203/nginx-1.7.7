@@ -872,12 +872,14 @@ failed:
 } // }}}
 
 
+// static void ngx_destroy_cycle_pools(ngx_conf_t *conf)
+// 销毁配置文件的临时内存池与配置文件内存池 {{{
 static void
 ngx_destroy_cycle_pools(ngx_conf_t *conf)
 {
     ngx_destroy_pool(conf->temp_pool);
     ngx_destroy_pool(conf->pool);
-}
+} // }}}
 
 
 static ngx_int_t

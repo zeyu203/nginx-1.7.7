@@ -9,6 +9,8 @@
 #include <ngx_core.h>
 
 
+// ngx_int_t ngx_daemon(ngx_log_t *log)
+// 创建守护进程，并且让执行初始化工作的进程退出 {{{
 ngx_int_t
 ngx_daemon(ngx_log_t *log)
 {
@@ -67,4 +69,4 @@ ngx_daemon(ngx_log_t *log)
     }
 
     return NGX_OK;
-}
+} // }}}

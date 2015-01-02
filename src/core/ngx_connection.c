@@ -310,6 +310,8 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 } // }}}
 
 
+// ngx_int_t ngx_open_listening_sockets(ngx_cycle_t *cycle)
+// 创建 socket 并设置为监听状态 {{{
 ngx_int_t
 ngx_open_listening_sockets(ngx_cycle_t *cycle)
 {
@@ -362,6 +364,8 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 return NGX_ERROR;
             }
 
+			// 设置 socket，让一个端口可以被多次绑定
+			// 并且当端口断开，可以立即被重新使用（默认会等待2分钟）
             if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
                            (const void *) &reuseaddr, sizeof(int))
                 == -1)
@@ -398,6 +402,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 #endif
             /* TODO: close on exit */
 
+			// 如果系统支持非阻塞IO，则设置 IO 为非阻塞方式
             if (!(ngx_event_flags & NGX_USE_AIO_EVENT)) {
                 if (ngx_nonblocking(s) == -1) {
                     ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
@@ -502,7 +507,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 // void ngx_configure_listening_sockets(ngx_cycle_t *cycle)

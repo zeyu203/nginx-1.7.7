@@ -444,6 +444,8 @@ main(int argc, char *const *argv)
     }
 
     if (!ngx_inherited && ccf->daemon) {
+		// 创建守护进程，初始化结束，执行初始化工作的进程退出
+		// 守护进程将继续执行
         if (ngx_daemon(cycle->log) != NGX_OK) {
             return 1;
         }

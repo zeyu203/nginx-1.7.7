@@ -608,10 +608,12 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
     }
 
+	// 为 cycle 中的每个监听目标创建 socket，并设置为监听状态
     if (ngx_open_listening_sockets(cycle) != NGX_OK) {
         goto failed;
     }
 
+	// 根据 cycle->listening 中的连接信息设定连接参数
     if (!ngx_test_config) {
         ngx_configure_listening_sockets(cycle);
     }

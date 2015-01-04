@@ -158,7 +158,7 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
-	// 内存链表初始化
+	// 共享内存链表初始化
     if (old_cycle->shared_memory.part.nelts) {
         n = old_cycle->shared_memory.part.nelts;
         for (part = old_cycle->shared_memory.part.next; part; part = part->next)
@@ -636,11 +636,13 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
     }
 
+	// 初始化工作尾声
 
     /* close and delete stuff that lefts from an old cycle */
 
     /* free the unnecessary shared memory */
 
+	// 释放共享内存
     opart = &old_cycle->shared_memory.part;
     oshm_zone = opart->elts;
 
@@ -691,6 +693,7 @@ old_shm_zone_done:
 
     /* close the unnecessary listening sockets */
 
+	// 关闭打开异常的 socket 连接
     ls = old_cycle->listening.elts;
     for (i = 0; i < old_cycle->listening.nelts; i++) {
 
@@ -726,6 +729,7 @@ old_shm_zone_done:
 
     /* close the unnecessary open files */
 
+	// 关闭打开异常的文件
     part = &old_cycle->open_files.part;
     file = part->elts;
 
@@ -773,6 +777,7 @@ old_shm_zone_done:
     }
 
 
+	// 销毁内存池与临时内存池
     if (ngx_temp_pool == NULL) {
         ngx_temp_pool = ngx_create_pool(128, cycle->log);
         if (ngx_temp_pool == NULL) {

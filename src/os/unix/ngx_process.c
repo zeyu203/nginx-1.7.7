@@ -11,12 +11,14 @@
 #include <ngx_channel.h>
 
 
+// struct ngx_signal_t
+// 信号结构 {{{
 typedef struct {
     int     signo;
     char   *signame;
     char   *name;
     void  (*handler)(int signo);
-} ngx_signal_t;
+} ngx_signal_t; // }}}
 
 
 
@@ -36,6 +38,8 @@ ngx_int_t        ngx_last_process;
 ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];
 
 
+// ngx_signal_t  signals
+// 信号默认处理方式 {{{
 ngx_signal_t  signals[] = {
     { ngx_signal_value(NGX_RECONFIGURE_SIGNAL),
       "SIG" ngx_value(NGX_RECONFIGURE_SIGNAL),
@@ -80,7 +84,7 @@ ngx_signal_t  signals[] = {
     { SIGPIPE, "SIGPIPE, SIG_IGN", "", SIG_IGN },
 
     { 0, NULL, "", NULL }
-};
+}; // }}}
 
 
 ngx_pid_t
@@ -280,10 +284,12 @@ ngx_execute_proc(ngx_cycle_t *cycle, void *data)
 }
 
 
+// ngx_int_t ngx_init_signals(ngx_log_t *log)
+// 设定所有信号的处理方式 {{{
 ngx_int_t
 ngx_init_signals(ngx_log_t *log)
 {
-    ngx_signal_t      *sig;
+    ngxsignal_t      *sig;
     struct sigaction   sa;
 
     for (sig = signals; sig->signo != 0; sig++) {
@@ -303,9 +309,11 @@ ngx_init_signals(ngx_log_t *log)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// void ngx_signal_handler(int signo)
+// 信号的默认处理函数 {{{
 void
 ngx_signal_handler(int signo)
 {
@@ -324,6 +332,7 @@ ngx_signal_handler(int signo)
         }
     }
 
+	// 更新 cached_err_log_time
     ngx_time_sigsafe_update();
 
     action = "";
@@ -446,7 +455,7 @@ ngx_signal_handler(int signo)
     }
 
     ngx_set_errno(err);
-}
+} // }}}
 
 
 static void

@@ -46,11 +46,12 @@ typedef struct {
 
 #define NGX_MAX_PROCESSES         1024
 
-#define NGX_PROCESS_NORESPAWN     -1
+#define NGX_PROCESS_NORESPAWN     -1	// 子进程退出时，父进程不再创建
 #define NGX_PROCESS_JUST_SPAWN    -2
-#define NGX_PROCESS_RESPAWN       -3
-#define NGX_PROCESS_JUST_RESPAWN  -4
-#define NGX_PROCESS_DETACHED      -5
+	//用于在子进程退出并重新创建后标记是刚刚创建的新进程，防止被父进程意外终止
+#define NGX_PROCESS_RESPAWN       -3	// 子进程退出时，父进程需要重新创建
+#define NGX_PROCESS_JUST_RESPAWN  -4	// 该标记用来标记进程数组中哪些是新创建的子进程
+#define NGX_PROCESS_DETACHED      -5	// 热代码替换
 
 
 #define ngx_getpid   getpid

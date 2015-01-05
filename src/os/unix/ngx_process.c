@@ -87,6 +87,10 @@ ngx_signal_t  signals[] = {
 }; // }}}
 
 
+// ngx_pid_t
+// ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
+//     char *name, ngx_int_t respawn)
+// 创建子进程 {{{
 ngx_pid_t
 ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     char *name, ngx_int_t respawn)
@@ -99,6 +103,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         s = respawn;
 
     } else {
+		// 如果进程已退出，则使用该节点存储新的进程信息
         for (s = 0; s < ngx_last_process; s++) {
             if (ngx_processes[s].pid == -1) {
                 break;
@@ -258,7 +263,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     }
 
     return pid;
-}
+} // }}}
 
 
 ngx_pid_t

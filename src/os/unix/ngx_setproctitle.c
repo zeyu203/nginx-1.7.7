@@ -77,6 +77,8 @@ ngx_init_setproctitle(ngx_log_t *log)
 } // }}}
 
 
+// void ngx_setproctitle(char *title)
+// 设置进程名 {{{
 void
 ngx_setproctitle(char *title)
 {
@@ -132,6 +134,6 @@ ngx_setproctitle(char *title)
 
     ngx_log_debug1(NGX_LOG_DEBUG_CORE, ngx_cycle->log, 0,
                    "setproctitle: \"%s\"", ngx_os_argv[0]);
-}
+} // }}}
 
 #endif /* NGX_SETPROCTITLE_USES_ENV */

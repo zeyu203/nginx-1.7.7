@@ -79,6 +79,8 @@ static ngx_log_t        ngx_exit_log;
 static ngx_open_file_t  ngx_exit_log_file;
 
 
+// void ngx_master_process_cycle(ngx_cycle_t *cycle)
+// master 进程核心工作 {{{
 void
 ngx_master_process_cycle(ngx_cycle_t *cycle)
 {
@@ -94,6 +96,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
     ngx_listening_t   *ls;
     ngx_core_conf_t   *ccf;
 
+	// 屏蔽某些信号
     sigemptyset(&set);
     sigaddset(&set, SIGCHLD);
     sigaddset(&set, SIGALRM);
@@ -132,11 +135,14 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
         p = ngx_cpystrn(p, (u_char *) ngx_argv[i], size);
     }
 
+	// 设置进程名
+	// nginx: master process /home/zeyu/Workspace/nginx-1.7.7/objs/nginx
     ngx_setproctitle(title);
 
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
 
+	// 启动 worker
     ngx_start_worker_processes(cycle, ccf->worker_processes,
                                NGX_PROCESS_RESPAWN);
     ngx_start_cache_manager_processes(cycle, 0);
@@ -291,7 +297,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
                                         ngx_signal_value(NGX_SHUTDOWN_SIGNAL));
         }
     }
-}
+} // }}}
 
 
 void
@@ -351,10 +357,13 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
 }
 
 
+// static void ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
+// 启动 worker 进程 {{{
 static void
 ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
 {
     ngx_int_t      i;
+	// 父子进程通讯结构
     ngx_channel_t  ch;
 
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "start worker processes");
@@ -374,7 +383,7 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
 
         ngx_pass_open_channel(cycle, &ch);
     }
-}
+} // }}}
 
 
 static void

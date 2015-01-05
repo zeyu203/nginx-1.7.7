@@ -459,10 +459,12 @@ main(int argc, char *const *argv)
 
 #endif
 
+	// 创建PID文件，写入当前 pid
     if (ngx_create_pidfile(&ccf->pid, cycle->log) != NGX_OK) {
         return 1;
     }
 
+	// 确认 cycle->log 是否可用
     if (ngx_log_redirect_stderr(cycle) != NGX_OK) {
         return 1;
     }

@@ -346,7 +346,7 @@ main(int argc, char *const *argv)
     ngx_max_module = 0;
 
 	// objs/ngx_modules.c
-	// ngx_module_t *ngx_modules[] = { {{{
+	// ngx_module_t *ngx_modules[] {{{
 	//     &ngx_core_module,
 	//     &ngx_errlog_module,
 	//     &ngx_conf_module,

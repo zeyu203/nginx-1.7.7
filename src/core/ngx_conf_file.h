@@ -74,15 +74,17 @@
 
 #define NGX_MAX_CONF_ERRSTR  1024
 
-
+// struct ngx_command_s
+// nginx 指令结构 {{{
 struct ngx_command_s {
-    ngx_str_t             name;
-    ngx_uint_t            type;
+    ngx_str_t             name;		// 模块名
+    ngx_uint_t            type;		// 模块类型
     char               *(*set)(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-    ngx_uint_t            conf;
-    ngx_uint_t            offset;
-    void                 *post;
-};
+		// 指令
+    ngx_uint_t            conf;		// 指令参数
+    ngx_uint_t            offset;	// 在父指令块中的偏移
+    void                 *post;		// 读取配置文件时可能使用的指令
+}; // }}}
 
 #define ngx_null_command  { ngx_null_string, 0, NULL, 0, 0, NULL }
 
@@ -105,31 +107,35 @@ struct ngx_open_file_s {
 // struct ngx_module_s
 // nginx 模块结构 {{{
 struct ngx_module_s {
-    ngx_uint_t            ctx_index;
-    ngx_uint_t            index;
+    ngx_uint_t            ctx_index;							// 所属分类标识
+		// core、http、event、mail
+    ngx_uint_t            index;								// 模块编号
 
+// 预留字段，备用
     ngx_uint_t            spare0;
     ngx_uint_t            spare1;
     ngx_uint_t            spare2;
     ngx_uint_t            spare3;
 
-    ngx_uint_t            version;
+    ngx_uint_t            version;								// 模块版本
 
-    void                 *ctx;
-    ngx_command_t        *commands;
-    ngx_uint_t            type;
+    void                 *ctx;									// 模块上下文
+    ngx_command_t        *commands;								// 模块支持的命令集
+    ngx_uint_t            type;									// 模块类型
 
-    ngx_int_t           (*init_master)(ngx_log_t *log);
+// 回调函数
+    ngx_int_t           (*init_master)(ngx_log_t *log);			// 主进程初始化
 
-    ngx_int_t           (*init_module)(ngx_cycle_t *cycle);
+    ngx_int_t           (*init_module)(ngx_cycle_t *cycle);		// 模块初始化
 
-    ngx_int_t           (*init_process)(ngx_cycle_t *cycle);
-    ngx_int_t           (*init_thread)(ngx_cycle_t *cycle);
-    void                (*exit_thread)(ngx_cycle_t *cycle);
-    void                (*exit_process)(ngx_cycle_t *cycle);
+    ngx_int_t           (*init_process)(ngx_cycle_t *cycle);	// 工作进程初始化
+    ngx_int_t           (*init_thread)(ngx_cycle_t *cycle);		// 工作线程初始化
+    void                (*exit_thread)(ngx_cycle_t *cycle);		// 工作线程退出
+    void                (*exit_process)(ngx_cycle_t *cycle);	// 工作进程退出
 
-    void                (*exit_master)(ngx_cycle_t *cycle);
+    void                (*exit_master)(ngx_cycle_t *cycle);		// 主进程退出
 
+// 预留字段，备用
     uintptr_t             spare_hook0;
     uintptr_t             spare_hook1;
     uintptr_t             spare_hook2;

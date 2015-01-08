@@ -10,6 +10,7 @@
 #include <ngx_channel.h>
 
 
+// 向子进程传递数据 {{{
 ngx_int_t
 ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     ngx_log_t *log)
@@ -17,6 +18,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     ssize_t             n;
     ngx_err_t           err;
     struct iovec        iov[1];
+	// 内核中的数据接收结构体
     struct msghdr       msg;
 
 #if (NGX_HAVE_MSGHDR_MSG_CONTROL)
@@ -89,7 +91,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 ngx_int_t

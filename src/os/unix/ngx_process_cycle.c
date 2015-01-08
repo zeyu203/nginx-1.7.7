@@ -145,6 +145,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
 	// 启动 worker
     ngx_start_worker_processes(cycle, ccf->worker_processes,
                                NGX_PROCESS_RESPAWN);
+	// 启动文件cache管理进程
     ngx_start_cache_manager_processes(cycle, 0);
 
     ngx_new_binary = 0;
@@ -153,6 +154,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
     live = 1;
 
     for ( ;; ) {
+		// 设定定时器，worker 定时退出
         if (delay) {
             if (ngx_sigalrm) {
                 sigio = 0;
@@ -168,6 +170,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
             itv.it_value.tv_sec = delay / 1000;
             itv.it_value.tv_usec = (delay % 1000 ) * 1000;
 
+			// 设定精确的定时功能，以系统时间计算
             if (setitimer(ITIMER_REAL, &itv, NULL) == -1) {
                 ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                               "setitimer() failed");
@@ -176,24 +179,35 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
 
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "sigsuspend");
 
+		// 等待信号
+		// 信号的默认处理函数是 ngx_init_signals 中设定的 ngx_signal_handler 函数
         sigsuspend(&set);
 
+		// 更新时间
         ngx_time_update();
 
         ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                        "wake up, sigio %i", sigio);
 
+		// SIGCHLD 信号响应
         if (ngx_reap) {
             ngx_reap = 0;
             ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "reap children");
 
+			// 有 worker 异常退出，重启 worker
             live = ngx_reap_children(cycle);
         }
 
+		// 收到 NGX_CMD_TERMINATE 命令 或 SIGTERM 信号 或 SIGINT 信号
+		// 或 NGX_CMD_QUIT 命令 或 SIGQUIT 信号
         if (!live && (ngx_terminate || ngx_quit)) {
+			// 退出 master
             ngx_master_process_exit(cycle);
         }
 
+		// 收到 NGX_CMD_TERMINATE 命令 或 SIGTERM 信号 或 SIGINT 信号
+		// 给所有进程发送 NGX_TERMINATE_SIGNAL 信号，然后等待
+		// 如果超时，再次发送 SIGKILL 信号强制退出
         if (ngx_terminate) {
             if (delay == 0) {
                 delay = 50;
@@ -216,10 +230,13 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
             continue;
         }
 
+		// 收到 NGX_CMD_QUIT 命令 或 SIGQUIT 信号
         if (ngx_quit) {
+			// 给所有 worker 发送 SIGQUIT 信号
             ngx_signal_worker_processes(cycle,
                                         ngx_signal_value(NGX_SHUTDOWN_SIGNAL));
 
+			// 关闭所有监听 socket
             ls = cycle->listening.elts;
             for (n = 0; n < cycle->listening.nelts; n++) {
                 if (ngx_close_socket(ls[n].fd) == -1) {
@@ -233,9 +250,11 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
             continue;
         }
 
+		// 收到 SIGHUP 信号
         if (ngx_reconfigure) {
             ngx_reconfigure = 0;
 
+			// 重启 worker，不需要重新初始化配置
             if (ngx_new_binary) {
                 ngx_start_worker_processes(cycle, ccf->worker_processes,
                                            NGX_PROCESS_RESPAWN);
@@ -247,12 +266,14 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
 
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "reconfiguring");
 
+			// 重新初始化配置
             cycle = ngx_init_cycle(cycle);
             if (cycle == NULL) {
                 cycle = (ngx_cycle_t *) ngx_cycle;
                 continue;
             }
 
+			// 重启 worker
             ngx_cycle = cycle;
             ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx,
                                                    ngx_core_module);
@@ -268,6 +289,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
                                         ngx_signal_value(NGX_SHUTDOWN_SIGNAL));
         }
 
+		// worker 需要重启
         if (ngx_restart) {
             ngx_restart = 0;
             ngx_start_worker_processes(cycle, ccf->worker_processes,
@@ -276,6 +298,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
             live = 1;
         }
 
+		// 收到 SIGUSR1 信号，重新打开 log
         if (ngx_reopen) {
             ngx_reopen = 0;
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "reopening logs");
@@ -284,12 +307,14 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
                                         ngx_signal_value(NGX_REOPEN_SIGNAL));
         }
 
+		// 收到 SIGUSR2 信号，热代码替换
         if (ngx_change_binary) {
             ngx_change_binary = 0;
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "changing binary");
             ngx_new_binary = ngx_exec_new_binary(cycle, ngx_argv);
         }
 
+		// 收到SIGWINCH信号不在接受请求，worker退出，master不退出
         if (ngx_noaccept) {
             ngx_noaccept = 0;
             ngx_noaccepting = 1;
@@ -382,11 +407,15 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
         ch.slot = ngx_process_slot;
         ch.fd = ngx_processes[ngx_process_slot].channel[0];
 
+		// 通知其他子进程，不要打开这两个已打开的 channel ？
         ngx_pass_open_channel(cycle, &ch);
     }
 } // }}}
 
 
+// static void
+// ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
+// 启动缓存进程 {{{
 static void
 ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
 {
@@ -440,7 +469,7 @@ ngx_start_cache_manager_processes(ngx_cycle_t *cycle, ngx_uint_t respawn)
     ch.fd = ngx_processes[ngx_process_slot].channel[0];
 
     ngx_pass_open_channel(cycle, &ch);
-}
+} // }}}
 
 
 static void
@@ -450,6 +479,7 @@ ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
 
     for (i = 0; i < ngx_last_process; i++) {
 
+		// 如果对应进程已经退出或者是刚刚创建的进程则跳过
         if (i == ngx_process_slot
             || ngx_processes[i].pid == -1
             || ngx_processes[i].channel[0] == -1)
@@ -465,6 +495,7 @@ ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
 
         /* TODO: NGX_AGAIN */
 
+		// 向其他子进程写入数据
         ngx_write_channel(ngx_processes[i].channel[0],
                           ch, sizeof(ngx_channel_t), cycle->log);
     }

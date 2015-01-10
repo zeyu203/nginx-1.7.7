@@ -407,7 +407,7 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
         ch.slot = ngx_process_slot;
         ch.fd = ngx_processes[ngx_process_slot].channel[0];
 
-		// 通知其他子进程，不要打开这两个已打开的 channel ？
+		// 向其他子进程广播新创建进程信息
         ngx_pass_open_channel(cycle, &ch);
     }
 } // }}}

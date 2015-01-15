@@ -10,6 +10,7 @@
 #include <ngx_channel.h>
 
 
+// ngx_int_t ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
 // 向子进程传递数据 {{{
 ngx_int_t
 ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,

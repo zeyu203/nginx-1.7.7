@@ -251,6 +251,12 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
         }
 
 		// 收到 SIGHUP 信号
+		// 产生 SIGHUP 信号的三种原因：
+		// 1、中断关闭，会话首进程，及所有后台进程会收到该信号（默认操作为退出）
+		// 2、会话首进程退出后，会话中每个进程会收到该信号（默认操作为退出）
+		// 3、父进程退出时，如果子进程已经收到过 SIGSTOP 或 SIGTSTP 信号，则子进程将收到 SIGHUP 信号
+		//
+		// 由于 master 已经脱离终端，所以不会收到 SIGHUP，SIGHUP 信号被重用为重启 worker，重新初始化配置信号
         if (ngx_reconfigure) {
             ngx_reconfigure = 0;
 
@@ -314,7 +320,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
             ngx_new_binary = ngx_exec_new_binary(cycle, ngx_argv);
         }
 
-		// 收到SIGWINCH信号不在接受请求，worker退出，master不退出
+		// 收到 SIGWINCH 信号不再接受请求，worker 退出，master 不退出
         if (ngx_noaccept) {
             ngx_noaccept = 0;
             ngx_noaccepting = 1;
@@ -502,6 +508,8 @@ ngx_pass_open_channel(ngx_cycle_t *cycle, ngx_channel_t *ch)
 }
 
 
+// static void ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
+// 给所有子进程发送 signo 信号 {{{
 static void
 ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
 {
@@ -568,6 +576,7 @@ ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
         }
 
         if (ch.command) {
+			// 通过域套接字向子进程发送信号
             if (ngx_write_channel(ngx_processes[i].channel[0],
                                   &ch, sizeof(ngx_channel_t), cycle->log)
                 == NGX_OK)
@@ -588,6 +597,7 @@ ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
             ngx_log_error(NGX_LOG_ALERT, cycle->log, err,
                           "kill(%P, %d) failed", ngx_processes[i].pid, signo);
 
+			// errno 为 ESRCH 说明找不到对应 pid，说明已经退出
             if (err == NGX_ESRCH) {
                 ngx_processes[i].exited = 1;
                 ngx_processes[i].exiting = 0;
@@ -601,7 +611,7 @@ ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
             ngx_processes[i].exiting = 1;
         }
     }
-}
+} // }}}
 
 
 static ngx_uint_t

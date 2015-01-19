@@ -614,6 +614,8 @@ ngx_signal_worker_processes(ngx_cycle_t *cycle, int signo)
 } // }}}
 
 
+// static ngx_uint_t ngx_reap_children(ngx_cycle_t *cycle)
+// 重启子进程 {{{
 static ngx_uint_t
 ngx_reap_children(ngx_cycle_t *cycle)
 {
@@ -644,9 +646,11 @@ ngx_reap_children(ngx_cycle_t *cycle)
             continue;
         }
 
+		// 进程已退出则重启
         if (ngx_processes[i].exited) {
 
             if (!ngx_processes[i].detached) {
+				// 关闭与已退出进程通信的 fd
                 ngx_close_channel(ngx_processes[i].channel, cycle->log);
 
                 ngx_processes[i].channel[0] = -1;
@@ -655,6 +659,7 @@ ngx_reap_children(ngx_cycle_t *cycle)
                 ch.pid = ngx_processes[i].pid;
                 ch.slot = i;
 
+				// 通知其他子进程关闭与已退出进程通信的fd
                 for (n = 0; n < ngx_last_process; n++) {
                     if (ngx_processes[n].exited
                         || ngx_processes[n].pid == -1
@@ -669,11 +674,13 @@ ngx_reap_children(ngx_cycle_t *cycle)
 
                     /* TODO: NGX_AGAIN */
 
+					// 向子进程发送数据
                     ngx_write_channel(ngx_processes[n].channel[0],
                                       &ch, sizeof(ngx_channel_t), cycle->log);
                 }
             }
 
+			// 重启需要重启的已退出进程
             if (ngx_processes[i].respawn
                 && !ngx_processes[i].exiting
                 && !ngx_terminate
@@ -696,6 +703,7 @@ ngx_reap_children(ngx_cycle_t *cycle)
                 ch.slot = ngx_process_slot;
                 ch.fd = ngx_processes[ngx_process_slot].channel[0];
 
+				// 向其他子进程广播新创建进程信息
                 ngx_pass_open_channel(cycle, &ch);
 
                 live = 1;
@@ -738,7 +746,7 @@ ngx_reap_children(ngx_cycle_t *cycle)
     }
 
     return live;
-}
+} // }}}
 
 
 static void

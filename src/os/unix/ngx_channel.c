@@ -11,7 +11,7 @@
 
 
 // ngx_int_t ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
-// 向子进程传递数据 {{{
+// 使用域套接字进行进程间通信 {{{
 ngx_int_t
 ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     ngx_log_t *log)
@@ -24,6 +24,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
 
 #if (NGX_HAVE_MSGHDR_MSG_CONTROL)
 
+	// 新版本的 msghdr
     union {
         struct cmsghdr  cm;
         char            space[CMSG_SPACE(sizeof(int))];
@@ -60,6 +61,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
 
 #else
 
+	// 旧版本的 msghdr
     if (ch->fd == -1) {
         msg.msg_accrights = NULL;
         msg.msg_accrightslen = 0;
@@ -71,6 +73,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
 
 #endif
 
+	// 缓冲区
     iov[0].iov_base = (char *) ch;
     iov[0].iov_len = size;
 
@@ -79,6 +82,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     msg.msg_iov = iov;
     msg.msg_iovlen = 1;
 
+	// 发送数据
     n = sendmsg(s, &msg, 0);
 
     if (n == -1) {
@@ -121,13 +125,16 @@ ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size, ngx_log_t *log)
     msg.msg_iovlen = 1;
 
 #if (NGX_HAVE_MSGHDR_MSG_CONTROL)
+	// 新版本的 msghdr 结构
     msg.msg_control = (caddr_t) &cmsg;
     msg.msg_controllen = sizeof(cmsg);
 #else
+	// 旧版本的 msghdr 结构
     msg.msg_accrights = (caddr_t) &fd;
     msg.msg_accrightslen = sizeof(int);
 #endif
 
+	// 接收消息
     n = recvmsg(s, &msg, 0);
 
     if (n == -1) {
@@ -243,6 +250,8 @@ ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
 }
 
 
+// void ngx_close_channel(ngx_fd_t *fd, ngx_log_t *log)
+// 关闭进程间通信的域套接字fd {{{
 void
 ngx_close_channel(ngx_fd_t *fd, ngx_log_t *log)
 {
@@ -253,4 +262,4 @@ ngx_close_channel(ngx_fd_t *fd, ngx_log_t *log)
     if (close(fd[1]) == -1) {
         ngx_log_error(NGX_LOG_ALERT, log, ngx_errno, "close() channel failed");
     }
-}
+} // }}}

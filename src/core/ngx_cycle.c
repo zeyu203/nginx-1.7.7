@@ -986,6 +986,8 @@ ngx_create_pidfile(ngx_str_t *name, ngx_log_t *log)
 } // }}}
 
 
+// void ngx_delete_pidfile(ngx_cycle_t *cycle)
+// 删除 pid 文件 {{{
 void
 ngx_delete_pidfile(ngx_cycle_t *cycle)
 {
@@ -1000,7 +1002,7 @@ ngx_delete_pidfile(ngx_cycle_t *cycle)
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       ngx_delete_file_n " \"%s\" failed", name);
     }
-}
+} // }}}
 
 
 // ngx_int_t ngx_signal_process(ngx_cycle_t *cycle, char *sig)

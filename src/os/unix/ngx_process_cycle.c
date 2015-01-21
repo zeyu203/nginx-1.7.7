@@ -749,21 +749,26 @@ ngx_reap_children(ngx_cycle_t *cycle)
 } // }}}
 
 
+// static void ngx_master_process_exit(ngx_cycle_t *cycle)
+// master 的退出 {{{
 static void
 ngx_master_process_exit(ngx_cycle_t *cycle)
 {
     ngx_uint_t  i;
 
+	// 删除 pid 文件
     ngx_delete_pidfile(cycle);
 
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "exit");
 
+	// 执行模块退出回调函数
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->exit_master) {
             ngx_modules[i]->exit_master(cycle);
         }
     }
 
+	// 关闭套接字
     ngx_close_listening_sockets(cycle);
 
     /*
@@ -786,10 +791,12 @@ ngx_master_process_exit(ngx_cycle_t *cycle)
     ngx_exit_cycle.files_n = ngx_cycle->files_n;
     ngx_cycle = &ngx_exit_cycle;
 
+	// 销毁内存池
     ngx_destroy_pool(cycle->pool);
 
+	// 退出进程
     exit(0);
-}
+} // }}}
 
 
 static void

@@ -12,6 +12,8 @@
 
 #include <sys/cpuset.h>
 
+// void ngx_setaffinity(uint64_t cpu_affinity, ngx_log_t *log)
+// 将进程绑定到 CPU 一个核心上 {{{
 void
 ngx_setaffinity(uint64_t cpu_affinity, ngx_log_t *log)
 {
@@ -37,7 +39,7 @@ ngx_setaffinity(uint64_t cpu_affinity, ngx_log_t *log)
         ngx_log_error(NGX_LOG_ALERT, log, ngx_errno,
                       "cpuset_setaffinity() failed");
     }
-}
+} // }}}
 
 #elif (NGX_HAVE_SCHED_SETAFFINITY)
 

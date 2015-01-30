@@ -547,6 +547,8 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
 } // }}}
 
 
+// char ** ngx_set_environment(ngx_cycle_t *cycle, ngx_uint_t *last)
+// 将 cycle 中继承的环境变量写入系统环境变量 {{{
 char **
 ngx_set_environment(ngx_cycle_t *cycle, ngx_uint_t *last)
 {
@@ -643,7 +645,7 @@ tz_found:
     }
 
     return env;
-}
+} // }}}
 
 
 ngx_pid_t

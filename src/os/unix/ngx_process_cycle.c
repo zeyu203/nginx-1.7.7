@@ -799,6 +799,8 @@ ngx_master_process_exit(ngx_cycle_t *cycle)
 } // }}}
 
 
+// static void ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
+// nginx worker 进程主循环  {{{
 static void
 ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 {
@@ -807,8 +809,10 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
     ngx_uint_t         i;
     ngx_connection_t  *c;
 
+	// master 的 ngx_process 被设置为 NGX_PROCESS_MASTER
     ngx_process = NGX_PROCESS_WORKER;
 
+	// 初始化 worker 进程
     ngx_worker_process_init(cycle, worker);
 
     ngx_setproctitle("worker process");
@@ -911,9 +915,11 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
             ngx_reopen_files(cycle, -1);
         }
     }
-}
+} // }}}
 
 
+// static void ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
+// 初始化 worker {{{
 static void
 ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 {
@@ -925,6 +931,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     ngx_core_conf_t  *ccf;
     ngx_listening_t  *ls;
 
+	// 设定环境变量
     if (ngx_set_environment(cycle, NULL) == NULL) {
         /* fatal */
         exit(2);
@@ -932,6 +939,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
 
+	// 设置进程优先级
     if (worker >= 0 && ccf->priority != 0) {
         if (setpriority(PRIO_PROCESS, 0, ccf->priority) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
@@ -939,6 +947,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         }
     }
 
+	// 设置进程的各种资源限制
     if (ccf->rlimit_nofile != NGX_CONF_UNSET) {
         rlmt.rlim_cur = (rlim_t) ccf->rlimit_nofile;
         rlmt.rlim_max = (rlim_t) ccf->rlimit_nofile;
@@ -974,6 +983,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     }
 #endif
 
+	// 是否是 root 权限
     if (geteuid() == 0) {
         if (setgid(ccf->group) == -1) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
@@ -997,9 +1007,11 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     }
 
     if (worker >= 0) {
+		// 获取 CPU 相关信息
         cpu_affinity = ngx_get_cpu_affinity(worker);
 
         if (cpu_affinity) {
+			// 将进程绑定到一个 CPU 核心上
             ngx_setaffinity(cpu_affinity, cycle->log);
         }
     }
@@ -1008,6 +1020,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 
     /* allow coredump after setuid() in Linux 2.4.x */
 
+	// 设置崩溃后核心不转储
     if (prctl(PR_SET_DUMPABLE, 1, 0, 0, 0) == -1) {
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "prctl(PR_SET_DUMPABLE) failed");
@@ -1015,6 +1028,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 
 #endif
 
+	// 改变当前工作目录到指定目录
     if (ccf->working_directory.len) {
         if (chdir((char *) ccf->working_directory.data) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
@@ -1031,6 +1045,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
                       "sigprocmask() failed");
     }
 
+	// 初始化随机数种子发生器
     srandom((ngx_pid << 16) ^ ngx_time());
 
     /*
@@ -1042,6 +1057,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         ls[i].previous = NULL;
     }
 
+	// 初始化模块
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->init_process) {
             if (ngx_modules[i]->init_process(cycle) == NGX_ERROR) {
@@ -1051,6 +1067,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         }
     }
 
+	// 关闭父进程与其他子进程通信的域套接字 fd
     for (n = 0; n < ngx_last_process; n++) {
 
         if (ngx_processes[n].pid == -1) {
@@ -1080,6 +1097,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
     ngx_last_process = 0;
 #endif
 
+	// 给 ngx_channel 注册一个读事件处理函数
     if (ngx_add_channel_event(cycle, ngx_channel, NGX_READ_EVENT,
                               ngx_channel_handler)
         == NGX_ERROR)
@@ -1087,7 +1105,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         /* fatal */
         exit(2);
     }
-}
+} // }}}
 
 
 static void

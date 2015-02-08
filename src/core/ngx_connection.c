@@ -844,6 +844,8 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
 }
 
 
+// ngx_connection_t * ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
+// 从空闲 connection 中取出一个关联 sockfd {{{
 ngx_connection_t *
 ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 {
@@ -853,6 +855,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 
     /* disable warning: Win32 SOCKET is u_int while UNIX socket is int */
 
+	// fd 大于了系统最大fd限制
     if (ngx_cycle->files && (ngx_uint_t) s >= ngx_cycle->files_n) {
         ngx_log_error(NGX_LOG_ALERT, log, 0,
                       "the new socket has number %d, "
@@ -863,9 +866,11 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 
     /* ngx_mutex_lock */
 
+	// 连接池
     c = ngx_cycle->free_connections;
 
     if (c == NULL) {
+		// 连接池已经分配完，释放长连接
         ngx_drain_connections();
         c = ngx_cycle->free_connections;
     }
@@ -916,7 +921,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
     wev->write = 1;
 
     return c;
-}
+} // }}}
 
 
 void
@@ -1062,6 +1067,8 @@ ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable)
 }
 
 
+// static void ngx_drain_connections(void)
+// 连接池满了以后释放长连接，以便新的连接使用 {{{
 static void
 ngx_drain_connections(void)
 {
@@ -1083,7 +1090,7 @@ ngx_drain_connections(void)
         c->close = 1;
         c->read->handler(c->read);
     }
-}
+} // }}}
 
 
 ngx_int_t

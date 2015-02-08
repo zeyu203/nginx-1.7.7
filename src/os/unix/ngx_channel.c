@@ -205,6 +205,10 @@ ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size, ngx_log_t *log)
 }
 
 
+// ngx_int_t
+// ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
+//      ngx_event_handler_pt handler)
+// 为 fd 注册回调函数 {{{
 ngx_int_t
 ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
     ngx_event_handler_pt handler)
@@ -212,6 +216,7 @@ ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
     ngx_event_t       *ev, *rev, *wev;
     ngx_connection_t  *c;
 
+	// 从连接池中获取连接
     c = ngx_get_connection(fd, cycle->log);
 
     if (c == NULL) {
@@ -247,7 +252,7 @@ ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 // void ngx_close_channel(ngx_fd_t *fd, ngx_log_t *log)

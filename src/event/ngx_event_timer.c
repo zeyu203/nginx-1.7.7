@@ -24,6 +24,8 @@ static ngx_rbtree_node_t          ngx_event_timer_sentinel;
  * a minimum timer value only
  */
 
+// ngx_int_t ngx_event_timer_init(ngx_log_t *log)
+// 定时器初始化 {{{
 ngx_int_t
 ngx_event_timer_init(ngx_log_t *log)
 {
@@ -45,7 +47,7 @@ ngx_event_timer_init(ngx_log_t *log)
 #endif
 
     return NGX_OK;
-}
+} // }}}
 
 
 ngx_msec_t

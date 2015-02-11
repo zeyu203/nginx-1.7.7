@@ -39,6 +39,7 @@ ngx_event_timer_init(ngx_log_t *log)
         return NGX_OK;
     }
 
+	// 初始化线程锁
     ngx_event_timer_mutex = ngx_mutex_init(log, 0);
     if (ngx_event_timer_mutex == NULL) {
         return NGX_ERROR;

@@ -34,17 +34,21 @@
 #define EPOLL_CTL_DEL  2
 #define EPOLL_CTL_MOD  3
 
+// union epoll_data_t
+// epoll 信息记录联合体 {{{
 typedef union epoll_data {
     void         *ptr;
     int           fd;
     uint32_t      u32;
     uint64_t      u64;
-} epoll_data_t;
+} epoll_data_t; // }}}
 
+// struct epoll_event
+// epoll 描述结构 {{{
 struct epoll_event {
     uint32_t      events;
     epoll_data_t  data;
-};
+}; // }}}
 
 
 int epoll_create(int size);
@@ -291,6 +295,8 @@ failed:
 #endif
 
 
+// static ngx_int_t ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
+// epoll 模块初始化 {{{
 static ngx_int_t
 ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 {
@@ -299,6 +305,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
     epcf = ngx_event_get_conf(cycle->conf_ctx, ngx_epoll_module);
 
     if (ep == -1) {
+		// 创建 epoll fd
         ep = epoll_create(cycle->connection_n / 2);
 
         if (ep == -1) {
@@ -309,6 +316,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 
 #if (NGX_HAVE_FILE_AIO)
 
+		// 设置为异步输出
         ngx_epoll_aio_init(cycle, epcf);
 
 #endif
@@ -333,15 +341,17 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
     ngx_event_actions = ngx_epoll_module_ctx.actions;
 
 #if (NGX_HAVE_CLEAR_EVENT)
+	// 边沿触发
     ngx_event_flags = NGX_USE_CLEAR_EVENT
 #else
+	// 水平触发
     ngx_event_flags = NGX_USE_LEVEL_EVENT
 #endif
                       |NGX_USE_GREEDY_EVENT
                       |NGX_USE_EPOLL_EVENT;
 
     return NGX_OK;
-}
+} // }}}
 
 
 static void

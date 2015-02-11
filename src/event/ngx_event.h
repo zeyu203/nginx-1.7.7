@@ -35,8 +35,10 @@ typedef struct {
 } ngx_event_mutex_t;
 
 
+// struct ngx_event_s
+// 事件描述结构体 {{{
 struct ngx_event_s {
-    void            *data;
+    void            *data;			// 事件上下文数据  
 
     unsigned         write:1;
 
@@ -54,7 +56,7 @@ struct ngx_event_s {
     unsigned         disabled:1;
 
     /* the ready event; in aio mode 0 means that no operation can be posted */
-    unsigned         ready:1;
+    unsigned         ready:1;			// 用于异步IO，当有请求需要处理时置位
 
     unsigned         oneshot:1;
 
@@ -156,7 +158,7 @@ struct ngx_event_s {
     uint32_t         padding[NGX_EVENT_T_PADDING];
 #endif
 #endif
-};
+}; // }}}
 
 
 #if (NGX_HAVE_FILE_AIO)

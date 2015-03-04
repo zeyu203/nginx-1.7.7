@@ -1023,7 +1023,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 
     /* allow coredump after setuid() in Linux 2.4.x */
 
-	// 生成核心转储文件
+	// 异常情况下生成核心转储文件（系统默认生成）
     if (prctl(PR_SET_DUMPABLE, 1, 0, 0, 0) == -1) {
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "prctl(PR_SET_DUMPABLE) failed");
@@ -1060,7 +1060,7 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
         ls[i].previous = NULL;
     }
 
-	// 初始化模块
+	// 初始化模块 ( ngx_event_process_init )
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->init_process) {
             if (ngx_modules[i]->init_process(cycle) == NGX_ERROR) {

@@ -341,7 +341,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
     ngx_event_actions = ngx_epoll_module_ctx.actions;
 
 #if (NGX_HAVE_CLEAR_EVENT)
-	// 边沿触发
+	// 边缘触发
     ngx_event_flags = NGX_USE_CLEAR_EVENT
 #else
 	// 水平触发
@@ -392,6 +392,9 @@ ngx_epoll_done(ngx_cycle_t *cycle)
 }
 
 
+// static ngx_int_t
+// ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
+// 将事件加入 epoll 监听 {{{
 static ngx_int_t
 ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 {
@@ -447,7 +450,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 #endif
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t

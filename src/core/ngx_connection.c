@@ -845,7 +845,7 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
 
 
 // ngx_connection_t * ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
-// 从空闲 connection 中取出一个关联 sockfd {{{
+// 从空闲 connection 中取出一个关联 sockfd，并初始化 {{{
 ngx_connection_t *
 ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 {
@@ -1068,7 +1068,7 @@ ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable)
 
 
 // static void ngx_drain_connections(void)
-// 连接池满了以后释放长连接，以便新的连接使用 {{{
+// 连接池满了以后释放最先添加的长连接，以便新的连接使用 {{{
 static void
 ngx_drain_connections(void)
 {

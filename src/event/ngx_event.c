@@ -722,6 +722,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     i = cycle->connection_n;
     next = NULL;
 
+	// 初始化连接池
     do {
         i--;
 

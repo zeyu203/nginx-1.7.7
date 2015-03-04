@@ -216,7 +216,7 @@ ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
     ngx_event_t       *ev, *rev, *wev;
     ngx_connection_t  *c;
 
-	// 从连接池中获取连接
+	// 在连接池中分配并初始化连接
     c = ngx_get_connection(fd, cycle->log);
 
     if (c == NULL) {
@@ -245,6 +245,9 @@ ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
         }
 
     } else {
+		// 为连接关联事件
+		// （ngx_epoll_init 函数中
+		// 		将 ngx_event_actions.add 初始化为 ngx_epoll_add_event）
         if (ngx_add_event(ev, event, 0) == NGX_ERROR) {
             ngx_free_connection(c);
             return NGX_ERROR;

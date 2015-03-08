@@ -367,6 +367,8 @@ ngx_event_accept(ngx_event_t *ev)
 }
 
 
+// ngx_int_t ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
+// 尝试获取锁 {{{
 ngx_int_t
 ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
 {
@@ -405,7 +407,7 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t

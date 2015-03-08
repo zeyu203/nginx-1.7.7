@@ -198,6 +198,8 @@ ngx_module_t  ngx_event_core_module = {
 };
 
 
+// void ngx_process_events_and_timers(ngx_cycle_t *cycle)
+// 事件驱动函数 {{{
 void
 ngx_process_events_and_timers(ngx_cycle_t *cycle)
 {
@@ -221,11 +223,14 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 #endif
     }
 
+	// 判断是否使用 accept 互斥体，用于避免惊群现象
     if (ngx_use_accept_mutex) {
+		// 如果进程接受的链接太多，则放弃一次
         if (ngx_accept_disabled > 0) {
             ngx_accept_disabled--;
 
         } else {
+			// 尝试获取 accept 锁，避免惊群现象
             if (ngx_trylock_accept_mutex(cycle) == NGX_ERROR) {
                 return;
             }
@@ -234,6 +239,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
                 flags |= NGX_POST_EVENTS;
 
             } else {
+				// 没有获取到锁，则延迟一段时间后重新尝试获取锁
                 if (timer == NGX_TIMER_INFINITE
                     || timer > ngx_accept_mutex_delay)
                 {
@@ -245,6 +251,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
     delta = ngx_current_msec;
 
+	// ngx_epoll_process_events
     (void) ngx_process_events(cycle, timer, flags);
 
     delta = ngx_current_msec - delta;
@@ -263,7 +270,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     }
 
     ngx_event_process_posted(cycle, &ngx_posted_events);
-}
+} // }}}
 
 
 ngx_int_t

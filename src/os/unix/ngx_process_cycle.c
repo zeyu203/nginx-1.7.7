@@ -817,8 +817,8 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 
     ngx_setproctitle("worker process");
 
-	// 线程模型
 #if (NGX_THREADS)
+	// 线程模型
     {
     ngx_int_t         n;
     ngx_err_t         err;
@@ -864,12 +864,15 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
     }
 #endif
 
+	// worker 进程主循环
     for ( ;; ) {
 
+		// 准备退出
         if (ngx_exiting) {
 
             c = cycle->connections;
 
+			// 遍历连接池中所有连接并关闭
             for (i = 0; i < cycle->connection_n; i++) {
 
                 /* THREAD: lock */
@@ -884,12 +887,14 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
             {
                 ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "exiting");
 
+				// 关闭子进程
                 ngx_worker_process_exit(cycle);
             }
         }
 
         ngx_log_debug0(NGX_LOG_DEBUG_EVENT, cycle->log, 0, "worker cycle");
 
+		// 事件驱动函数
         ngx_process_events_and_timers(cycle);
 
         if (ngx_terminate) {

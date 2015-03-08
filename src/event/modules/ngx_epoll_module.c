@@ -573,6 +573,10 @@ ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
 }
 
 
+// static ngx_int_t
+// ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer,
+// ngx_uint_t flags)
+// epoll 事件处理函数 {{{
 static ngx_int_t
 ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 {
@@ -590,6 +594,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "epoll timer: %M", timer);
 
+	// epoll_wait，获取发生的事件列表 event_list
     events = epoll_wait(ep, event_list, (int) nevents, timer);
 
     err = (events == -1) ? ngx_errno : 0;
@@ -598,6 +603,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         ngx_time_update();
     }
 
+	// 出错处理
     if (err) {
         if (err == NGX_EINTR) {
 
@@ -616,19 +622,26 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         return NGX_ERROR;
     }
 
+	// 超时
     if (events == 0) {
         if (timer != NGX_TIMER_INFINITE) {
             return NGX_OK;
         }
 
+		// 如果 timer 为 -1（永久阻塞），则说明调用出错
         ngx_log_error(NGX_LOG_ALERT, cycle->log, 0,
                       "epoll_wait() returned no events without timeout");
         return NGX_ERROR;
     }
 
+	// 事件处理
     for (i = 0; i < events; i++) {
         c = event_list[i].data.ptr;
 
+		// 无论是 32 位还是 64 位系统，地址的最低位一定是0
+		// 因此，nginx 使用连接地址的最后一位保存 instance 变量
+		//
+		// 这里取出 instance 变量，并恢复地址
         instance = (uintptr_t) c & 1;
         c = (ngx_connection_t *) ((uintptr_t) c & (uintptr_t) ~1);
 
@@ -727,7 +740,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 #if (NGX_HAVE_FILE_AIO)

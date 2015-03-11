@@ -1068,7 +1068,7 @@ ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable)
 
 
 // static void ngx_drain_connections(void)
-// 连接池满了以后释放最先添加的长连接，以便新的连接使用 {{{
+// 从队列中最后在连接的32个连接中找出读取完成的连接，关闭 {{{
 static void
 ngx_drain_connections(void)
 {
@@ -1088,6 +1088,7 @@ ngx_drain_connections(void)
                        "reusing connection");
 
         c->close = 1;
+		// ngx_http_keepalive_handler
         c->read->handler(c->read);
     }
 } // }}}

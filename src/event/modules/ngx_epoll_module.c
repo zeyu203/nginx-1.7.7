@@ -705,9 +705,11 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
                 queue = rev->accept ? &ngx_posted_accept_events
                                     : &ngx_posted_events;
 
+				// 如果进程正在占用锁，则先将事件缓存在队列中
                 ngx_post_event(rev, queue);
 
             } else {
+				// 调用回调函数，accept 及事件处理
                 rev->handler(rev);
             }
         }

@@ -211,6 +211,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
         flags = 0;
 
     } else {
+		// 获取最近超时的时间
         timer = ngx_event_find_timer();
         flags = NGX_UPDATE_TIME;
 
@@ -251,7 +252,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
     delta = ngx_current_msec;
 
-	// ngx_epoll_process_events
+	// ngx_epoll_process_events 处理 epoll 网络事件
     (void) ngx_process_events(cycle, timer, flags);
 
     delta = ngx_current_msec - delta;
@@ -266,9 +267,11 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     }
 
     if (delta) {
+		// 定时器事件处理
         ngx_event_expire_timers();
     }
 
+	// 取出队列中事件并处理
     ngx_event_process_posted(cycle, &ngx_posted_events);
 } // }}}
 

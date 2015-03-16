@@ -70,6 +70,9 @@ void ngx_rbtree_insert_timer_value(ngx_rbtree_node_t *root,
 #define ngx_rbtree_sentinel_init(node)  ngx_rbt_black(node)
 
 
+// static ngx_inline ngx_rbtree_node_t *
+// ngx_rbtree_min(ngx_rbtree_node_t *node, ngx_rbtree_node_t *sentinel)
+// 获取红黑树中最小元素（最左叶子） {{{
 static ngx_inline ngx_rbtree_node_t *
 ngx_rbtree_min(ngx_rbtree_node_t *node, ngx_rbtree_node_t *sentinel)
 {
@@ -78,7 +81,7 @@ ngx_rbtree_min(ngx_rbtree_node_t *node, ngx_rbtree_node_t *sentinel)
     }
 
     return node;
-}
+} // }}}
 
 
 #endif /* _NGX_RBTREE_H_INCLUDED_ */

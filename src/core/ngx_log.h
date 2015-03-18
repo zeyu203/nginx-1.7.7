@@ -25,6 +25,7 @@
 #define NGX_LOG_DEBUG             8
 // }}}
 
+// 调试模式下的详细日志级别 {{{
 #define NGX_LOG_DEBUG_CORE        0x010
 #define NGX_LOG_DEBUG_ALLOC       0x020
 #define NGX_LOG_DEBUG_MUTEX       0x040
@@ -42,6 +43,7 @@
 #define NGX_LOG_DEBUG_LAST        NGX_LOG_DEBUG_MYSQL
 #define NGX_LOG_DEBUG_CONNECTION  0x80000000
 #define NGX_LOG_DEBUG_ALL         0x7ffffff0
+// }}}
 
 
 typedef u_char *(*ngx_log_handler_pt) (ngx_log_t *log, u_char *buf, size_t len);

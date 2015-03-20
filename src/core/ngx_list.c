@@ -29,6 +29,8 @@ ngx_list_create(ngx_pool_t *pool, ngx_uint_t n, size_t size)
 } // }}}
 
 
+// void * ngx_list_push(ngx_list_t *l)
+// 在单链表后追加节点 {{{
 void *
 ngx_list_push(ngx_list_t *l)
 {
@@ -62,4 +64,4 @@ ngx_list_push(ngx_list_t *l)
     last->nelts++;
 
     return elt;
-}
+} // }}}

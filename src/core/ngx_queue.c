@@ -14,6 +14,8 @@
  * or the first element of the queue's second part otherwise
  */
 
+// ngx_queue_t * ngx_queue_middle(ngx_queue_t *queue)
+// 通过双向遍历的方式，找到双向链表中位元素 {{{
 ngx_queue_t *
 ngx_queue_middle(ngx_queue_t *queue)
 {
@@ -42,11 +44,14 @@ ngx_queue_middle(ngx_queue_t *queue)
             return middle;
         }
     }
-}
+} // }}}
 
 
 /* the stable insertion sort */
 
+// void ngx_queue_sort(ngx_queue_t *queue,
+//    ngx_int_t (*cmp)(const ngx_queue_t *, const ngx_queue_t *))
+// 双向链表排序 (插入排序) {{{
 void
 ngx_queue_sort(ngx_queue_t *queue,
     ngx_int_t (*cmp)(const ngx_queue_t *, const ngx_queue_t *))
@@ -77,4 +82,4 @@ ngx_queue_sort(ngx_queue_t *queue,
 
         ngx_queue_insert_after(prev, q);
     }
-}
+} // }}}

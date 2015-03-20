@@ -39,15 +39,18 @@ ngx_list_push(ngx_list_t *l)
 
     last = l->last;
 
+	// 数组分配已满，需要新建节点
     if (last->nelts == l->nalloc) {
 
         /* the last part is full, allocate a new list part */
 
+		// 为节点分配空间
         last = ngx_palloc(l->pool, sizeof(ngx_list_part_t));
         if (last == NULL) {
             return NULL;
         }
 
+		// 为数组分配空间
         last->elts = ngx_palloc(l->pool, l->nalloc * l->size);
         if (last->elts == NULL) {
             return NULL;

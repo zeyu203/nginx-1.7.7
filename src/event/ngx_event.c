@@ -276,6 +276,9 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 } // }}}
 
 
+// ngx_int_t ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
+// 将读事件添加到事件驱动模块中
+// 一旦该事件对应的 TCP 连接出现可读事件，就会调用该事件的 handler 方法 {{{
 ngx_int_t
 ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
 {
@@ -341,9 +344,12 @@ ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
     /* aio, iocp, rtsig */
 
     return NGX_OK;
-}
+} // }}}
 
 
+// 将写事件添加到事件驱动模块中
+// 一旦该事件对应的 TCP 连接出现可写事件，就会调用该事件的 handler 方法
+// 只有当连接对应的套接字缓冲区中有 lowat 大小的可用空间时，才会去处理 {{{
 ngx_int_t
 ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
 {
@@ -420,7 +426,7 @@ ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
     /* aio, iocp, rtsig */
 
     return NGX_OK;
-}
+} // }}}
 
 
 static char *

@@ -38,42 +38,58 @@ typedef struct {
 // struct ngx_event_s
 // 事件描述结构体 {{{
 struct ngx_event_s {
-    void            *data;			// 事件上下文数据  
+	// 事件上下文数据，指向 ngx_connection_t 结构对象
+	// 对于文件异步 IO，可能指向 ngx_event_aio_t 结构对象
+    void            *data;
 
+	// 为 1 表示事件可写
     unsigned         write:1;
 
+	// 为 1 表示可以建立新的连接
     unsigned         accept:1;
 
     /* used to detect the stale events in kqueue, rtsig, and epoll */
+	// 判断当前事件是否过期
     unsigned         instance:1;
 
     /*
      * the event was passed or would be passed to a kernel;
      * in aio mode - operation was posted.
      */
+	// 为 1 表示当前活跃事件
     unsigned         active:1;
 
+	// 用于 kqueue 和 rtsing 事件，是否禁用
     unsigned         disabled:1;
 
     /* the ready event; in aio mode 0 means that no operation can be posted */
-    unsigned         ready:1;			// 用于异步IO，当有请求需要处理时置位
+	// 用于异步IO，当有请求需要处理时置位
+    unsigned         ready:1;
 
+	// 用于 kqueue 和 eventport
     unsigned         oneshot:1;
 
     /* aio operation is complete */
+	// 用于异步 IO 事件，是否已经完成
     unsigned         complete:1;
 
+	// 为 1 表示字符流已结束
     unsigned         eof:1;
     unsigned         error:1;
 
+	// 为 1 表示事件已超时
     unsigned         timedout:1;
+	// 为 1 表示该事件存储在定时器中
     unsigned         timer_set:1;
 
+	// 仅用于限速功能中，为 1 表示需要延时处理
     unsigned         delayed:1;
 
+	// 为 1 表示 TCP 三次握手后暂时不建立连接，等到真正收到数据包后才建立连接
     unsigned         deferred_accept:1;
 
     /* the pending eof reported by kqueue, epoll or in aio chain operation */
+	// 只用于 kqueue 和 aio 事件中，为 1 表示字符流结束
     unsigned         pending_eof:1;
 
     unsigned         posted:1;
@@ -110,6 +126,7 @@ struct ngx_event_s {
     unsigned         available:1;
 #endif
 
+	// 事件发生时处理的回调函数
     ngx_event_handler_pt  handler;
 
 
@@ -127,11 +144,13 @@ struct ngx_event_s {
 
     ngx_log_t       *log;
 
+	// 定时器节点
     ngx_rbtree_node_t   timer;
 
     /* the posted queue */
     ngx_queue_t      queue;
 
+	// 为 1 表示当前事件已关闭
     unsigned         closed:1;
 
     /* to test on worker exit */
@@ -192,23 +211,35 @@ struct ngx_event_aio_s {
 #endif
 
 
+// struct ngx_event_actions_t
+// 事件驱动函数描述结构 {{{
 typedef struct {
+	// 事件添加函数
     ngx_int_t  (*add)(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags);
+	// 事件删除函数
     ngx_int_t  (*del)(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags);
 
+	// 事件启用
     ngx_int_t  (*enable)(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags);
+	// 事件禁用
     ngx_int_t  (*disable)(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags);
 
+	// 向事件添加连接
     ngx_int_t  (*add_conn)(ngx_connection_t *c);
+	// 从事件中移除一个连接
     ngx_int_t  (*del_conn)(ngx_connection_t *c, ngx_uint_t flags);
 
+	// 线程模式下分发事件
     ngx_int_t  (*process_changes)(ngx_cycle_t *cycle, ngx_uint_t nowait);
+	// 分发事件
     ngx_int_t  (*process_events)(ngx_cycle_t *cycle, ngx_msec_t timer,
                    ngx_uint_t flags);
 
+	// 初始化事件驱动模块
     ngx_int_t  (*init)(ngx_cycle_t *cycle, ngx_msec_t timer);
+	// 退出事件驱动模块前调用的方法
     void       (*done)(ngx_cycle_t *cycle);
-} ngx_event_actions_t;
+} ngx_event_actions_t; // }}}
 
 
 extern ngx_event_actions_t   ngx_event_actions;
@@ -458,14 +489,20 @@ typedef struct {
 } ngx_event_conf_t;
 
 
+// struct ngx_event_module_t
+// 事件模块结构体 {{{
 typedef struct {
+	// 模块名称
     ngx_str_t              *name;
 
+	// 解析配置前，用于创建存储配置项参数结构体的回调函数
     void                 *(*create_conf)(ngx_cycle_t *cycle);
+	// 解析配置完成后，用于综合处理某些配置项
     char                 *(*init_conf)(ngx_cycle_t *cycle, void *conf);
 
+	// 对于事件驱动机制，每个时间需要实现的 10 个抽象方法
     ngx_event_actions_t     actions;
-} ngx_event_module_t;
+} ngx_event_module_t; // }}}
 
 
 extern ngx_atomic_t          *ngx_connection_counter;

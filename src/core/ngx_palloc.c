@@ -54,6 +54,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
     ngx_pool_large_t    *l;
     ngx_pool_cleanup_t  *c;
 
+	// 循环调用所有析构函数
     for (c = pool->cleanup; c; c = c->next) {
         if (c->handler) {
             ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0,
@@ -62,6 +63,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
         }
     }
 
+	// 释放所有大内存大内存结构
     for (l = pool->large; l; l = l->next) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, pool->log, 0, "free: %p", l->alloc);
@@ -89,6 +91,7 @@ ngx_destroy_pool(ngx_pool_t *pool)
 
 #endif
 
+	// 释放所有内存池
     for (p = pool, n = pool->d.next; /* void */; p = n, n = n->d.next) {
         ngx_free(p);
 
@@ -99,18 +102,22 @@ ngx_destroy_pool(ngx_pool_t *pool)
 } // }}}
 
 
+// void ngx_reset_pool(ngx_pool_t *pool)
+// 重置内存池 {{{
 void
 ngx_reset_pool(ngx_pool_t *pool)
 {
     ngx_pool_t        *p;
     ngx_pool_large_t  *l;
 
+	// 释放所有大内存结构
     for (l = pool->large; l; l = l->next) {
         if (l->alloc) {
             ngx_free(l->alloc);
         }
     }
 
+	// 依次初始化内存池链上所有内存池描述结构
     for (p = pool; p; p = p->d.next) {
         p->d.last = (u_char *) p + sizeof(ngx_pool_t);
         p->d.failed = 0;
@@ -119,7 +126,7 @@ ngx_reset_pool(ngx_pool_t *pool)
     pool->current = pool;
     pool->chain = NULL;
     pool->large = NULL;
-}
+} // }}}
 
 
 // void * ngx_palloc(ngx_pool_t *pool, size_t size)
@@ -135,6 +142,7 @@ ngx_palloc(ngx_pool_t *pool, size_t size)
         p = pool->current;
 
         do {
+			// 将内存对齐
             m = ngx_align_ptr(p->d.last, NGX_ALIGNMENT);
 
             if ((size_t) (p->d.end - m) >= size) {
@@ -186,6 +194,8 @@ ngx_pnalloc(ngx_pool_t *pool, size_t size)
 } // }}}
 
 
+// static void * ngx_palloc_block(ngx_pool_t *pool, size_t size)
+// 分配新的内存池 {{{
 static void *
 ngx_palloc_block(ngx_pool_t *pool, size_t size)
 {
@@ -219,11 +229,11 @@ ngx_palloc_block(ngx_pool_t *pool, size_t size)
     p->d.next = new;
 
     return m;
-}
+} // }}}
 
 
 // static void * ngx_palloc_large(ngx_pool_t *pool, size_t size)
-// 扩大内存池 {{{
+// 为大块内存申请分配内存池 {{{
 static void *
 ngx_palloc_large(ngx_pool_t *pool, size_t size)
 {
@@ -263,12 +273,15 @@ ngx_palloc_large(ngx_pool_t *pool, size_t size)
 } // }}}
 
 
+// void * ngx_pmemalign(ngx_pool_t *pool, size_t size, size_t alignment)
+// 以指定对齐方式分配内存 {{{
 void *
 ngx_pmemalign(ngx_pool_t *pool, size_t size, size_t alignment)
 {
     void              *p;
     ngx_pool_large_t  *large;
 
+	// 指定内存对齐方式
     p = ngx_memalign(alignment, size, pool->log);
     if (p == NULL) {
         return NULL;
@@ -285,9 +298,11 @@ ngx_pmemalign(ngx_pool_t *pool, size_t size, size_t alignment)
     pool->large = large;
 
     return p;
-}
+} // }}}
 
 
+// ngx_int_t ngx_pfree(ngx_pool_t *pool, void *p)
+// 大块内存释放 {{{
 ngx_int_t
 ngx_pfree(ngx_pool_t *pool, void *p)
 {
@@ -305,9 +320,11 @@ ngx_pfree(ngx_pool_t *pool, void *p)
     }
 
     return NGX_DECLINED;
-}
+} // }}}
 
 
+// void * ngx_pcalloc(ngx_pool_t *pool, size_t size)
+// 在堆上分配内存并初始化为 0 {{{
 void *
 ngx_pcalloc(ngx_pool_t *pool, size_t size)
 {
@@ -319,7 +336,7 @@ ngx_pcalloc(ngx_pool_t *pool, size_t size)
     }
 
     return p;
-}
+} // }}}
 
 
 ngx_pool_cleanup_t *

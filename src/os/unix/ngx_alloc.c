@@ -15,7 +15,7 @@ ngx_uint_t  ngx_cacheline_size;
 
 
 // void * ngx_alloc(size_t size, ngx_log_t *log)
-// malloc and check and set log {{{
+// 分配内存池 {{{
 void *
 ngx_alloc(size_t size, ngx_log_t *log)
 {
@@ -33,6 +33,8 @@ ngx_alloc(size_t size, ngx_log_t *log)
 } // }}}
 
 
+// void * ngx_calloc(size_t size, ngx_log_t *log)
+// 分配内存池并初始化为 0 {{{
 void *
 ngx_calloc(size_t size, ngx_log_t *log)
 {
@@ -45,17 +47,20 @@ ngx_calloc(size_t size, ngx_log_t *log)
     }
 
     return p;
-}
+} // }}}
 
 
 #if (NGX_HAVE_POSIX_MEMALIGN)
 
+// void * ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
+// 指定内存对齐方式并分配堆内存 {{{
 void *
 ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 {
     void  *p;
     int    err;
 
+	// 以指定对齐方式分配 size 大小的内存
 	// size 单位是 byte 而不是 bit
     err = posix_memalign(&p, alignment, size);
 
@@ -69,7 +74,7 @@ ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
                    "posix_memalign: %p:%uz @%uz", p, size, alignment);
 
     return p;
-}
+} // }}}
 
 #elif (NGX_HAVE_MEMALIGN)
 

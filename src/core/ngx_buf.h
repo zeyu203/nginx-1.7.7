@@ -58,10 +58,12 @@ struct ngx_buf_s {
 }; // }}}
 
 
+// struct ngx_chain_s
+// 缓存链结构 {{{
 struct ngx_chain_s {
     ngx_buf_t    *buf;
     ngx_chain_t  *next;
-};
+}; // }}}
 
 
 typedef struct {

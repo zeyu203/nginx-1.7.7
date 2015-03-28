@@ -23,6 +23,8 @@
 
 #if (NGX_HAVE_FIONBIO)
 
+// int ngx_nonblocking(ngx_socket_t s)
+// 设置 IO 为非阻塞方式 {{{
 int
 ngx_nonblocking(ngx_socket_t s)
 {
@@ -31,7 +33,7 @@ ngx_nonblocking(ngx_socket_t s)
     nb = 1;
 
     return ioctl(s, FIONBIO, &nb);
-}
+} // }}}
 
 
 int

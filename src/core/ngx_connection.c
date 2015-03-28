@@ -310,6 +310,8 @@ ngx_set_inherited_sockets(ngx_cycle_t *cycle)
 } // }}}
 
 
+// ngx_int_t ngx_open_listening_sockets(ngx_cycle_t *cycle)
+// 创建 socket 并设置为监听状态 {{{
 ngx_int_t
 ngx_open_listening_sockets(ngx_cycle_t *cycle)
 {
@@ -362,6 +364,8 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 return NGX_ERROR;
             }
 
+			// 设置 socket，让一个端口可以被多次绑定
+			// 并且当端口断开，可以立即被重新使用（默认会等待2分钟）
             if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
                            (const void *) &reuseaddr, sizeof(int))
                 == -1)
@@ -398,6 +402,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 #endif
             /* TODO: close on exit */
 
+			// 如果系统支持非阻塞IO，则设置 IO 为非阻塞方式
             if (!(ngx_event_flags & NGX_USE_AIO_EVENT)) {
                 if (ngx_nonblocking(s) == -1) {
                     ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
@@ -502,7 +507,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 // void ngx_configure_listening_sockets(ngx_cycle_t *cycle)
@@ -839,6 +844,8 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
 }
 
 
+// ngx_connection_t * ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
+// 从空闲 connection 中取出一个关联 sockfd，并初始化 {{{
 ngx_connection_t *
 ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 {
@@ -848,6 +855,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 
     /* disable warning: Win32 SOCKET is u_int while UNIX socket is int */
 
+	// fd 大于了系统最大fd限制
     if (ngx_cycle->files && (ngx_uint_t) s >= ngx_cycle->files_n) {
         ngx_log_error(NGX_LOG_ALERT, log, 0,
                       "the new socket has number %d, "
@@ -858,9 +866,11 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
 
     /* ngx_mutex_lock */
 
+	// 连接池
     c = ngx_cycle->free_connections;
 
     if (c == NULL) {
+		// 连接池已经分配完，释放长连接
         ngx_drain_connections();
         c = ngx_cycle->free_connections;
     }
@@ -911,7 +921,7 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
     wev->write = 1;
 
     return c;
-}
+} // }}}
 
 
 void
@@ -1057,6 +1067,8 @@ ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable)
 }
 
 
+// static void ngx_drain_connections(void)
+// 从队列中最后在连接的32个连接中找出读取完成的连接，关闭 {{{
 static void
 ngx_drain_connections(void)
 {
@@ -1076,9 +1088,10 @@ ngx_drain_connections(void)
                        "reusing connection");
 
         c->close = 1;
+		// ngx_http_keepalive_handler
         c->read->handler(c->read);
     }
-}
+} // }}}
 
 
 ngx_int_t

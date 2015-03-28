@@ -51,7 +51,11 @@ struct ngx_pool_large_s {
 }; // }}}
 
 
+<<<<<<< HEAD
 // typedef struct
+=======
+// struct ngx_pool_data_t
+>>>>>>> origin/master
 // 内存池数据结构 {{{
 typedef struct {
     u_char               *last;		// 当前内存分配的结束位置

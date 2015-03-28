@@ -3056,6 +3056,8 @@ ngx_http_set_keepalive(ngx_http_request_t *r)
 }
 
 
+// static void ngx_http_keepalive_handler(ngx_event_t *rev)
+// 长连接处理 {{{
 static void
 ngx_http_keepalive_handler(ngx_event_t *rev)
 {
@@ -3068,6 +3070,7 @@ ngx_http_keepalive_handler(ngx_event_t *rev)
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0, "http keepalive handler");
 
+	// 连接超时或需要关闭
     if (rev->timedout || c->close) {
         ngx_http_close_connection(c);
         return;
@@ -3184,7 +3187,7 @@ ngx_http_keepalive_handler(ngx_event_t *rev)
 
     rev->handler = ngx_http_process_request_line;
     ngx_http_process_request_line(rev);
-}
+} // }}}
 
 
 static void

@@ -13,6 +13,7 @@
 #include <ngx_core.h>
 
 
+// 日志级别 {{{
 #define NGX_LOG_STDERR            0
 #define NGX_LOG_EMERG             1
 #define NGX_LOG_ALERT             2
@@ -22,7 +23,9 @@
 #define NGX_LOG_NOTICE            6
 #define NGX_LOG_INFO              7
 #define NGX_LOG_DEBUG             8
+// }}}
 
+// 调试模式下的详细日志级别 {{{
 #define NGX_LOG_DEBUG_CORE        0x010
 #define NGX_LOG_DEBUG_ALLOC       0x020
 #define NGX_LOG_DEBUG_MUTEX       0x040
@@ -40,6 +43,7 @@
 #define NGX_LOG_DEBUG_LAST        NGX_LOG_DEBUG_MYSQL
 #define NGX_LOG_DEBUG_CONNECTION  0x80000000
 #define NGX_LOG_DEBUG_ALL         0x7ffffff0
+// }}}
 
 
 typedef u_char *(*ngx_log_handler_pt) (ngx_log_t *log, u_char *buf, size_t len);
@@ -47,14 +51,16 @@ typedef void (*ngx_log_writer_pt) (ngx_log_t *log, ngx_uint_t level,
     u_char *buf, size_t len);
 
 
+// struct ngx_log_s
+// 日志结构 {{{
 struct ngx_log_s {
-    ngx_uint_t           log_level;
-    ngx_open_file_t     *file;
+    ngx_uint_t           log_level;		// 日志等级
+    ngx_open_file_t     *file;			// 日志文件信息
 
-    ngx_atomic_uint_t    connection;
+    ngx_atomic_uint_t    connection;	// 引用该日志对象的连接数
 
-    ngx_log_handler_pt   handler;
-    void                *data;
+    ngx_log_handler_pt   handler;		// 输出日志时需要调用的回调函数
+    void                *data;			// 回调函数所需要的参数
 
     ngx_log_writer_pt    writer;
     void                *wdata;
@@ -65,10 +71,10 @@ struct ngx_log_s {
      * their types all the time
      */
 
-    char                *action;
+    char                *action;		// 日志记录前，保存当前正在进行的动作
 
-    ngx_log_t           *next;
-};
+    ngx_log_t           *next;			// 指向下一日志对象
+}; // }}}
 
 
 #define NGX_MAX_ERROR_STR   2048

@@ -367,6 +367,8 @@ ngx_event_accept(ngx_event_t *ev)
 }
 
 
+// ngx_int_t ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
+// 尝试获取锁，返回是否获取锁成功 {{{
 ngx_int_t
 ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
 {
@@ -382,6 +384,7 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
             return NGX_OK;
         }
 
+		// 将全部监听连接的读事件添加到当前 epoll 事件模块中
         if (ngx_enable_accept_events(cycle) == NGX_ERROR) {
             ngx_shmtx_unlock(&ngx_accept_mutex);
             return NGX_ERROR;
@@ -396,6 +399,7 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "accept mutex lock failed: %ui", ngx_accept_mutex_held);
 
+	// 当前还在获取锁的状态，这是一种调用中的异常情况，需要专门处理
     if (ngx_accept_mutex_held) {
         if (ngx_disable_accept_events(cycle) == NGX_ERROR) {
             return NGX_ERROR;
@@ -405,9 +409,11 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static ngx_int_t ngx_enable_accept_events(ngx_cycle_t *cycle)
+// 将连接池中的所有连接的读事件全部添加到 epoll 模块中 {{{
 static ngx_int_t
 ngx_enable_accept_events(ngx_cycle_t *cycle)
 {
@@ -438,7 +444,7 @@ ngx_enable_accept_events(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t

@@ -22,6 +22,7 @@ typedef struct ngx_event_s       ngx_event_t;
 typedef struct ngx_event_aio_s   ngx_event_aio_t;
 typedef struct ngx_connection_s  ngx_connection_t;
 
+// 事件处理回调函数
 typedef void (*ngx_event_handler_pt)(ngx_event_t *ev);
 typedef void (*ngx_connection_handler_pt)(ngx_connection_t *c);
 

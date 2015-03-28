@@ -20,10 +20,12 @@ typedef struct {
 } ngx_hash_elt_t;
 
 
+// struct ngx_hash_t
+// 哈希表结构 {{{
 typedef struct {
     ngx_hash_elt_t  **buckets;
     ngx_uint_t        size;
-} ngx_hash_t;
+} ngx_hash_t; // }}}
 
 
 typedef struct {

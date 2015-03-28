@@ -213,6 +213,7 @@ main(int argc, char *const *argv)
 
     ngx_debug_init();
 
+	// 初始化系统错误列表
     if (ngx_strerror_init() != NGX_OK) {
         return 1;
     }
@@ -277,6 +278,7 @@ main(int argc, char *const *argv)
 
     /* TODO */ ngx_max_sockets = -1;
 
+	// 时间初始化
     ngx_time_init();
 
 #if (NGX_PCRE)
@@ -285,7 +287,6 @@ main(int argc, char *const *argv)
 
     ngx_pid = ngx_getpid();
 
-	// 初始化log
 	// 初始化 ngx_log 结构，创建 errlog 文件
     log = ngx_log_init(ngx_prefix);
     if (log == NULL) {
@@ -293,6 +294,7 @@ main(int argc, char *const *argv)
     }
 
     /* STUB */
+	// for https
 #if (NGX_OPENSSL)
     ngx_ssl_init(log);
 #endif
@@ -306,8 +308,7 @@ main(int argc, char *const *argv)
     init_cycle.log = log;
     ngx_cycle = &init_cycle;
 
-	// 创建内存池
-	// 1KB
+	// 创建内存池 1KB
     init_cycle.pool = ngx_create_pool(1024, log);
     if (init_cycle.pool == NULL) {
         return 1;
@@ -345,7 +346,7 @@ main(int argc, char *const *argv)
     ngx_max_module = 0;
 
 	// objs/ngx_modules.c
-	// ngx_module_t *ngx_modules[] = { {{{
+	// ngx_module_t *ngx_modules[] {{{
 	//     &ngx_core_module,
 	//     &ngx_errlog_module,
 	//     &ngx_conf_module,
@@ -443,6 +444,8 @@ main(int argc, char *const *argv)
     }
 
     if (!ngx_inherited && ccf->daemon) {
+		// 创建守护进程，初始化结束，执行初始化工作的进程退出
+		// 守护进程将继续执行
         if (ngx_daemon(cycle->log) != NGX_OK) {
             return 1;
         }
@@ -456,10 +459,12 @@ main(int argc, char *const *argv)
 
 #endif
 
+	// 创建PID文件，写入当前 pid
     if (ngx_create_pidfile(&ccf->pid, cycle->log) != NGX_OK) {
         return 1;
     }
 
+	// 确认 cycle->log 是否可用
     if (ngx_log_redirect_stderr(cycle) != NGX_OK) {
         return 1;
     }
@@ -474,9 +479,11 @@ main(int argc, char *const *argv)
     ngx_use_stderr = 0;
 
     if (ngx_process == NGX_PROCESS_SINGLE) {
+		// 单进程模式
         ngx_single_process_cycle(cycle);
 
     } else {
+		// 多进程模式
         ngx_master_process_cycle(cycle);
     }
 
@@ -540,6 +547,8 @@ ngx_add_inherited_sockets(ngx_cycle_t *cycle)
 } // }}}
 
 
+// char ** ngx_set_environment(ngx_cycle_t *cycle, ngx_uint_t *last)
+// 将 cycle 中继承的环境变量写入系统环境变量 {{{
 char **
 ngx_set_environment(ngx_cycle_t *cycle, ngx_uint_t *last)
 {
@@ -636,7 +645,7 @@ tz_found:
     }
 
     return env;
-}
+} // }}}
 
 
 ngx_pid_t
@@ -980,6 +989,7 @@ ngx_process_options(ngx_cycle_t *cycle)
         ngx_str_set(&cycle->conf_file, NGX_CONF_PATH);
     }
 
+	// 获取配置绝对路径
     if (ngx_conf_full_name(cycle, &cycle->conf_file, 0) != NGX_OK) {
         return NGX_ERROR;
     }
@@ -1010,6 +1020,8 @@ ngx_process_options(ngx_cycle_t *cycle)
 } // }}}
 
 
+// static void * ngx_core_module_create_conf(ngx_cycle_t *cycle)
+// 内核模块创建函数 {{{
 static void *
 ngx_core_module_create_conf(ngx_cycle_t *cycle)
 {
@@ -1056,9 +1068,10 @@ ngx_core_module_create_conf(ngx_cycle_t *cycle)
     }
 
     return ccf;
-}
+} // }}}
 
-
+// static char * ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
+// 内核模块初始化函数 {{{
 static char *
 ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
 {

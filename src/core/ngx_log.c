@@ -298,6 +298,8 @@ ngx_log_init(u_char *prefix)
     ngx_log.file = &ngx_log_file;
     ngx_log.log_level = NGX_LOG_NOTICE;
 
+	// NGX_ERROR_LOG_PATH 安装时定义的宏，error log 的路径
+	// 如 /var/log/nginx/error.log
     name = (u_char *) NGX_ERROR_LOG_PATH;
 
     /*
@@ -377,6 +379,8 @@ ngx_log_init(u_char *prefix)
 // }}}
 
 
+// ngx_int_t ngx_log_open_default(ngx_cycle_t *cycle)
+// 测试所有log文件是否都可以打开 {{{
 ngx_int_t
 ngx_log_open_default(ngx_cycle_t *cycle)
 {
@@ -412,9 +416,11 @@ ngx_log_open_default(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// ngx_int_t ngx_log_redirect_stderr(ngx_cycle_t *cycle)
+// 确认 cycle 中的 log 是否可用 {{{
 ngx_int_t
 ngx_log_redirect_stderr(ngx_cycle_t *cycle)
 {
@@ -437,9 +443,11 @@ ngx_log_redirect_stderr(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// ngx_log_t * ngx_log_get_file_log(ngx_log_t *head)
+// 获取可用的 log 文件信息 {{{
 ngx_log_t *
 ngx_log_get_file_log(ngx_log_t *head)
 {
@@ -452,7 +460,7 @@ ngx_log_get_file_log(ngx_log_t *head)
     }
 
     return NULL;
-}
+} // }}}
 
 
 static char *

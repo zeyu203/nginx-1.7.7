@@ -198,6 +198,8 @@ ngx_module_t  ngx_event_core_module = {
 };
 
 
+// void ngx_process_events_and_timers(ngx_cycle_t *cycle)
+// 事件驱动函数 {{{
 void
 ngx_process_events_and_timers(ngx_cycle_t *cycle)
 {
@@ -209,6 +211,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
         flags = 0;
 
     } else {
+		// 获取最近超时的时间
         timer = ngx_event_find_timer();
         flags = NGX_UPDATE_TIME;
 
@@ -221,11 +224,14 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 #endif
     }
 
+	// 判断是否使用 accept 互斥体，用于避免惊群现象
     if (ngx_use_accept_mutex) {
+		// 如果进程接受的链接太多，则放弃一次
         if (ngx_accept_disabled > 0) {
             ngx_accept_disabled--;
 
         } else {
+			// 尝试获取 accept 锁，避免惊群现象
             if (ngx_trylock_accept_mutex(cycle) == NGX_ERROR) {
                 return;
             }
@@ -234,6 +240,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
                 flags |= NGX_POST_EVENTS;
 
             } else {
+				// 没有获取到锁，则延迟一段时间后重新尝试获取锁
                 if (timer == NGX_TIMER_INFINITE
                     || timer > ngx_accept_mutex_delay)
                 {
@@ -245,6 +252,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
     delta = ngx_current_msec;
 
+	// ngx_epoll_process_events 处理 epoll 网络事件
     (void) ngx_process_events(cycle, timer, flags);
 
     delta = ngx_current_msec - delta;
@@ -259,13 +267,18 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     }
 
     if (delta) {
+		// 定时器事件处理
         ngx_event_expire_timers();
     }
 
+	// 取出队列中事件并处理
     ngx_event_process_posted(cycle, &ngx_posted_events);
-}
+} // }}}
 
 
+// ngx_int_t ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
+// 将读事件添加到事件驱动模块中
+// 一旦该事件对应的 TCP 连接出现可读事件，就会调用该事件的 handler 方法 {{{
 ngx_int_t
 ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
 {
@@ -331,9 +344,12 @@ ngx_handle_read_event(ngx_event_t *rev, ngx_uint_t flags)
     /* aio, iocp, rtsig */
 
     return NGX_OK;
-}
+} // }}}
 
 
+// 将写事件添加到事件驱动模块中
+// 一旦该事件对应的 TCP 连接出现可写事件，就会调用该事件的 handler 方法
+// 只有当连接对应的套接字缓冲区中有 lowat 大小的可用空间时，才会去处理 {{{
 ngx_int_t
 ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
 {
@@ -410,7 +426,7 @@ ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
     /* aio, iocp, rtsig */
 
     return NGX_OK;
-}
+} // }}}
 
 
 static char *
@@ -571,6 +587,8 @@ ngx_timer_signal_handler(int signo)
 #endif
 
 
+// static ngx_int_t ngx_event_process_init(ngx_cycle_t *cycle)
+// 事件模块初始化 {{{
 static ngx_int_t
 ngx_event_process_init(ngx_cycle_t *cycle)
 {
@@ -585,6 +603,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
     ecf = ngx_event_get_conf(cycle->conf_ctx, ngx_event_core_module);
 
+	// 是否是多个进程同时 accept
     if (ccf->master && ccf->worker_processes > 1 && ecf->accept_mutex) {
         ngx_use_accept_mutex = 1;
         ngx_accept_mutex_held = 0;
@@ -608,11 +627,13 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     ngx_queue_init(&ngx_posted_accept_events);
     ngx_queue_init(&ngx_posted_events);
 
+	// 初始化定时器红黑树
     if (ngx_event_timer_init(cycle->log) == NGX_ERROR) {
         return NGX_ERROR;
     }
 
     for (m = 0; ngx_modules[m]; m++) {
+		// 只有 ngx_event_core_module 和 ngx_epoll_module 是 NGX_EVENT_MODULE类型的
         if (ngx_modules[m]->type != NGX_EVENT_MODULE) {
             continue;
         }
@@ -623,6 +644,8 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
         module = ngx_modules[m]->ctx;
 
+		// 初始化 epoll 模块
+		// 在 src/event/modules/ngx_epoll_module.c 中的 ngx_epoll_init 函数
         if (module->actions.init(cycle, ngx_timer_resolution) != NGX_OK) {
             /* fatal */
             exit(2);
@@ -633,6 +656,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 #if !(NGX_WIN32)
 
+	// 是否设置超时
     if (ngx_timer_resolution && !(ngx_event_flags & NGX_USE_TIMER_EVENT)) {
         struct sigaction  sa;
         struct itimerval  itv;
@@ -678,6 +702,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 #endif
 
+	// 创建连接池
     cycle->connections =
         ngx_alloc(sizeof(ngx_connection_t) * cycle->connection_n, cycle->log);
     if (cycle->connections == NULL) {
@@ -686,6 +711,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
     c = cycle->connections;
 
+	// 创建事件描述结构
     cycle->read_events = ngx_alloc(sizeof(ngx_event_t) * cycle->connection_n,
                                    cycle->log);
     if (cycle->read_events == NULL) {
@@ -712,6 +738,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     i = cycle->connection_n;
     next = NULL;
 
+	// 初始化连接池
     do {
         i--;
 
@@ -835,7 +862,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 ngx_int_t

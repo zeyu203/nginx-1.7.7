@@ -9,6 +9,8 @@
 #include <ngx_core.h>
 
 
+// ngx_int_t ngx_daemon(ngx_log_t *log)
+// 创建守护进程，并且让执行初始化工作的进程退出 {{{
 ngx_int_t
 ngx_daemon(ngx_log_t *log)
 {
@@ -28,6 +30,7 @@ ngx_daemon(ngx_log_t *log)
 
     ngx_pid = ngx_getpid();
 
+	// 将当前进程设置为会话组组长，使进程脱离原来的会话组和进程组，脱离登录终端
     if (setsid() == -1) {
         ngx_log_error(NGX_LOG_EMERG, log, ngx_errno, "setsid() failed");
         return NGX_ERROR;
@@ -67,4 +70,4 @@ ngx_daemon(ngx_log_t *log)
     }
 
     return NGX_OK;
-}
+} // }}}

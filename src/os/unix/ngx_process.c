@@ -11,12 +11,14 @@
 #include <ngx_channel.h>
 
 
+// struct ngx_signal_t
+// 信号结构 {{{
 typedef struct {
     int     signo;
     char   *signame;
     char   *name;
     void  (*handler)(int signo);
-} ngx_signal_t;
+} ngx_signal_t; // }}}
 
 
 
@@ -36,6 +38,8 @@ ngx_int_t        ngx_last_process;
 ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];
 
 
+// ngx_signal_t  signals
+// 信号默认处理方式 {{{
 ngx_signal_t  signals[] = {
     { ngx_signal_value(NGX_RECONFIGURE_SIGNAL),
       "SIG" ngx_value(NGX_RECONFIGURE_SIGNAL),
@@ -80,9 +84,13 @@ ngx_signal_t  signals[] = {
     { SIGPIPE, "SIGPIPE, SIG_IGN", "", SIG_IGN },
 
     { 0, NULL, "", NULL }
-};
+}; // }}}
 
 
+// ngx_pid_t
+// ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
+//     char *name, ngx_int_t respawn)
+// 创建子进程 {{{
 ngx_pid_t
 ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     char *name, ngx_int_t respawn)
@@ -95,6 +103,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         s = respawn;
 
     } else {
+		// 如果进程已退出，则使用该节点存储新的进程信息
         for (s = 0; s < ngx_last_process; s++) {
             if (ngx_processes[s].pid == -1) {
                 break;
@@ -114,6 +123,8 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
 
         /* Solaris 9 still has no AF_LOCAL */
 
+		// unix 域套接字，用于进程间通信
+		// 用第四个参数作为返回值，返回2个用于通信的sockfd
         if (socketpair(AF_UNIX, SOCK_STREAM, 0, ngx_processes[s].channel) == -1)
         {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
@@ -126,6 +137,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
                        ngx_processes[s].channel[0],
                        ngx_processes[s].channel[1]);
 
+		// 设置非阻塞IO
         if (ngx_nonblocking(ngx_processes[s].channel[0]) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           ngx_nonblocking_n " failed while spawning \"%s\"",
@@ -143,6 +155,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         }
 
         on = 1;
+		// 设置支持异步IO
         if (ioctl(ngx_processes[s].channel[0], FIOASYNC, &on) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "ioctl(FIOASYNC) failed while spawning \"%s\"", name);
@@ -150,6 +163,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
             return NGX_INVALID_PID;
         }
 
+		// 设置将接收 SIGIO 和 SIGURG 信号的进程 id 或进程组 id
         if (fcntl(ngx_processes[s].channel[0], F_SETOWN, ngx_pid) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "fcntl(F_SETOWN) failed while spawning \"%s\"", name);
@@ -157,6 +171,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
             return NGX_INVALID_PID;
         }
 
+		// 设置调用 exec 后自动关闭 fd
         if (fcntl(ngx_processes[s].channel[0], F_SETFD, FD_CLOEXEC) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "fcntl(FD_CLOEXEC) failed while spawning \"%s\"",
@@ -176,6 +191,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         ngx_channel = ngx_processes[s].channel[1];
 
     } else {
+		// 分离态子进程不需要通信
         ngx_processes[s].channel[0] = -1;
         ngx_processes[s].channel[1] = -1;
     }
@@ -204,6 +220,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
 
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "start %s %P", name, pid);
 
+	// 父进程记录子进程 pid
     ngx_processes[s].pid = pid;
     ngx_processes[s].exited = 0;
 
@@ -211,6 +228,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         return pid;
     }
 
+	// proc == ngx_worker_process_cycle
     ngx_processes[s].proc = proc;
     ngx_processes[s].data = data;
     ngx_processes[s].name = name;
@@ -254,7 +272,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
     }
 
     return pid;
-}
+} // }}}
 
 
 ngx_pid_t
@@ -280,10 +298,12 @@ ngx_execute_proc(ngx_cycle_t *cycle, void *data)
 }
 
 
+// ngx_int_t ngx_init_signals(ngx_log_t *log)
+// 设定所有信号的处理方式 {{{
 ngx_int_t
 ngx_init_signals(ngx_log_t *log)
 {
-    ngx_signal_t      *sig;
+    ngxsignal_t      *sig;
     struct sigaction   sa;
 
     for (sig = signals; sig->signo != 0; sig++) {
@@ -303,9 +323,11 @@ ngx_init_signals(ngx_log_t *log)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// void ngx_signal_handler(int signo)
+// 信号的默认处理函数 {{{
 void
 ngx_signal_handler(int signo)
 {
@@ -324,6 +346,7 @@ ngx_signal_handler(int signo)
         }
     }
 
+	// 更新 cached_err_log_time
     ngx_time_sigsafe_update();
 
     action = "";
@@ -446,7 +469,7 @@ ngx_signal_handler(int signo)
     }
 
     ngx_set_errno(err);
-}
+} // }}}
 
 
 static void

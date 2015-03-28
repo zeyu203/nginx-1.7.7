@@ -68,6 +68,7 @@ ngx_conf_param(ngx_conf_t *cf)
     ngx_buf_t         b;
     ngx_conf_file_t   conf_file;
 
+	// 获取系统配置参数
     param = &cf->cycle->conf_param;
 
     if (param->len == 0) {
@@ -136,11 +137,14 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 
         cf->conf_file = &conf_file;
 
+		// #define ngx_fd_info(fd, sb)      fstat(fd, sb)
+		// 获取文件状态
         if (ngx_fd_info(fd, &cf->conf_file->file.info) == NGX_FILE_ERROR) {
             ngx_log_error(NGX_LOG_EMERG, cf->log, ngx_errno,
                           ngx_fd_info_n " \"%s\" failed", filename->data);
         }
 
+		// 创建文件缓存
         cf->conf_file->buffer = &buf;
 
         buf.start = ngx_alloc(NGX_CONF_BUFFER, cf->log);
@@ -431,6 +435,8 @@ invalid:
 }
 
 
+// static ngx_int_t ngx_conf_read_token(ngx_conf_t *cf)
+// 取出并读取配置指令 {{{
 static ngx_int_t
 ngx_conf_read_token(ngx_conf_t *cf)
 {
@@ -446,10 +452,13 @@ ngx_conf_read_token(ngx_conf_t *cf)
     found = 0;
     need_space = 0;
     last_space = 1;
+	// 标识当前字符在评论中
     sharp_comment = 0;
     variable = 0;
     quoted = 0;
+	// 标识已经解析到一个单引号
     s_quoted = 0;
+	// 标识已经解析到一个双引号
     d_quoted = 0;
 
     cf->args->nelts = 0;
@@ -461,6 +470,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
 
     for ( ;; ) {
 
+		// 判断是否是首次使用 b->last 永远指向缓存起始位置
         if (b->pos >= b->last) {
 
             if (cf->conf_file->file.offset >= file_size) {
@@ -508,6 +518,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
             }
 
             if (len) {
+				// 缓存文件内容
                 ngx_memmove(b->start, start, len);
             }
 
@@ -517,6 +528,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                 size = b->end - (b->start + len);
             }
 
+			// 原子地读取文件
             n = ngx_read_file(&cf->conf_file->file, b->start + len, size,
                               cf->conf_file->file.offset);
 
@@ -533,6 +545,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
             }
 
             b->pos = b->start + len;
+			// 将last指针移向有效缓存区末尾
             b->last = b->pos + n;
             start = b->start;
         }
@@ -547,6 +560,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
             }
         }
 
+		// 是注释
         if (sharp_comment) {
             continue;
         }
@@ -556,6 +570,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
             continue;
         }
 
+		// 需要结束标志
         if (need_space) {
             if (ch == ' ' || ch == '\t' || ch == CR || ch == LF) {
                 last_space = 1;
@@ -689,6 +704,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
                     return NGX_ERROR;
                 }
 
+				// 为 args 新元素赋值
                 for (dst = word->data, src = start, len = 0;
                      src < b->pos - 1;
                      len++)
@@ -735,7 +751,7 @@ ngx_conf_read_token(ngx_conf_t *cf)
             }
         }
     }
-}
+} // }}}
 
 
 char *

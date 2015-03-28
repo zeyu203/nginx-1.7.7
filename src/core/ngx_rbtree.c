@@ -21,6 +21,9 @@ static ngx_inline void ngx_rbtree_right_rotate(ngx_rbtree_node_t **root,
     ngx_rbtree_node_t *sentinel, ngx_rbtree_node_t *node);
 
 
+// void ngx_rbtree_insert(ngx_thread_volatile ngx_rbtree_t *tree,
+//     ngx_rbtree_node_t *node)
+// 插入节点，并通过旋转保证树结构 {{{
 void
 ngx_rbtree_insert(ngx_thread_volatile ngx_rbtree_t *tree,
     ngx_rbtree_node_t *node)
@@ -91,7 +94,7 @@ ngx_rbtree_insert(ngx_thread_volatile ngx_rbtree_t *tree,
     }
 
     ngx_rbt_black(*root);
-}
+} // }}}
 
 
 void
@@ -119,6 +122,10 @@ ngx_rbtree_insert_value(ngx_rbtree_node_t *temp, ngx_rbtree_node_t *node,
 }
 
 
+// void
+// ngx_rbtree_insert_timer_value(ngx_rbtree_node_t *temp,
+//     ngx_rbtree_node_t *node, ngx_rbtree_node_t *sentinel)
+// 插入计时器节点，为保证运行效率，暂不调整树结构 {{{
 void
 ngx_rbtree_insert_timer_value(ngx_rbtree_node_t *temp, ngx_rbtree_node_t *node,
     ngx_rbtree_node_t *sentinel)
@@ -151,9 +158,12 @@ ngx_rbtree_insert_timer_value(ngx_rbtree_node_t *temp, ngx_rbtree_node_t *node,
     node->left = sentinel;
     node->right = sentinel;
     ngx_rbt_red(node);
-}
+} // }}}
 
 
+// void ngx_rbtree_delete(ngx_thread_volatile ngx_rbtree_t *tree,
+//     ngx_rbtree_node_t *node)
+// 删除节点，并调整树结构 {{{
 void
 ngx_rbtree_delete(ngx_thread_volatile ngx_rbtree_t *tree,
     ngx_rbtree_node_t *node)
@@ -319,9 +329,13 @@ ngx_rbtree_delete(ngx_thread_volatile ngx_rbtree_t *tree,
     }
 
     ngx_rbt_black(temp);
-}
+} // }}}
 
 
+// static ngx_inline void
+// ngx_rbtree_left_rotate(ngx_rbtree_node_t **root, ngx_rbtree_node_t *sentinel,
+//     ngx_rbtree_node_t *node)
+// 左旋转 {{{
 static ngx_inline void
 ngx_rbtree_left_rotate(ngx_rbtree_node_t **root, ngx_rbtree_node_t *sentinel,
     ngx_rbtree_node_t *node)
@@ -349,9 +363,13 @@ ngx_rbtree_left_rotate(ngx_rbtree_node_t **root, ngx_rbtree_node_t *sentinel,
 
     temp->left = node;
     node->parent = temp;
-}
+} // }}}
 
 
+// static ngx_inline void
+// ngx_rbtree_right_rotate(ngx_rbtree_node_t **root, ngx_rbtree_node_t *sentinel,
+//     ngx_rbtree_node_t *node)
+// 右旋转 {{{
 static ngx_inline void
 ngx_rbtree_right_rotate(ngx_rbtree_node_t **root, ngx_rbtree_node_t *sentinel,
     ngx_rbtree_node_t *node)
@@ -379,4 +397,4 @@ ngx_rbtree_right_rotate(ngx_rbtree_node_t **root, ngx_rbtree_node_t *sentinel,
 
     temp->right = node;
     node->parent = temp;
-}
+} // }}}

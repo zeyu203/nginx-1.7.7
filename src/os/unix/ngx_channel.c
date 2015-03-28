@@ -10,6 +10,8 @@
 #include <ngx_channel.h>
 
 
+// ngx_int_t ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
+// 使用域套接字进行进程间通信 {{{
 ngx_int_t
 ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     ngx_log_t *log)
@@ -17,10 +19,12 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     ssize_t             n;
     ngx_err_t           err;
     struct iovec        iov[1];
+	// 内核中的数据接收结构体
     struct msghdr       msg;
 
 #if (NGX_HAVE_MSGHDR_MSG_CONTROL)
 
+	// 新版本的 msghdr
     union {
         struct cmsghdr  cm;
         char            space[CMSG_SPACE(sizeof(int))];
@@ -57,6 +61,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
 
 #else
 
+	// 旧版本的 msghdr
     if (ch->fd == -1) {
         msg.msg_accrights = NULL;
         msg.msg_accrightslen = 0;
@@ -68,6 +73,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
 
 #endif
 
+	// 缓冲区
     iov[0].iov_base = (char *) ch;
     iov[0].iov_len = size;
 
@@ -76,6 +82,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     msg.msg_iov = iov;
     msg.msg_iovlen = 1;
 
+	// 发送数据
     n = sendmsg(s, &msg, 0);
 
     if (n == -1) {
@@ -89,7 +96,7 @@ ngx_write_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size,
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 ngx_int_t
@@ -118,13 +125,16 @@ ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size, ngx_log_t *log)
     msg.msg_iovlen = 1;
 
 #if (NGX_HAVE_MSGHDR_MSG_CONTROL)
+	// 新版本的 msghdr 结构
     msg.msg_control = (caddr_t) &cmsg;
     msg.msg_controllen = sizeof(cmsg);
 #else
+	// 旧版本的 msghdr 结构
     msg.msg_accrights = (caddr_t) &fd;
     msg.msg_accrightslen = sizeof(int);
 #endif
 
+	// 接收消息
     n = recvmsg(s, &msg, 0);
 
     if (n == -1) {
@@ -195,6 +205,10 @@ ngx_read_channel(ngx_socket_t s, ngx_channel_t *ch, size_t size, ngx_log_t *log)
 }
 
 
+// ngx_int_t
+// ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
+//      ngx_event_handler_pt handler)
+// 为 fd 注册回调函数 {{{
 ngx_int_t
 ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
     ngx_event_handler_pt handler)
@@ -202,6 +216,7 @@ ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
     ngx_event_t       *ev, *rev, *wev;
     ngx_connection_t  *c;
 
+	// 在连接池中分配并初始化连接
     c = ngx_get_connection(fd, cycle->log);
 
     if (c == NULL) {
@@ -230,6 +245,9 @@ ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
         }
 
     } else {
+		// 为连接关联事件
+		// （ngx_epoll_init 函数中
+		// 		将 ngx_event_actions.add 初始化为 ngx_epoll_add_event）
         if (ngx_add_event(ev, event, 0) == NGX_ERROR) {
             ngx_free_connection(c);
             return NGX_ERROR;
@@ -237,9 +255,11 @@ ngx_add_channel_event(ngx_cycle_t *cycle, ngx_fd_t fd, ngx_int_t event,
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// void ngx_close_channel(ngx_fd_t *fd, ngx_log_t *log)
+// 关闭进程间通信的域套接字fd {{{
 void
 ngx_close_channel(ngx_fd_t *fd, ngx_log_t *log)
 {
@@ -250,4 +270,4 @@ ngx_close_channel(ngx_fd_t *fd, ngx_log_t *log)
     if (close(fd[1]) == -1) {
         ngx_log_error(NGX_LOG_ALERT, log, ngx_errno, "close() channel failed");
     }
-}
+} // }}}

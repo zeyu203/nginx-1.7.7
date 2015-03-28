@@ -24,6 +24,8 @@ static ngx_rbtree_node_t          ngx_event_timer_sentinel;
  * a minimum timer value only
  */
 
+// ngx_int_t ngx_event_timer_init(ngx_log_t *log)
+// 定时器初始化 {{{
 ngx_int_t
 ngx_event_timer_init(ngx_log_t *log)
 {
@@ -37,6 +39,7 @@ ngx_event_timer_init(ngx_log_t *log)
         return NGX_OK;
     }
 
+	// 初始化线程锁
     ngx_event_timer_mutex = ngx_mutex_init(log, 0);
     if (ngx_event_timer_mutex == NULL) {
         return NGX_ERROR;
@@ -45,15 +48,18 @@ ngx_event_timer_init(ngx_log_t *log)
 #endif
 
     return NGX_OK;
-}
+} // }}}
 
 
+// ngx_msec_t ngx_event_find_timer(void)
+// 获取定时器中最近超时事件的时间 {{{
 ngx_msec_t
 ngx_event_find_timer(void)
 {
     ngx_msec_int_t      timer;
     ngx_rbtree_node_t  *node, *root, *sentinel;
 
+	// 红黑树为空
     if (ngx_event_timer_rbtree.root == &ngx_event_timer_sentinel) {
         return NGX_TIMER_INFINITE;
     }
@@ -63,6 +69,7 @@ ngx_event_find_timer(void)
     root = ngx_event_timer_rbtree.root;
     sentinel = ngx_event_timer_rbtree.sentinel;
 
+	// 获取红黑树中最小元素
     node = ngx_rbtree_min(root, sentinel);
 
     ngx_mutex_unlock(ngx_event_timer_mutex);
@@ -70,9 +77,11 @@ ngx_event_find_timer(void)
     timer = (ngx_msec_int_t) (node->key - ngx_current_msec);
 
     return (ngx_msec_t) (timer > 0 ? timer : 0);
-}
+} // }}}
 
 
+// void ngx_event_expire_timers(void)
+// 定时器事件处理 {{{
 void
 ngx_event_expire_timers(void)
 {
@@ -125,4 +134,4 @@ ngx_event_expire_timers(void)
     }
 
     ngx_mutex_unlock(ngx_event_timer_mutex);
-}
+} // }}}

@@ -36,9 +36,9 @@ static ngx_connection_t  dumb;
 /* STUB */
 
 
-// 环境初始化
-ngx_cycle_t *
-ngx_init_cycle(ngx_cycle_t *old_cycle)
+// ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
+// 环境初始化 {{{
+ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
 {
     void                *rv;
     char               **senv, **env;
@@ -56,6 +56,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_core_module_t   *module;
     char                 hostname[NGX_MAXHOSTNAMELEN];
 
+	// 设置系统时区
     ngx_timezone_update();
 
     /* force localtime update with a new timezone */
@@ -70,6 +71,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_time_update();
 
 
+	// 从 init_cycle 中继承 log 的相关配置
     log = old_cycle->log;
 
 	// 创建内存池 16 KB, 16 位对齐
@@ -124,6 +126,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     n = old_cycle->paths.nelts ? old_cycle->paths.nelts : 10;
 
+	// 路径数组复制
     cycle->paths.elts = ngx_pcalloc(pool, n * sizeof(ngx_path_t *));
     if (cycle->paths.elts == NULL) {
         ngx_destroy_pool(pool);
@@ -136,6 +139,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     cycle->paths.pool = pool;
 
 
+	// 打开文件链表初始化
     if (old_cycle->open_files.part.nelts) {
         n = old_cycle->open_files.part.nelts;
         for (part = old_cycle->open_files.part.next; part; part = part->next) {
@@ -146,7 +150,6 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         n = 20;
     }
 
-	// 共享文件、内存链表初始化
     if (ngx_list_init(&cycle->open_files, pool, n, sizeof(ngx_open_file_t))
         != NGX_OK)
     {
@@ -155,6 +158,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
+	// 共享内存链表初始化
     if (old_cycle->shared_memory.part.nelts) {
         n = old_cycle->shared_memory.part.nelts;
         for (part = old_cycle->shared_memory.part.next; part; part = part->next)
@@ -192,6 +196,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_queue_init(&cycle->reusable_connections_queue);
 
 
+	// 创建所有模块的配置上下文数组
     cycle->conf_ctx = ngx_pcalloc(pool, ngx_max_module * sizeof(void *));
     if (cycle->conf_ctx == NULL) {
         ngx_destroy_pool(pool);
@@ -349,7 +354,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
-	// 创建全部配置文件
+	// 创建全部配置文件目录
     if (ngx_create_paths(cycle, ccf->user) != NGX_OK) {
         goto failed;
     }
@@ -365,6 +370,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     part = &cycle->open_files.part;
     file = part->elts;
 
+	// 打开所有配置文件，并加入到已打开文件链表中
     for (i = 0; /* void */ ; i++) {
 
         if (i >= part->nelts) {
@@ -602,10 +608,12 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
     }
 
+	// 为 cycle 中的每个监听目标创建 socket，并设置为监听状态
     if (ngx_open_listening_sockets(cycle) != NGX_OK) {
         goto failed;
     }
 
+	// 根据 cycle->listening 中的连接信息设定连接参数
     if (!ngx_test_config) {
         ngx_configure_listening_sockets(cycle);
     }
@@ -628,11 +636,13 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         }
     }
 
+	// 初始化工作尾声
 
     /* close and delete stuff that lefts from an old cycle */
 
     /* free the unnecessary shared memory */
 
+	// 释放共享内存
     opart = &old_cycle->shared_memory.part;
     oshm_zone = opart->elts;
 
@@ -683,6 +693,7 @@ old_shm_zone_done:
 
     /* close the unnecessary listening sockets */
 
+	// 关闭打开异常的 socket 连接
     ls = old_cycle->listening.elts;
     for (i = 0; i < old_cycle->listening.nelts; i++) {
 
@@ -718,6 +729,7 @@ old_shm_zone_done:
 
     /* close the unnecessary open files */
 
+	// 关闭打开异常的文件
     part = &old_cycle->open_files.part;
     file = part->elts;
 
@@ -765,6 +777,7 @@ old_shm_zone_done:
     }
 
 
+	// 销毁内存池与临时内存池
     if (ngx_temp_pool == NULL) {
         ngx_temp_pool = ngx_create_pool(128, cycle->log);
         if (ngx_temp_pool == NULL) {
@@ -864,15 +877,17 @@ failed:
     ngx_destroy_cycle_pools(&conf);
 
     return NULL;
-}
+} // }}}
 
 
+// static void ngx_destroy_cycle_pools(ngx_conf_t *conf)
+// 销毁配置文件的临时内存池与配置文件内存池 {{{
 static void
 ngx_destroy_cycle_pools(ngx_conf_t *conf)
 {
     ngx_destroy_pool(conf->temp_pool);
     ngx_destroy_pool(conf->pool);
-}
+} // }}}
 
 
 static ngx_int_t
@@ -971,6 +986,8 @@ ngx_create_pidfile(ngx_str_t *name, ngx_log_t *log)
 } // }}}
 
 
+// void ngx_delete_pidfile(ngx_cycle_t *cycle)
+// 删除 pid 文件 {{{
 void
 ngx_delete_pidfile(ngx_cycle_t *cycle)
 {
@@ -985,7 +1002,7 @@ ngx_delete_pidfile(ngx_cycle_t *cycle)
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       ngx_delete_file_n " \"%s\" failed", name);
     }
-}
+} // }}}
 
 
 // ngx_int_t ngx_signal_process(ngx_cycle_t *cycle, char *sig)

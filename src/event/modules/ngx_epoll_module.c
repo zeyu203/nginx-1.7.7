@@ -34,17 +34,21 @@
 #define EPOLL_CTL_DEL  2
 #define EPOLL_CTL_MOD  3
 
+// union epoll_data_t
+// epoll 信息记录联合体 {{{
 typedef union epoll_data {
     void         *ptr;
     int           fd;
     uint32_t      u32;
     uint64_t      u64;
-} epoll_data_t;
+} epoll_data_t; // }}}
 
+// struct epoll_event
+// epoll 描述结构 {{{
 struct epoll_event {
     uint32_t      events;
     epoll_data_t  data;
-};
+}; // }}}
 
 
 int epoll_create(int size);
@@ -291,6 +295,8 @@ failed:
 #endif
 
 
+// static ngx_int_t ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
+// epoll 模块初始化 {{{
 static ngx_int_t
 ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 {
@@ -299,6 +305,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
     epcf = ngx_event_get_conf(cycle->conf_ctx, ngx_epoll_module);
 
     if (ep == -1) {
+		// 创建 epoll fd
         ep = epoll_create(cycle->connection_n / 2);
 
         if (ep == -1) {
@@ -309,6 +316,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 
 #if (NGX_HAVE_FILE_AIO)
 
+		// 设置为异步输出
         ngx_epoll_aio_init(cycle, epcf);
 
 #endif
@@ -333,15 +341,17 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
     ngx_event_actions = ngx_epoll_module_ctx.actions;
 
 #if (NGX_HAVE_CLEAR_EVENT)
+	// 边缘触发
     ngx_event_flags = NGX_USE_CLEAR_EVENT
 #else
+	// 水平触发
     ngx_event_flags = NGX_USE_LEVEL_EVENT
 #endif
                       |NGX_USE_GREEDY_EVENT
                       |NGX_USE_EPOLL_EVENT;
 
     return NGX_OK;
-}
+} // }}}
 
 
 static void
@@ -382,6 +392,9 @@ ngx_epoll_done(ngx_cycle_t *cycle)
 }
 
 
+// static ngx_int_t
+// ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
+// 将事件加入 epoll 监听 {{{
 static ngx_int_t
 ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 {
@@ -437,7 +450,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 #endif
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t
@@ -560,6 +573,10 @@ ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
 }
 
 
+// static ngx_int_t
+// ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer,
+// ngx_uint_t flags)
+// epoll 事件处理函数 {{{
 static ngx_int_t
 ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 {
@@ -577,6 +594,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "epoll timer: %M", timer);
 
+	// epoll_wait，获取发生的事件列表 event_list
     events = epoll_wait(ep, event_list, (int) nevents, timer);
 
     err = (events == -1) ? ngx_errno : 0;
@@ -585,6 +603,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         ngx_time_update();
     }
 
+	// 出错处理
     if (err) {
         if (err == NGX_EINTR) {
 
@@ -603,19 +622,26 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         return NGX_ERROR;
     }
 
+	// 超时
     if (events == 0) {
         if (timer != NGX_TIMER_INFINITE) {
             return NGX_OK;
         }
 
+		// 如果 timer 为 -1（永久阻塞），则说明调用出错
         ngx_log_error(NGX_LOG_ALERT, cycle->log, 0,
                       "epoll_wait() returned no events without timeout");
         return NGX_ERROR;
     }
 
+	// 事件处理
     for (i = 0; i < events; i++) {
         c = event_list[i].data.ptr;
 
+		// 无论是 32 位还是 64 位系统，地址的最低位一定是0
+		// 因此，nginx 使用连接地址的最后一位保存 instance 变量
+		//
+		// 这里取出 instance 变量，并恢复地址
         instance = (uintptr_t) c & 1;
         c = (ngx_connection_t *) ((uintptr_t) c & (uintptr_t) ~1);
 
@@ -679,9 +705,11 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
                 queue = rev->accept ? &ngx_posted_accept_events
                                     : &ngx_posted_events;
 
+				// 如果进程正在占用锁，则先将事件缓存在队列中
                 ngx_post_event(rev, queue);
 
             } else {
+				// 调用回调函数，accept 及事件处理
                 rev->handler(rev);
             }
         }
@@ -714,7 +742,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 #if (NGX_HAVE_FILE_AIO)

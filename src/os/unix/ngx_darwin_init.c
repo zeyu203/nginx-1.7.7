@@ -179,7 +179,8 @@ ngx_os_specific_init(ngx_log_t *log)
 } // }}}
 
 
-// 操作系统初始化的特殊处理
+// void ngx_os_specific_status(ngx_log_t *log)
+// 操作系统初始化的特殊处理 {{{
 void
 ngx_os_specific_status(ngx_log_t *log)
 {
@@ -204,4 +205,4 @@ ngx_os_specific_status(ngx_log_t *log)
                           sysctls[i].name, value);
         }
     }
-}
+} // }}}

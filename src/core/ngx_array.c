@@ -29,6 +29,8 @@ ngx_array_create(ngx_pool_t *p, ngx_uint_t n, size_t size)
 } // }}}
 
 
+// void ngx_array_destroy(ngx_array_t *a)
+// 数组销毁 {{{
 void
 ngx_array_destroy(ngx_array_t *a)
 {
@@ -43,11 +45,11 @@ ngx_array_destroy(ngx_array_t *a)
     if ((u_char *) a + sizeof(ngx_array_t) == p->d.last) {
         p->d.last = (u_char *) a;
     }
-}
+} // }}}
 
 
 // void * ngx_array_push(ngx_array_t *a)
-// 向数组中增加一个元素空间，并返回该空间首地址 {{{
+// 向数组中增加一个元素，并返回该空间首地址 {{{
 void *
 ngx_array_push(ngx_array_t *a)
 {
@@ -95,6 +97,8 @@ ngx_array_push(ngx_array_t *a)
 } // }}}
 
 
+// void * ngx_array_push_n(ngx_array_t *a, ngx_uint_t n)
+// 在数组中追加 n 个元素 {{{
 void *
 ngx_array_push_n(ngx_array_t *a, ngx_uint_t n)
 {
@@ -142,4 +146,4 @@ ngx_array_push_n(ngx_array_t *a, ngx_uint_t n)
     a->nelts += n;
 
     return elt;
-}
+} // }}}

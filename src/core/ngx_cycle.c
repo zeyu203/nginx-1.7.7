@@ -1094,6 +1094,8 @@ ngx_test_lockfile(u_char *file, ngx_log_t *log)
 } // }}}
 
 
+// void ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
+// 重新打开所有日志文件 {{{
 void
 ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
 {
@@ -1217,7 +1219,7 @@ ngx_reopen_files(ngx_cycle_t *cycle, ngx_uid_t user)
     }
 
     (void) ngx_log_redirect_stderr(cycle);
-}
+} // }}}
 
 
 ngx_shm_zone_t *

@@ -769,6 +769,8 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 } // }}}
 
 
+// void ngx_close_listening_sockets(ngx_cycle_t *cycle)
+// 关闭所有监听的套接字 {{{
 void
 ngx_close_listening_sockets(ngx_cycle_t *cycle)
 {
@@ -841,7 +843,7 @@ ngx_close_listening_sockets(ngx_cycle_t *cycle)
     }
 
     cycle->listening.nelts = 0;
-}
+} // }}}
 
 
 // ngx_connection_t * ngx_get_connection(ngx_socket_t s, ngx_log_t *log)

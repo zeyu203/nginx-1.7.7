@@ -613,6 +613,8 @@ ngx_unlock_mutexes(ngx_pid_t pid)
 }
 
 
+// void ngx_debug_point(void)
+// 递送 SIGSTOP 信号给进程，让其停止运行，便于调试 {{{
 void
 ngx_debug_point(void)
 {
@@ -630,7 +632,7 @@ ngx_debug_point(void)
     case NGX_DEBUG_POINTS_ABORT:
         ngx_abort();
     }
-}
+} // }}}
 
 
 // ngx_int_t ngx_os_signal_process(ngx_cycle_t *cycle, char *name, ngx_int_t pid)

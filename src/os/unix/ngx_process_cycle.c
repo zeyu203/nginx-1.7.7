@@ -864,15 +864,15 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
     }
 #endif
 
-	// worker 进程主循环
+	// worker 进程主循环 {{{
     for ( ;; ) {
 
-		// 准备退出
+		// 退出进程
         if (ngx_exiting) {
 
             c = cycle->connections;
 
-			// 遍历连接池中所有连接并关闭
+			// 遍历连接池中所有活动连接并关闭
             for (i = 0; i < cycle->connection_n; i++) {
 
                 /* THREAD: lock */
@@ -883,8 +883,8 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
                 }
             }
 
-            if (ngx_event_timer_rbtree.root == ngx_event_timer_rbtree.sentinel)
-            {
+			if (ngx_event_timer_rbtree.root == ngx_event_timer_rbtree.sentinel)
+			{
                 ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "exiting");
 
 				// 关闭子进程
@@ -897,16 +897,19 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 		// 事件驱动函数
         ngx_process_events_and_timers(cycle);
 
+		// 收到 SIGTERM 或 SIGINT 信号后在 ngx_signal_handler 函数中置位
         if (ngx_terminate) {
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "exiting");
 
             ngx_worker_process_exit(cycle);
         }
 
+		// 收到 SIGQUIT 信号后在 ngx_signal_handler 函数中置位
         if (ngx_quit) {
             ngx_quit = 0;
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0,
                           "gracefully shutting down");
+			// 改变当前进程名，标志他已经要退出
             ngx_setproctitle("worker process is shutting down");
 
             if (!ngx_exiting) {
@@ -915,12 +918,14 @@ ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
             }
         }
 
+		// 收到 SIGUSR1 信号后在 ngx_signal_handler 函数中置位
         if (ngx_reopen) {
             ngx_reopen = 0;
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "reopening logs");
+			// 重新打开所有文件
             ngx_reopen_files(cycle, -1);
         }
-    }
+    } // }}}
 } // }}}
 
 
@@ -1116,6 +1121,8 @@ ngx_worker_process_init(ngx_cycle_t *cycle, ngx_int_t worker)
 } // }}}
 
 
+// static void ngx_worker_process_exit(ngx_cycle_t *cycle)
+// 子进程退出 {{{
 static void
 ngx_worker_process_exit(ngx_cycle_t *cycle)
 {
@@ -1128,12 +1135,14 @@ ngx_worker_process_exit(ngx_cycle_t *cycle)
     ngx_wakeup_worker_threads(cycle);
 #endif
 
+	// 执行各个模块的 exit_process 回调函数
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->exit_process) {
             ngx_modules[i]->exit_process(cycle);
         }
     }
 
+	// 不是强制退出的情况下，如果还有打开的连接，则异常退出
     if (ngx_exiting) {
         c = cycle->connections;
         for (i = 0; i < cycle->connection_n; i++) {
@@ -1152,6 +1161,7 @@ ngx_worker_process_exit(ngx_cycle_t *cycle)
 
         if (ngx_debug_quit) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, 0, "aborting");
+			// 断言，raise SIGSTOP 信号给进程
             ngx_debug_point();
         }
     }
@@ -1175,12 +1185,13 @@ ngx_worker_process_exit(ngx_cycle_t *cycle)
     ngx_exit_cycle.files_n = ngx_cycle->files_n;
     ngx_cycle = &ngx_exit_cycle;
 
+	// 销毁内存池
     ngx_destroy_pool(cycle->pool);
 
     ngx_log_error(NGX_LOG_NOTICE, ngx_cycle->log, 0, "exit");
 
     exit(0);
-}
+} // }}}
 
 
 static void

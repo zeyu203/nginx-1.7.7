@@ -254,9 +254,11 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
 		// 产生 SIGHUP 信号的三种原因：
 		// 1、中断关闭，会话首进程，及所有后台进程会收到该信号（默认操作为退出）
 		// 2、会话首进程退出后，会话中每个进程会收到该信号（默认操作为退出）
-		// 3、父进程退出时，如果子进程已经收到过 SIGSTOP 或 SIGTSTP 信号，则子进程将收到 SIGHUP 信号
+		// 3、父进程退出时，如果子进程已经收到过 SIGSTOP 或 SIGTSTP 信号
+		// 则子进程将收到 SIGHUP 信号
 		//
-		// 由于 master 已经脱离终端，所以不会收到 SIGHUP，SIGHUP 信号被重用为重启 worker，重新初始化配置信号
+		// 由于 master 已经脱离终端，所以不会收到 SIGHUP
+		// SIGHUP 信号被重用为重启 worker，重新初始化配置信号
         if (ngx_reconfigure) {
             ngx_reconfigure = 0;
 

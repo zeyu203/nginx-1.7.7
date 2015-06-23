@@ -34,6 +34,7 @@ ngx_event_accept(ngx_event_t *ev)
     static ngx_uint_t  use_accept4 = 1;
 #endif
 
+	// 如果超时时间没有到，则重新加入等待列表中并更新超时时间
     if (ev->timedout) {
         if (ngx_enable_accept_events((ngx_cycle_t *) ngx_cycle) != NGX_OK) {
             return;
@@ -63,6 +64,8 @@ ngx_event_accept(ngx_event_t *ev)
 
 #if (NGX_HAVE_ACCEPT4)
         if (use_accept4) {
+			// accept4：非标准的 linux 接口，具有 flags 参数的 accept
+			// linux 2.6.28 开始支持
             s = accept4(lc->fd, (struct sockaddr *) sa, &socklen,
                         SOCK_NONBLOCK);
         } else {
@@ -113,6 +116,9 @@ ngx_event_accept(ngx_event_t *ev)
                 }
             }
 
+			// #define NGX_EMFILE        EMFILE	文件描述符过大
+			// #define NGX_ENFILE        ENFILE 同时打开的 fd 超过系统最大值
+			// 打开的连接过多，则将监听的连接从 epoll 中移除
             if (err == NGX_EMFILE || err == NGX_ENFILE) {
                 if (ngx_disable_accept_events((ngx_cycle_t *) ngx_cycle)
                     != NGX_OK)
@@ -449,6 +455,8 @@ ngx_enable_accept_events(ngx_cycle_t *cycle)
 } // }}}
 
 
+// static ngx_int_t ngx_disable_accept_events(ngx_cycle_t *cycle)
+// 将监听的连接从 epoll 事件中移除 {{{
 static ngx_int_t
 ngx_disable_accept_events(ngx_cycle_t *cycle)
 {
@@ -480,7 +488,7 @@ ngx_disable_accept_events(ngx_cycle_t *cycle)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 static void

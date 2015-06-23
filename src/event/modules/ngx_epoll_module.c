@@ -316,7 +316,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 
 #if (NGX_HAVE_FILE_AIO)
 
-		// 设置为异步输出
+		// 使用异步IO
         ngx_epoll_aio_init(cycle, epcf);
 
 #endif

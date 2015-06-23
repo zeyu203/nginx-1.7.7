@@ -633,7 +633,8 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     }
 
     for (m = 0; ngx_modules[m]; m++) {
-		// 只有 ngx_event_core_module 和 ngx_epoll_module 是 NGX_EVENT_MODULE类型的
+		// 只有 ngx_event_core_module 和 ngx_epoll_modul
+		// 是 NGX_EVENT_MODULE 类型的
         if (ngx_modules[m]->type != NGX_EVENT_MODULE) {
             continue;
         }
@@ -840,6 +841,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 #else
 
+		// 绑定事件处理函数
         rev->handler = ngx_event_accept;
 
         if (ngx_use_accept_mutex) {

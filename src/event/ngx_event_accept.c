@@ -15,6 +15,8 @@ static ngx_int_t ngx_disable_accept_events(ngx_cycle_t *cycle);
 static void ngx_close_accepted_connection(ngx_connection_t *c);
 
 
+// void ngx_event_accept(ngx_event_t *ev)
+// 事件处理函数 {{{
 void
 ngx_event_accept(ngx_event_t *ev)
 {
@@ -364,7 +366,7 @@ ngx_event_accept(ngx_event_t *ev)
         }
 
     } while (ev->available);
-}
+} // }}}
 
 
 // ngx_int_t ngx_trylock_accept_mutex(ngx_cycle_t *cycle)

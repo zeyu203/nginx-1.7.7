@@ -303,7 +303,7 @@ ngx_execute_proc(ngx_cycle_t *cycle, void *data)
 ngx_int_t
 ngx_init_signals(ngx_log_t *log)
 {
-    ngxsignal_t      *sig;
+    ngx_signal_t      *sig;
     struct sigaction   sa;
 
     for (sig = signals; sig->signo != 0; sig++) {

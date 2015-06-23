@@ -683,6 +683,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         }
     }
 
+	// 分配 fd 连接结构数组
     if (ngx_event_flags & NGX_USE_FD_EVENT) {
         struct rlimit  rlmt;
 

@@ -221,15 +221,19 @@ io_getevents(aio_context_t ctx, long min_nr, long nr, struct io_event *events,
 }
 
 
+// static void ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
+// 初始化异步 IO 机制 {{{
 static void
 ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
 {
     int                 n;
     struct epoll_event  ee;
 
+	// 调用 eventfd 获取 eventfd 对象，用来在内核态与用户态之间传递通知
 #if (NGX_HAVE_SYS_EVENTFD_H)
     ngx_eventfd = eventfd(0, 0);
 #else
+	// syscall 直接调用指定 id 的系统调用，即系统并没有开放用户态接口
     ngx_eventfd = syscall(SYS_eventfd, 0);
 #endif
 
@@ -245,19 +249,23 @@ ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
 
     n = 1;
 
+	// 设置 eventfd 为非阻塞
     if (ioctl(ngx_eventfd, FIONBIO, &n) == -1) {
         ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                       "ioctl(eventfd, FIONBIO) failed");
         goto failed;
     }
 
+	// 创建异步 IO 上下文
     if (io_setup(epcf->aio_requests, &ngx_aio_ctx) == -1) {
         ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                       "io_setup() failed");
         goto failed;
     }
 
+	// 异步 IO 回调函数 ngx_epoll_eventfd_handler 的参数，nginx 连接结构
     ngx_eventfd_event.data = &ngx_eventfd_conn;
+	// 绑定事件回调函数
     ngx_eventfd_event.handler = ngx_epoll_eventfd_handler;
     ngx_eventfd_event.log = cycle->log;
     ngx_eventfd_event.active = 1;
@@ -268,6 +276,7 @@ ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
     ee.events = EPOLLIN|EPOLLET;
     ee.data.ptr = &ngx_eventfd_conn;
 
+	// 将 eventfd 添加到 epoll 中
     if (epoll_ctl(ep, EPOLL_CTL_ADD, ngx_eventfd, &ee) != -1) {
         return;
     }
@@ -275,6 +284,7 @@ ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
     ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
                   "epoll_ctl(EPOLL_CTL_ADD, eventfd) failed");
 
+	// 执行失败则删除异步 IO 上下文
     if (io_destroy(ngx_aio_ctx) == -1) {
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "io_destroy() failed");
@@ -282,6 +292,7 @@ ngx_epoll_aio_init(ngx_cycle_t *cycle, ngx_epoll_conf_t *epcf)
 
 failed:
 
+	// 关闭 eventfd
     if (close(ngx_eventfd) == -1) {
         ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                       "eventfd close() failed");
@@ -290,7 +301,7 @@ failed:
     ngx_eventfd = -1;
     ngx_aio_ctx = 0;
     ngx_file_aio = 0;
-}
+} // }}}
 
 #endif
 
@@ -316,12 +327,13 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 
 #if (NGX_HAVE_FILE_AIO)
 
-		// 使用异步IO
+		// 初始化异步IO
         ngx_epoll_aio_init(cycle, epcf);
 
 #endif
     }
 
+	// 事件列表容量不足则重新分配事件列表
     if (nevents < epcf->events) {
         if (event_list) {
             ngx_free(event_list);
@@ -747,6 +759,8 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 
 #if (NGX_HAVE_FILE_AIO)
 
+// static void ngx_epoll_eventfd_handler(ngx_event_t *ev)
+// 异步 IO 回调函数 {{{
 static void
 ngx_epoll_eventfd_handler(ngx_event_t *ev)
 {
@@ -787,6 +801,7 @@ ngx_epoll_eventfd_handler(ngx_event_t *ev)
 
     while (ready) {
 
+		// 获取异步 IO 请求的事件
         events = io_getevents(ngx_aio_ctx, 1, 64, event, &ts);
 
         ngx_log_debug1(NGX_LOG_DEBUG_EVENT, ev->log, 0,
@@ -811,6 +826,7 @@ ngx_epoll_eventfd_handler(ngx_event_t *ev)
                 aio = e->data;
                 aio->res = event[i].res;
 
+				// 将事件添加到事件消息队列中
                 ngx_post_event(e, &ngx_posted_events);
             }
 
@@ -826,7 +842,7 @@ ngx_epoll_eventfd_handler(ngx_event_t *ev)
                       "io_getevents() failed");
         return;
     }
-}
+} // }}}
 
 #endif
 

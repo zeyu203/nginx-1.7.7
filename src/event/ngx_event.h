@@ -500,7 +500,7 @@ typedef struct {
 	// 解析配置完成后，用于综合处理某些配置项
     char                 *(*init_conf)(ngx_cycle_t *cycle, void *conf);
 
-	// 对于事件驱动机制，每个时间需要实现的 10 个抽象方法
+	// 对于事件驱动机制，每个事件需要实现的 10 个抽象方法
     ngx_event_actions_t     actions;
 } ngx_event_module_t; // }}}
 

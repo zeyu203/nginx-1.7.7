@@ -156,24 +156,39 @@ static ngx_command_t  ngx_epoll_commands[] = {
 };
 
 
+// ngx_event_module_t  ngx_epoll_module_ctx
+// epoll 模块配置，相应接口的实现 {{{
 ngx_event_module_t  ngx_epoll_module_ctx = {
     &epoll_name,
+	// 配置创建回调
     ngx_epoll_create_conf,               /* create configuration */
+	// 配置初始化回调
     ngx_epoll_init_conf,                 /* init configuration */
 
+	// ngx_event_actions_t 类型，包含全部回调函数
     {
+		// add 方法，事件添加
         ngx_epoll_add_event,             /* add an event */
+		// del 方法，事件删除
         ngx_epoll_del_event,             /* delete an event */
+		// enable 方法，事件启用
         ngx_epoll_add_event,             /* enable an event */
+		// disable 方法，事件禁用
         ngx_epoll_del_event,             /* disable an event */
+		// add_conn，添加连接
         ngx_epoll_add_connection,        /* add an connection */
+		// del_conn，删除连接
         ngx_epoll_del_connection,        /* delete an connection */
+		// process_changes，线程模式下分发事件
         NULL,                            /* process the changes */
+		// process_events，分发事件
         ngx_epoll_process_events,        /* process the events */
+		// 初始化事件驱动模块
         ngx_epoll_init,                  /* init the events */
+		// 退出事件驱动模块前调用的方法
         ngx_epoll_done,                  /* done the events */
     }
-};
+}; // }}}
 
 ngx_module_t  ngx_epoll_module = {
     NGX_MODULE_V1,
@@ -466,6 +481,9 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 } // }}}
 
 
+// static ngx_int_t
+// ngx_epoll_del_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
+// 从 epoll 中去除事件 {{{
 static ngx_int_t
 ngx_epoll_del_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 {
@@ -521,9 +539,11 @@ ngx_epoll_del_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
     ev->active = 0;
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static ngx_int_t ngx_epoll_add_connection(ngx_connection_t *c)
+// 增加连接 {{{
 static ngx_int_t
 ngx_epoll_add_connection(ngx_connection_t *c)
 {
@@ -545,9 +565,12 @@ ngx_epoll_add_connection(ngx_connection_t *c)
     c->write->active = 1;
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
+// 从 epoll 中移除连接 {{{
 static ngx_int_t
 ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
 {
@@ -583,12 +606,12 @@ ngx_epoll_del_connection(ngx_connection_t *c, ngx_uint_t flags)
     c->write->active = 0;
 
     return NGX_OK;
-}
+} // }}}
 
 
 // static ngx_int_t
 // ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer,
-// ngx_uint_t flags)
+// 		ngx_uint_t flags)
 // epoll 事件处理函数 {{{
 static ngx_int_t
 ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)

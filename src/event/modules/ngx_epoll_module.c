@@ -167,13 +167,13 @@ ngx_event_module_t  ngx_epoll_module_ctx = {
 
 	// ngx_event_actions_t 类型，包含全部回调函数
     {
-		// add 方法，事件添加
+		// add，事件添加
         ngx_epoll_add_event,             /* add an event */
-		// del 方法，事件删除
+		// del，事件删除
         ngx_epoll_del_event,             /* delete an event */
-		// enable 方法，事件启用
+		// enable，事件启用
         ngx_epoll_add_event,             /* enable an event */
-		// disable 方法，事件禁用
+		// disable，事件禁用
         ngx_epoll_del_event,             /* disable an event */
 		// add_conn，添加连接
         ngx_epoll_add_connection,        /* add an connection */

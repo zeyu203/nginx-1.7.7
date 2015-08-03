@@ -59,7 +59,7 @@ ngx_shmtx_destroy(ngx_shmtx_t *mtx)
 }
 
 
-// 尝试获取锁
+// 尝试获取自旋锁
 ngx_uint_t
 ngx_shmtx_trylock(ngx_shmtx_t *mtx)
 {

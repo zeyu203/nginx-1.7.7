@@ -14,21 +14,22 @@
 
 /* epoll declarations */
 
-#define EPOLLIN        0x001
-#define EPOLLPRI       0x002
-#define EPOLLOUT       0x004
-#define EPOLLRDNORM    0x040
-#define EPOLLRDBAND    0x080
-#define EPOLLWRNORM    0x100
-#define EPOLLWRBAND    0x200
-#define EPOLLMSG       0x400
-#define EPOLLERR       0x008
-#define EPOLLHUP       0x010
+// epoll_event 结构 events 域取值 {{{
+#define EPOLLIN        0x001	// 连接上有数据可读，包括 tcp 连接关闭时收到 FIN 包
+#define EPOLLPRI       0x002	// 连接上有紧急数据可读
+#define EPOLLOUT       0x004	// 连接可写
+#define EPOLLRDNORM    0x040	// 普通数据可读
+#define EPOLLRDBAND    0x080	// 优先级数据可读
+#define EPOLLWRNORM    0x100	// 普通数据可写
+#define EPOLLWRBAND    0x200	// 优先级数据可写
+#define EPOLLMSG       0x400	// 消息队列数据
+#define EPOLLERR       0x008	// 连接上发生错误
+#define EPOLLHUP       0x010	// 连接被挂起
+#define EPOLLRDHUP     0x2000	// 连接远端已经关闭或半关闭
+// }}}
 
-#define EPOLLRDHUP     0x2000
-
-#define EPOLLET        0x80000000
-#define EPOLLONESHOT   0x40000000
+#define EPOLLET        0x80000000	// 边沿触发
+#define EPOLLONESHOT   0x40000000	// 只对事件处理一次，处理完毕即丢弃
 
 #define EPOLL_CTL_ADD  1
 #define EPOLL_CTL_DEL  2
@@ -44,10 +45,10 @@ typedef union epoll_data {
 } epoll_data_t; // }}}
 
 // struct epoll_event
-// epoll 描述结构 {{{
+// epoll 事件结构 {{{
 struct epoll_event {
-    uint32_t      events;
-    epoll_data_t  data;
+    uint32_t      events;	// 事件的属性，具体取值位于本文件上方
+    epoll_data_t  data;		// 事件的具体数据
 }; // }}}
 
 
@@ -95,10 +96,12 @@ struct io_event {
 #endif
 
 
+// struct ngx_epoll_conf_t
+// epoll 模块配置信息结构体 {{{
 typedef struct {
     ngx_uint_t  events;
     ngx_uint_t  aio_requests;
-} ngx_epoll_conf_t;
+} ngx_epoll_conf_t; // }}}
 
 
 static ngx_int_t ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer);
@@ -160,9 +163,9 @@ static ngx_command_t  ngx_epoll_commands[] = {
 // epoll 模块配置，相应接口的实现 {{{
 ngx_event_module_t  ngx_epoll_module_ctx = {
     &epoll_name,
-	// 配置创建回调
+	// 创建存储配置信息的结构体 ngx_epoll_conf_t  *epcf
     ngx_epoll_create_conf,               /* create configuration */
-	// 配置初始化回调
+	// 初始化配置信息
     ngx_epoll_init_conf,                 /* init configuration */
 
 	// ngx_event_actions_t 类型，包含全部回调函数
@@ -181,7 +184,7 @@ ngx_event_module_t  ngx_epoll_module_ctx = {
         ngx_epoll_del_connection,        /* delete an connection */
 		// process_changes，线程模式下分发事件
         NULL,                            /* process the changes */
-		// process_events，分发事件
+		// process_events，事件处理
         ngx_epoll_process_events,        /* process the events */
 		// 初始化事件驱动模块
         ngx_epoll_init,                  /* init the events */
@@ -382,6 +385,8 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 } // }}}
 
 
+// static void ngx_epoll_done(ngx_cycle_t *cycle)
+// epoll 模块析构函数 {{{
 static void
 ngx_epoll_done(ngx_cycle_t *cycle)
 {
@@ -417,12 +422,13 @@ ngx_epoll_done(ngx_cycle_t *cycle)
 
     event_list = NULL;
     nevents = 0;
-}
+} // }}}
 
 
 // static ngx_int_t
 // ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 // 将事件加入 epoll 监听 {{{
+// 三个传入参数分别是：事件对象、nginx 事件属性和 epoll 事件属性
 static ngx_int_t
 ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 {
@@ -432,7 +438,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
     ngx_connection_t    *c;
     struct epoll_event   ee;
 
-    c = ev->data;
+    c = ev->data; // 在 epoll 模块中，事件结构的 data 域是指向连接结构的指针
 
     events = (uint32_t) event;
 
@@ -451,6 +457,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
 #endif
     }
 
+	// 如果连接已经存在，则将已经在 epoll 中注册过的 fd 更新，否则加入新的 fd
     if (e->active) {
         op = EPOLL_CTL_MOD;
         events |= prev;
@@ -460,18 +467,22 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
     }
 
     ee.events = events | (uint32_t) flags;
+	// ev->instance 判断事件是否过期，过期则不处理
+	// 因为对齐的原因，地址最低位一定是 0，因此用这一位作为 instance 位
     ee.data.ptr = (void *) ((uintptr_t) c | ev->instance);
 
     ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                    "epoll add event: fd:%d op:%d ev:%08XD",
                    c->fd, op, ee.events);
 
+	// 将事件加入 EPOLL 队列
     if (epoll_ctl(ep, op, c->fd, &ee) == -1) {
         ngx_log_error(NGX_LOG_ALERT, ev->log, ngx_errno,
                       "epoll_ctl(%d, %d) failed", op, c->fd);
         return NGX_ERROR;
     }
 
+	// 将事件设为活跃状态
     ev->active = 1;
 #if 0
     ev->oneshot = (flags & NGX_ONESHOT_EVENT) ? 1 : 0;
@@ -675,7 +686,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         c = event_list[i].data.ptr;
 
 		// 无论是 32 位还是 64 位系统，地址的最低位一定是0
-		// 因此，nginx 使用连接地址的最后一位保存 instance 变量
+		// 因此，nginx 使用连接地址的最后一位保存 instance 变量，用于记录是否过期
 		//
 		// 这里取出 instance 变量，并恢复地址
         instance = (uintptr_t) c & 1;
@@ -683,6 +694,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 
         rev = c->read;
 
+		// 非监听 fd 或已过期
         if (c->fd == -1 || rev->instance != instance) {
 
             /*
@@ -727,6 +739,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
             revents |= EPOLLIN|EPOLLOUT;
         }
 
+		// 事件可读
         if ((revents & EPOLLIN) && rev->active) {
 
 #if (NGX_HAVE_EPOLLRDHUP)
@@ -745,7 +758,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
                 ngx_post_event(rev, queue);
 
             } else {
-				// 调用回调函数，accept 及事件处理
+				// 调用读事件回调函数，accept 及事件处理 ngx_event_accept
                 rev->handler(rev);
             }
         }
@@ -871,6 +884,8 @@ ngx_epoll_eventfd_handler(ngx_event_t *ev)
 #endif
 
 
+// static void * ngx_epoll_create_conf(ngx_cycle_t *cycle)
+// 创建存储配置项的结构体 ngx_epoll_conf_t  *epcf {{{
 static void *
 ngx_epoll_create_conf(ngx_cycle_t *cycle)
 {
@@ -885,9 +900,11 @@ ngx_epoll_create_conf(ngx_cycle_t *cycle)
     epcf->aio_requests = NGX_CONF_UNSET;
 
     return epcf;
-}
+} // }}}
 
 
+// static char * ngx_epoll_init_conf(ngx_cycle_t *cycle, void *conf)
+// 初始化配置信息结构体 {{{
 static char *
 ngx_epoll_init_conf(ngx_cycle_t *cycle, void *conf)
 {
@@ -897,4 +914,4 @@ ngx_epoll_init_conf(ngx_cycle_t *cycle, void *conf)
     ngx_conf_init_uint_value(epcf->aio_requests, 32);
 
     return NGX_CONF_OK;
-}
+} // }}}

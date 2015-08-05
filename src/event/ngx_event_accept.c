@@ -393,6 +393,7 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
         }
 
 		// 将全部监听连接的读事件添加到当前 epoll 事件模块中
+		// 至少会添加 listen 设为监听状态的 socket fd
         if (ngx_enable_accept_events(cycle) == NGX_ERROR) {
             ngx_shmtx_unlock(&ngx_accept_mutex);
             return NGX_ERROR;
@@ -445,6 +446,7 @@ ngx_enable_accept_events(ngx_cycle_t *cycle)
             }
 
         } else {
+			// ngx_epoll_add_event
             if (ngx_add_event(c->read, NGX_READ_EVENT, 0) == NGX_ERROR) {
                 return NGX_ERROR;
             }

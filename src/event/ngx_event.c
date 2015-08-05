@@ -260,6 +260,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "timer delta: %M", delta);
 
+	// 消费 ngx_posted_accept_events 队列中的事件
     ngx_event_process_posted(cycle, &ngx_posted_accept_events);
 
     if (ngx_accept_mutex_held) {
@@ -271,7 +272,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
         ngx_event_expire_timers();
     }
 
-	// 取出队列中事件并处理
+	// 消费 ngx_posted_events 队列中的事件
     ngx_event_process_posted(cycle, &ngx_posted_events);
 } // }}}
 

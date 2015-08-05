@@ -752,6 +752,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 
             rev->ready = 1;
 
+			// 拿着锁则先把事件放到队列中延后处理
             if (flags & NGX_POST_EVENTS) {
                 queue = rev->accept ? &ngx_posted_accept_events
                                     : &ngx_posted_events;
@@ -760,7 +761,8 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
                 ngx_post_event(rev, queue);
 
             } else {
-				// 调用读事件回调函数，accept 及事件处理 ngx_event_accept
+				// 调用读事件回调函数
+				// 如果是 epoll 时间则会调用 ngx_event_accept 处理 accept
                 rev->handler(rev);
             }
         }

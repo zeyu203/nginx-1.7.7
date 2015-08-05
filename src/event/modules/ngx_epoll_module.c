@@ -646,6 +646,8 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 
     err = (events == -1) ? ngx_errno : 0;
 
+	// 如果配置文件中配置了 ngx_timer_resolution
+	// 则在调用 ngx_timer_signal_handler 的过程中会将 ngx_event_timer_alarm 置 1
     if (flags & NGX_UPDATE_TIME || ngx_event_timer_alarm) {
         ngx_time_update();
     }

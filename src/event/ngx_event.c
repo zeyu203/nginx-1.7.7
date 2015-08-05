@@ -224,7 +224,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 #endif
     }
 
-	// 判断是否使用 accept 互斥体，用于避免惊群现象
+	// 判断是否使用 accept 自旋锁，用于避免惊群现象
     if (ngx_use_accept_mutex) {
 		// 如果进程接受的链接太多，则放弃一次
         if (ngx_accept_disabled > 0) {
@@ -240,7 +240,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
                 flags |= NGX_POST_EVENTS;
 
             } else {
-				// 没有获取到锁，则延迟一段时间后重新尝试获取锁
+				// 没有获取到锁，则设定 epoll_wait 的等待时间
                 if (timer == NGX_TIMER_INFINITE
                     || timer > ngx_accept_mutex_delay)
                 {
@@ -657,7 +657,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 #if !(NGX_WIN32)
 
-	// 是否设置超时
+	// 是否设置了超时，ngx_timer_resolution 是从配置文件中读取的
     if (ngx_timer_resolution && !(ngx_event_flags & NGX_USE_TIMER_EVENT)) {
         struct sigaction  sa;
         struct itimerval  itv;
@@ -677,6 +677,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         itv.it_value.tv_sec = ngx_timer_resolution / 1000;
         itv.it_value.tv_usec = (ngx_timer_resolution % 1000 ) * 1000;
 
+		// 每隔 ngx_timer_resolution 毫秒调用一次 ngx_timer_signal_handler
         if (setitimer(ITIMER_REAL, &itv, NULL) == -1) {
             ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                           "setitimer() failed");

@@ -263,6 +263,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 	// 消费 ngx_posted_accept_events 队列中的事件
     ngx_event_process_posted(cycle, &ngx_posted_accept_events);
 
+	// 需要调用 accept 建立新连接的事件处理完毕，释放 accept 锁
     if (ngx_accept_mutex_held) {
         ngx_shmtx_unlock(&ngx_accept_mutex);
     }

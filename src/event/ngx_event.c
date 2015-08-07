@@ -228,6 +228,9 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     if (ngx_use_accept_mutex) {
 		// 如果进程接受的链接太多，则放弃一次
         if (ngx_accept_disabled > 0) {
+			// 在 ngx_event_accept 函数中
+			// 会做 ngx_accept_disabled =
+			// ngx_cycle->connection_n / 8 - ngx_cycle->free_connection_n 操作
             ngx_accept_disabled--;
 
         } else {

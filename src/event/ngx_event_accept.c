@@ -408,7 +408,7 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "accept mutex lock failed: %ui", ngx_accept_mutex_held);
 
-	// 当前还在获取锁的状态，这是一种调用中的异常情况，需要专门处理
+	// 获取锁失败，则清空 accept 队列并将 ngx_accept_mutex_held 置为 0
     if (ngx_accept_mutex_held) {
         if (ngx_disable_accept_events(cycle) == NGX_ERROR) {
             return NGX_ERROR;

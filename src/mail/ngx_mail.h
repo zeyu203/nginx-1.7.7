@@ -339,6 +339,8 @@ struct ngx_mail_protocol_s {
 };
 
 
+// struct ngx_mail_module_t
+// 邮件模块描述结构 {{{
 typedef struct {
     ngx_mail_protocol_t        *protocol;
 
@@ -348,7 +350,7 @@ typedef struct {
     void                       *(*create_srv_conf)(ngx_conf_t *cf);
     char                       *(*merge_srv_conf)(ngx_conf_t *cf, void *prev,
                                       void *conf);
-} ngx_mail_module_t;
+} ngx_mail_module_t; // }}}
 
 
 #define NGX_MAIL_MODULE         0x4C49414D     /* "MAIL" */

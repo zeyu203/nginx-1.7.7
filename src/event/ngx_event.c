@@ -640,6 +640,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     for (m = 0; ngx_modules[m]; m++) {
 		// 只有 ngx_event_core_module 和 ngx_epoll_modul
 		// 是 NGX_EVENT_MODULE 类型的
+		// 而 ngx_event_core_module 的 actions 中的所有接口均为 NULL
         if (ngx_modules[m]->type != NGX_EVENT_MODULE) {
             continue;
         }

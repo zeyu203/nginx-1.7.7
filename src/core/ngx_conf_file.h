@@ -119,7 +119,10 @@ struct ngx_module_s {
 
     ngx_uint_t            version;								// 模块版本
 
-    void                 *ctx;									// 模块上下文
+	// 指向模块上下文结构体变量的指针
+	// 模块上下文有 ngx_core_module_t、ngx_mail_module_t
+	// ngx_event_module_t、ngx_http_module_t 四种类型
+    void                 *ctx;
     ngx_command_t        *commands;								// 模块支持的命令集
     ngx_uint_t            type;									// 模块类型
 

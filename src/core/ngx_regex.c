@@ -69,12 +69,14 @@ static ngx_pool_t  *ngx_pcre_pool;
 static ngx_list_t  *ngx_pcre_studies;
 
 
+// void ngx_regex_init(void)
+// 正则初始化 {{{
 void
 ngx_regex_init(void)
 {
     pcre_malloc = ngx_regex_malloc;
     pcre_free = ngx_regex_free;
-}
+} // }}}
 
 
 static ngx_inline void

@@ -21,19 +21,29 @@ typedef struct {
 } ngx_http_conf_ctx_t;
 
 
+// struct ngx_http_module_t
+// http 模块描述结构 {{{
 typedef struct {
+	// 解析配置文件前调用
     ngx_int_t   (*preconfiguration)(ngx_conf_t *cf);
+	// 解析配置文件后调用
     ngx_int_t   (*postconfiguration)(ngx_conf_t *cf);
 
+	// 用于创建直属于 http{...} 的配置项的结构体
     void       *(*create_main_conf)(ngx_conf_t *cf);
+	// 用于初始化 main 级别配置项
     char       *(*init_main_conf)(ngx_conf_t *cf, void *conf);
 
+	// 用于创建只属于 server{...} 的配置项的结构体
     void       *(*create_srv_conf)(ngx_conf_t *cf);
+	// 用于合并 main 级别和 srv 级别下的同名配置项
     char       *(*merge_srv_conf)(ngx_conf_t *cf, void *prev, void *conf);
 
+	// 用于创建直属于 location{...} 的配置项的结构体
     void       *(*create_loc_conf)(ngx_conf_t *cf);
+	// 用于合并 srv 级别和 loc 级别下的同名配置项
     char       *(*merge_loc_conf)(ngx_conf_t *cf, void *prev, void *conf);
-} ngx_http_module_t;
+} ngx_http_module_t; // }}}
 
 
 #define NGX_HTTP_MODULE           0x50545448   /* "HTTP" */

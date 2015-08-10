@@ -225,6 +225,9 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_strlow(cycle->hostname.data, (u_char *) hostname, cycle->hostname.len);
 
 
+	// 创建 CORE 模块的配置
+	// NGX_CORE_MODULE 包括：ngx_core_module、ngx_errlog_module
+	// ngx_events_module、ngx_regex_module、ngx_http_module
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_CORE_MODULE) {
             continue;
@@ -233,7 +236,12 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
         module = ngx_modules[i]->ctx;
 
         if (module->create_conf) {
-			// 创建模块配置
+			// ngx_core_module		ngx_core_module_create_conf
+			// ngx_regex_module		ngx_regex_create_conf
+			//
+			// ngx_errlog_module	NULL
+			// ngx_events_module	NULL
+			// ngx_http_module		NULL
             rv = module->create_conf(cycle);
             if (rv == NULL) {
                 ngx_destroy_pool(pool);
@@ -293,7 +301,9 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
                        cycle->conf_file.data);
     }
 
-	// 初始化所有模块
+	// 初始化所有 CORE 模块配置文件
+	// NGX_CORE_MODULE 包括：ngx_core_module、ngx_errlog_module
+	// ngx_events_module、ngx_regex_module、ngx_http_module
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_CORE_MODULE) {
             continue;
@@ -302,6 +312,12 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
         module = ngx_modules[i]->ctx;
 
         if (module->init_conf) {
+			// ngx_errlog_module	NULL
+			// ngx_http_module		NULL
+			//
+			// ngx_core_module		ngx_core_module_init_conf
+			// ngx_events_module	ngx_event_init_conf
+			// ngx_regex_module		ngx_regex_init_conf
             if (module->init_conf(cycle, cycle->conf_ctx[ngx_modules[i]->index])
                 == NGX_CONF_ERROR)
             {
@@ -629,6 +645,8 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->init_module) {
+			// ngx_event_core_module	ngx_event_module_init
+			// ngx_regex_module			ngx_regex_module_init
             if (ngx_modules[i]->init_module(cycle) != NGX_OK) {
                 /* fatal */
                 exit(1);

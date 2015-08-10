@@ -92,13 +92,17 @@ static ngx_command_t  ngx_http_commands[] = {
 };
 
 
+// ngx_core_module_t  ngx_http_module_ctx
+// HTTP 模块上下文 {{{
 static ngx_core_module_t  ngx_http_module_ctx = {
     ngx_string("http"),
     NULL,
     NULL
-};
+}; // }}}
 
 
+// ngx_module_t  ngx_http_module
+// HTTP 模块定义 {{{
 ngx_module_t  ngx_http_module = {
     NGX_MODULE_V1,
     &ngx_http_module_ctx,                  /* module context */
@@ -112,7 +116,7 @@ ngx_module_t  ngx_http_module = {
     NULL,                                  /* exit process */
     NULL,                                  /* exit master */
     NGX_MODULE_V1_PADDING
-};
+}; // }}}
 
 
 static char *

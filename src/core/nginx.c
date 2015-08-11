@@ -1205,7 +1205,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
 #endif
 
     return NGX_CONF_OK;
-}
+} // }}}
 
 
 static char *

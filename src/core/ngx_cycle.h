@@ -77,43 +77,45 @@ struct ngx_cycle_s {
 }; // }}}
 
 
+// struct ngx_core_conf_t
+// nginx 核心配置结构体 {{{
 typedef struct {
      ngx_flag_t               daemon;
      ngx_flag_t               master;
 
-     ngx_msec_t               timer_resolution;
+     ngx_msec_t               timer_resolution;		// 最大超时时间
 
-     ngx_int_t                worker_processes;
+     ngx_int_t                worker_processes;		// worker 进程数
      ngx_int_t                debug_points;
 
-     ngx_int_t                rlimit_nofile;
-     ngx_int_t                rlimit_sigpending;
-     off_t                    rlimit_core;
+     ngx_int_t                rlimit_nofile;		// 系统最大文件描述符数
+     ngx_int_t                rlimit_sigpending;	// 系统最大挂起信号数
+     off_t                    rlimit_core;			// 内核转存文件的最大长度
 
-     int                      priority;
+     int                      priority;				// 进程优先级
 
-     ngx_uint_t               cpu_affinity_n;
+     ngx_uint_t               cpu_affinity_n;		// CPU 数
      uint64_t                *cpu_affinity;
 
-     char                    *username;
-     ngx_uid_t                user;
-     ngx_gid_t                group;
+     char                    *username;				// 用户名
+     ngx_uid_t                user;					// 用户ID
+     ngx_gid_t                group;				// 组ID
 
-     ngx_str_t                working_directory;
-     ngx_str_t                lock_file;
+     ngx_str_t                working_directory;	// 当前工作路径
+     ngx_str_t                lock_file;			// 锁文件
 
-     ngx_str_t                pid;
-     ngx_str_t                oldpid;
+     ngx_str_t                pid;					// pid 文件
+     ngx_str_t                oldpid;				// 老的 pid 文件，用于平滑启动
 
-     ngx_array_t              env;
-     char                   **environment;
+     ngx_array_t              env;					// 环境变量
+     char                   **environment;			// 环境变量
 
 #if (NGX_THREADS)
-     ngx_int_t                worker_threads;
-     size_t                   thread_stack_size;
+     ngx_int_t                worker_threads;		// worker 线程数
+     size_t                   thread_stack_size;	// 线程栈大小
 #endif
 
-} ngx_core_conf_t;
+} ngx_core_conf_t; // }}}
 
 
 typedef struct {

@@ -414,6 +414,8 @@ ngx_close_glob(ngx_glob_t *gl)
 }
 
 
+// ngx_err_t ngx_trylock_fd(ngx_fd_t fd)
+// 尝试锁文件 {{{
 ngx_err_t
 ngx_trylock_fd(ngx_fd_t fd)
 {
@@ -423,14 +425,17 @@ ngx_trylock_fd(ngx_fd_t fd)
     fl.l_type = F_WRLCK;
     fl.l_whence = SEEK_SET;
 
+	// 尝试锁定
     if (fcntl(fd, F_SETLK, &fl) == -1) {
         return ngx_errno;
     }
 
     return 0;
-}
+} // }}}
 
 
+// ngx_err_t ngx_lock_fd(ngx_fd_t fd)
+// 锁文件 {{{
 ngx_err_t
 ngx_lock_fd(ngx_fd_t fd)
 {
@@ -440,14 +445,17 @@ ngx_lock_fd(ngx_fd_t fd)
     fl.l_type = F_WRLCK;
     fl.l_whence = SEEK_SET;
 
+	// 阻塞直到锁定
     if (fcntl(fd, F_SETLKW, &fl) == -1) {
         return ngx_errno;
     }
 
     return 0;
-}
+} // }}}
 
 
+// ngx_err_t ngx_unlock_fd(ngx_fd_t fd)
+// 解锁锁文件 {{{
 ngx_err_t
 ngx_unlock_fd(ngx_fd_t fd)
 {
@@ -462,7 +470,7 @@ ngx_unlock_fd(ngx_fd_t fd)
     }
 
     return 0;
-}
+} // }}}
 
 
 #if (NGX_HAVE_POSIX_FADVISE) && !(NGX_HAVE_F_READAHEAD)

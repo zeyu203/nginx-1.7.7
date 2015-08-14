@@ -9,9 +9,12 @@
 #include <ngx_core.h>
 
 
+// struct ngx_regex_conf_t
+// PCRE 正则库配置 {{{
 typedef struct {
+	// 指向正则库编译器指针
     ngx_flag_t  pcre_jit;
-} ngx_regex_conf_t;
+} ngx_regex_conf_t; // }}}
 
 
 static void * ngx_libc_cdecl ngx_regex_malloc(size_t size);
@@ -410,6 +413,8 @@ ngx_regex_module_init(ngx_cycle_t *cycle)
 }
 
 
+// static void * ngx_regex_create_conf(ngx_cycle_t *cycle)
+// 正则配置结构创建 {{{
 static void *
 ngx_regex_create_conf(ngx_cycle_t *cycle)
 {
@@ -428,9 +433,11 @@ ngx_regex_create_conf(ngx_cycle_t *cycle)
     }
 
     return rcf;
-}
+} // }}}
 
 
+// static char * ngx_regex_init_conf(ngx_cycle_t *cycle, void *conf)
+// 正则库 PCRE 配置初始化 {{{
 static char *
 ngx_regex_init_conf(ngx_cycle_t *cycle, void *conf)
 {
@@ -439,7 +446,7 @@ ngx_regex_init_conf(ngx_cycle_t *cycle, void *conf)
     ngx_conf_init_value(rcf->pcre_jit, 0);
 
     return NGX_CONF_OK;
-}
+} // }}}
 
 
 static char *

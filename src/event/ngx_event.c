@@ -434,6 +434,8 @@ ngx_handle_write_event(ngx_event_t *wev, size_t lowat)
 } // }}}
 
 
+// static char * ngx_event_init_conf(ngx_cycle_t *cycle, void *conf)
+// 事件模块配置初始化 {{{
 static char *
 ngx_event_init_conf(ngx_cycle_t *cycle, void *conf)
 {
@@ -444,9 +446,11 @@ ngx_event_init_conf(ngx_cycle_t *cycle, void *conf)
     }
 
     return NGX_CONF_OK;
-}
+} // }}}
 
 
+// static ngx_int_t ngx_event_module_init(ngx_cycle_t *cycle)
+// 事件模块初始化 {{{
 static ngx_int_t
 ngx_event_module_init(ngx_cycle_t *cycle)
 {
@@ -458,8 +462,18 @@ ngx_event_module_init(ngx_cycle_t *cycle)
     ngx_core_conf_t     *ccf;
     ngx_event_conf_t    *ecf;
 
+	// 获取 ngx_events_module 配置
     cf = ngx_get_conf(cycle->conf_ctx, ngx_events_module);
+	// 获取 ngx_event_core_module 配置
     ecf = (*cf)[ngx_event_core_module.ctx_index];
+	// ecf = {
+	//     connections = 1024,
+	//     use = 1,
+	//     multi_accept = 0,
+	//     accept_mutex = 1,
+	//     accept_mutex_delay = 500,
+	//     name = 0x80bdb09 "epoll"
+	// }
 
     if (!ngx_test_config && ngx_process <= NGX_PROCESS_MASTER) {
         ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0,
@@ -467,6 +481,46 @@ ngx_event_module_init(ngx_cycle_t *cycle)
     }
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
+	// ccf = {
+	//     daemon = 1,
+	// 	   master = 1,
+	// 	   timer_resolution = 0,
+	// 	   worker_processes = 2,
+	// 	   debug_points = 0,
+	// 	   rlimit_nofile = -1,
+	// 	   rlimit_sigpending = -1,
+	// 	   rlimit_core = -1,
+	// 	   priority = 0,
+	// 	   cpu_affinity_n = 0,
+	// 	   cpu_affinity = 0x0,
+	// 	   username = 0x80ba02f "nobody",
+	// 	   user = 65534,
+	// 	   group = 65534,
+	// 	   working_directory = {
+	// 		   len = 0,
+	// 		   data = 0x0
+	// 	   },
+	// 	   lock_file = {
+	// 		   len = 49,
+	// 		   data = 0x810f358 "/home/zeyu/Documents/nginx-1.7.7//logs/nginx.lock"
+	// 	   },
+	// 	   pid = {
+	// 		   len = 24,
+	// 		   data = 0x80ba016 "/var/run/nginx/nginx.pid"
+	// 	   },
+	// 	   oldpid = {
+	// 		   len = 32,
+	// 		   data = 0x810f338 "/var/run/nginx/nginx.pid.oldbin"
+	// 	   },
+	// 	   env = {
+	// 		   elts = 0x80fff34,
+	// 		   nelts = 0,
+	// 		   size = 8,
+	// 		   nalloc = 1,
+	// 		   pool = 0x80ff5b0
+	// 	   },
+	// 	   environment = 0x0
+	// }
 
     ngx_timer_resolution = ccf->timer_resolution;
 
@@ -497,6 +551,7 @@ ngx_event_module_init(ngx_cycle_t *cycle)
 #endif /* !(NGX_WIN32) */
 
 
+	// 无 worker 模式，则不需要后续流程
     if (ccf->master == 0) {
         return NGX_OK;
     }
@@ -505,11 +560,15 @@ ngx_event_module_init(ngx_cycle_t *cycle)
         return NGX_OK;
     }
 
+	// 实现互斥锁 ngx_accept_mutex {{{
+
 
     /* cl should be equal to or greater than cache line size */
 
+	// cache line 大小
     cl = 128;
 
+	// 为三个进程间共享变量预分配空间
     size = cl            /* ngx_accept_mutex */
            + cl          /* ngx_connection_counter */
            + cl;         /* ngx_temp_number */
@@ -540,6 +599,7 @@ ngx_event_module_init(ngx_cycle_t *cycle)
     ngx_accept_mutex_ptr = (ngx_atomic_t *) shared;
     ngx_accept_mutex.spin = (ngx_uint_t) -1;
 
+	// 初始化互斥锁
     if (ngx_shmtx_create(&ngx_accept_mutex, (ngx_shmtx_sh_t *) shared,
                          cycle->lock_file.data)
         != NGX_OK)
@@ -547,6 +607,7 @@ ngx_event_module_init(ngx_cycle_t *cycle)
         return NGX_ERROR;
     }
 
+	// nginx 连接总数统计值，在所有 worker 中共享
     ngx_connection_counter = (ngx_atomic_t *) (shared + 1 * cl);
 
     (void) ngx_atomic_cmp_set(ngx_connection_counter, 0, 1);
@@ -572,9 +633,10 @@ ngx_event_module_init(ngx_cycle_t *cycle)
     ngx_stat_waiting = (ngx_atomic_t *) (shared + 9 * cl);
 
 #endif
+	// }}}
 
     return NGX_OK;
-}
+} // }}}
 
 
 #if !(NGX_WIN32)

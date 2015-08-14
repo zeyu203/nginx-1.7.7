@@ -1022,7 +1022,7 @@ ngx_process_options(ngx_cycle_t *cycle)
 
 
 // static void * ngx_core_module_create_conf(ngx_cycle_t *cycle)
-// 内核模块创建函数 {{{
+// 核心配置信息创建 {{{
 static void *
 ngx_core_module_create_conf(ngx_cycle_t *cycle)
 {
@@ -1072,7 +1072,7 @@ ngx_core_module_create_conf(ngx_cycle_t *cycle)
 } // }}}
 
 // static char * ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
-// 内核模块初始化函数 {{{
+// 内核模块配置结构初始化 {{{
 static char *
 ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
 {
@@ -1112,6 +1112,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
         ngx_str_set(&ccf->pid, NGX_PID_PATH);
     }
 
+	// 保存 pid 配置文件路径
     if (ngx_conf_full_name(cycle, &ccf->pid, 0) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -1134,6 +1135,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
         struct passwd  *pwd;
 
         ngx_set_errno(0);
+		// 获取用户 (nobody) 相关信息
         pwd = getpwnam(NGX_USER);
         if (pwd == NULL) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
@@ -1145,6 +1147,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
         ccf->user = pwd->pw_uid;
 
         ngx_set_errno(0);
+		// 获取组 (nogroup) 相关信息
         grp = getgrnam(NGX_GROUP);
         if (grp == NULL) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, ngx_errno,
@@ -1156,6 +1159,7 @@ ngx_core_module_init_conf(ngx_cycle_t *cycle, void *conf)
     }
 
 
+	// 初始化锁文件配置
     if (ccf->lock_file.len == 0) {
         ngx_str_set(&ccf->lock_file, NGX_LOCK_PATH);
     }

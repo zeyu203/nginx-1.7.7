@@ -80,8 +80,8 @@ struct ngx_cycle_s {
 // struct ngx_core_conf_t
 // nginx 核心配置结构体 {{{
 typedef struct {
-     ngx_flag_t               daemon;
-     ngx_flag_t               master;
+     ngx_flag_t               daemon;				// 为 0 则不以 deamon 方式运行
+     ngx_flag_t               master;				// 为 0 则不创建 worker
 
      ngx_msec_t               timer_resolution;		// 最大超时时间
 

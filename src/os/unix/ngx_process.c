@@ -465,6 +465,7 @@ ngx_signal_handler(int signo)
     }
 
     if (signo == SIGCHLD) {
+		// 清理子进程，包括解锁
         ngx_process_get_status();
     }
 
@@ -472,6 +473,8 @@ ngx_signal_handler(int signo)
 } // }}}
 
 
+// static void ngx_process_get_status(void)
+// 已死子进程清理 {{{
 static void
 ngx_process_get_status(void)
 {
@@ -485,6 +488,7 @@ ngx_process_get_status(void)
     one = 0;
 
     for ( ;; ) {
+		// 获取退出子进程 pid
         pid = waitpid(-1, &status, WNOHANG);
 
         if (pid == 0) {
@@ -561,11 +565,14 @@ ngx_process_get_status(void)
             ngx_processes[i].respawn = 0;
         }
 
+		// 如果已退出子进程拥有锁，则解锁
         ngx_unlock_mutexes(pid);
     }
-}
+} // }}}
 
 
+// static void ngx_unlock_mutexes(ngx_pid_t pid)
+// 如果已退出子进程拥有锁，则解锁 {{{
 static void
 ngx_unlock_mutexes(ngx_pid_t pid)
 {
@@ -580,6 +587,7 @@ ngx_unlock_mutexes(ngx_pid_t pid)
      */
 
     if (ngx_accept_mutex_ptr) {
+		// 如果 pid 持有锁则解锁
         (void) ngx_shmtx_force_unlock(&ngx_accept_mutex, pid);
     }
 
@@ -604,13 +612,14 @@ ngx_unlock_mutexes(ngx_pid_t pid)
 
         sp = (ngx_slab_pool_t *) shm_zone[i].shm.addr;
 
+		// 如果 pid 持有锁则解锁
         if (ngx_shmtx_force_unlock(&sp->mutex, pid)) {
             ngx_log_error(NGX_LOG_ALERT, ngx_cycle->log, 0,
                           "shared memory zone \"%V\" was locked by %P",
                           &shm_zone[i].shm.name, pid);
         }
     }
-}
+} // }}}
 
 
 // void ngx_debug_point(void)

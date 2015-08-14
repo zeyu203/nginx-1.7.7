@@ -70,6 +70,7 @@ ngx_int_t ngx_init_signals(ngx_log_t *log);
 void ngx_debug_point(void);
 
 
+// 放弃CPU所有权
 #if (NGX_HAVE_SCHED_YIELD)
 #define ngx_sched_yield()  sched_yield()
 #else

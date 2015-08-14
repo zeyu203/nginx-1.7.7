@@ -15,6 +15,9 @@
 static void ngx_shmtx_wakeup(ngx_shmtx_t *mtx);
 
 
+// ngx_int_t
+// ngx_shmtx_create(ngx_shmtx_t *mtx, ngx_shmtx_sh_t *addr, u_char *name)
+// 初始化自旋锁 {{{
 ngx_int_t
 ngx_shmtx_create(ngx_shmtx_t *mtx, ngx_shmtx_sh_t *addr, u_char *name)
 {
@@ -30,6 +33,7 @@ ngx_shmtx_create(ngx_shmtx_t *mtx, ngx_shmtx_sh_t *addr, u_char *name)
 
     mtx->wait = &addr->wait;
 
+	// 初始化信号量
     if (sem_init(&mtx->sem, 1, 0) == -1) {
         ngx_log_error(NGX_LOG_ALERT, ngx_cycle->log, ngx_errno,
                       "sem_init() failed");
@@ -40,7 +44,7 @@ ngx_shmtx_create(ngx_shmtx_t *mtx, ngx_shmtx_sh_t *addr, u_char *name)
 #endif
 
     return NGX_OK;
-}
+} // }}}
 
 
 void
@@ -59,14 +63,17 @@ ngx_shmtx_destroy(ngx_shmtx_t *mtx)
 }
 
 
-// 尝试获取自旋锁
+// ngx_uint_t ngx_shmtx_trylock(ngx_shmtx_t *mtx)
+// 尝试获取自旋锁 {{{
 ngx_uint_t
 ngx_shmtx_trylock(ngx_shmtx_t *mtx)
 {
     return (*mtx->lock == 0 && ngx_atomic_cmp_set(mtx->lock, 0, ngx_pid));
-}
+} // }}}
 
 
+// void ngx_shmtx_lock(ngx_shmtx_t *mtx)
+// 阻塞并获取锁 {{{
 void
 ngx_shmtx_lock(ngx_shmtx_t *mtx)
 {
@@ -98,6 +105,7 @@ ngx_shmtx_lock(ngx_shmtx_t *mtx)
 
 #if (NGX_HAVE_POSIX_SEM)
 
+		// 等待信号量
         if (mtx->semaphore) {
             (void) ngx_atomic_fetch_add(mtx->wait, 1);
 
@@ -128,11 +136,14 @@ ngx_shmtx_lock(ngx_shmtx_t *mtx)
 
 #endif
 
+		// 主动放弃一轮 CPU
         ngx_sched_yield();
     }
-}
+} // }}}
 
 
+// void ngx_shmtx_unlock(ngx_shmtx_t *mtx)
+// 原子自旋锁解锁 {{{
 void
 ngx_shmtx_unlock(ngx_shmtx_t *mtx)
 {
@@ -141,11 +152,14 @@ ngx_shmtx_unlock(ngx_shmtx_t *mtx)
     }
 
     if (ngx_atomic_cmp_set(mtx->lock, ngx_pid, 0)) {
+		// 用于调用 sem_post
         ngx_shmtx_wakeup(mtx);
     }
-}
+} // }}}
 
 
+// ngx_uint_t ngx_shmtx_force_unlock(ngx_shmtx_t *mtx, ngx_pid_t pid)
+// 如果 pid 持有锁则解锁 {{{
 ngx_uint_t
 ngx_shmtx_force_unlock(ngx_shmtx_t *mtx, ngx_pid_t pid)
 {
@@ -153,12 +167,13 @@ ngx_shmtx_force_unlock(ngx_shmtx_t *mtx, ngx_pid_t pid)
                    "shmtx forced unlock");
 
     if (ngx_atomic_cmp_set(mtx->lock, pid, 0)) {
+		// 用于调用 sem_post
         ngx_shmtx_wakeup(mtx);
         return 1;
     }
 
     return 0;
-}
+} // }}}
 
 
 static void
@@ -242,11 +257,14 @@ ngx_shmtx_destroy(ngx_shmtx_t *mtx)
 }
 
 
+// ngx_uint_t ngx_shmtx_trylock(ngx_shmtx_t *mtx)
+// 尝试获取锁 {{{
 ngx_uint_t
 ngx_shmtx_trylock(ngx_shmtx_t *mtx)
 {
     ngx_err_t  err;
 
+	// 尝试获取锁文件
     err = ngx_trylock_fd(mtx->fd);
 
     if (err == 0) {
@@ -268,14 +286,17 @@ ngx_shmtx_trylock(ngx_shmtx_t *mtx)
     ngx_log_abort(err, ngx_trylock_fd_n " %s failed", mtx->name);
 
     return 0;
-}
+} // }}}
 
 
+// void ngx_shmtx_lock(ngx_shmtx_t *mtx)
+// 阻塞直到获取锁 {{{
 void
 ngx_shmtx_lock(ngx_shmtx_t *mtx)
 {
     ngx_err_t  err;
 
+	// 锁文件
     err = ngx_lock_fd(mtx->fd);
 
     if (err == 0) {
@@ -283,9 +304,11 @@ ngx_shmtx_lock(ngx_shmtx_t *mtx)
     }
 
     ngx_log_abort(err, ngx_lock_fd_n " %s failed", mtx->name);
-}
+} // }}}
 
 
+// void ngx_shmtx_unlock(ngx_shmtx_t *mtx)
+// 锁文件解锁 {{{
 void
 ngx_shmtx_unlock(ngx_shmtx_t *mtx)
 {
@@ -298,7 +321,7 @@ ngx_shmtx_unlock(ngx_shmtx_t *mtx)
     }
 
     ngx_log_abort(err, ngx_unlock_fd_n " %s failed", mtx->name);
-}
+} // }}}
 
 
 ngx_uint_t

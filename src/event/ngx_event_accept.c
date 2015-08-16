@@ -149,6 +149,7 @@ ngx_event_accept(ngx_event_t *ev)
         ngx_accept_disabled = ngx_cycle->connection_n / 8
                               - ngx_cycle->free_connection_n;
 
+		// 从连接池中取出连接并初始化
         c = ngx_get_connection(s, ev->log);
 
         if (c == NULL) {
@@ -164,12 +165,14 @@ ngx_event_accept(ngx_event_t *ev)
         (void) ngx_atomic_fetch_add(ngx_stat_active, 1);
 #endif
 
+		// 分配内存池
         c->pool = ngx_create_pool(ls->pool_size, ev->log);
         if (c->pool == NULL) {
             ngx_close_accepted_connection(c);
             return;
         }
 
+		// 分配地址存储结构
         c->sockaddr = ngx_palloc(c->pool, socklen);
         if (c->sockaddr == NULL) {
             ngx_close_accepted_connection(c);
@@ -178,6 +181,7 @@ ngx_event_accept(ngx_event_t *ev)
 
         ngx_memcpy(c->sockaddr, sa, socklen);
 
+		// 分配日志结构
         log = ngx_palloc(c->pool, sizeof(ngx_log_t));
         if (log == NULL) {
             ngx_close_accepted_connection(c);
@@ -209,9 +213,13 @@ ngx_event_accept(ngx_event_t *ev)
 
         *log = ls->log;
 
+		// ngx_unix_recv
         c->recv = ngx_recv;
+		// ngx_unix_send
         c->send = ngx_send;
+		// ngx_readv_chain
         c->recv_chain = ngx_recv_chain;
+		// ngx_linux_sendfile_chain
         c->send_chain = ngx_send_chain;
 
         c->log = log;
@@ -365,6 +373,7 @@ ngx_event_accept(ngx_event_t *ev)
         log->data = NULL;
         log->handler = NULL;
 
+		// ngx_connection_handler_pt
         ls->handler(c);
 
         if (ngx_event_flags & NGX_USE_KQUEUE_EVENT) {

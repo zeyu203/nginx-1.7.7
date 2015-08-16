@@ -972,6 +972,9 @@ ngx_send_lowat(ngx_connection_t *c, size_t lowat)
 }
 
 
+// static char *
+// ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+// 解析配置文件中的 events 配置项 {{{
 static char *
 ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -981,6 +984,7 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_conf_t            pcf;
     ngx_event_module_t   *m;
 
+	// 已经初始化过则不再重复初始化
     if (*(void **) conf) {
         return "is duplicate";
     }
@@ -993,6 +997,8 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             continue;
         }
 
+		// 重新设定事件模块序号
+		// ngx_event_core_module、ngx_epoll_module
         ngx_modules[i]->ctx_index = ngx_event_max_module++;
     }
 
@@ -1008,6 +1014,7 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     *(void **) conf = ctx;
 
+	// 为每个 EVENT 模块创建配置，保存响应配置结构
     for (i = 0; ngx_modules[i]; i++) {
         if (ngx_modules[i]->type != NGX_EVENT_MODULE) {
             continue;
@@ -1016,6 +1023,9 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         m = ngx_modules[i]->ctx;
 
         if (m->create_conf) {
+			// 调用 create_conf 回调
+			// ngx_event_core_module	ngx_event_core_create_conf
+			// ngx_epoll_module			ngx_epoll_create_conf
             (*ctx)[ngx_modules[i]->ctx_index] = m->create_conf(cf->cycle);
             if ((*ctx)[ngx_modules[i]->ctx_index] == NULL) {
                 return NGX_CONF_ERROR;
@@ -1043,6 +1053,9 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         m = ngx_modules[i]->ctx;
 
         if (m->init_conf) {
+			// 调用 init_conf 回调
+			// ngx_event_core_module	ngx_event_core_init_conf
+			// ngx_epoll_module			ngx_epoll_init_conf
             rv = m->init_conf(cf->cycle, (*ctx)[ngx_modules[i]->ctx_index]);
             if (rv != NGX_CONF_OK) {
                 return rv;
@@ -1051,7 +1064,7 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     return NGX_CONF_OK;
-}
+} // }}}
 
 
 static char *
@@ -1253,6 +1266,8 @@ ngx_event_debug_connection(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 }
 
 
+// static void * ngx_event_core_create_conf(ngx_cycle_t *cycle)
+// 创建事件模块配置结构 {{{
 static void *
 ngx_event_core_create_conf(ngx_cycle_t *cycle)
 {
@@ -1263,6 +1278,7 @@ ngx_event_core_create_conf(ngx_cycle_t *cycle)
         return NULL;
     }
 
+	// 创建事件模块响应结构，保存事件模块各项参数，初始化为 -1
     ecf->connections = NGX_CONF_UNSET_UINT;
     ecf->use = NGX_CONF_UNSET_UINT;
     ecf->multi_accept = NGX_CONF_UNSET;
@@ -1281,9 +1297,11 @@ ngx_event_core_create_conf(ngx_cycle_t *cycle)
 #endif
 
     return ecf;
-}
+} // }}}
 
 
+// static char * ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
+// 初始化事件模块配置结构 {{{
 static char *
 ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
 {
@@ -1411,4 +1429,4 @@ ngx_event_core_init_conf(ngx_cycle_t *cycle, void *conf)
     return NGX_CONF_OK;
 
 #endif
-}
+} // }}}

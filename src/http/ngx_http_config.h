@@ -14,11 +14,13 @@
 #include <ngx_http.h>
 
 
+// struct ngx_http_conf_ctx_t
+// http 模块配置结构 {{{
 typedef struct {
     void        **main_conf;
     void        **srv_conf;
     void        **loc_conf;
-} ngx_http_conf_ctx_t;
+} ngx_http_conf_ctx_t; // }}}
 
 
 // struct ngx_http_module_t

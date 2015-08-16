@@ -762,7 +762,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 
             } else {
 				// 调用读事件回调函数
-				// 如果是 epoll 时间则会调用 ngx_event_accept 处理 accept
+				// 如果是 epoll 事件则会调用 ngx_event_accept 处理 accept
                 rev->handler(rev);
             }
         }

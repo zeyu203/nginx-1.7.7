@@ -282,7 +282,7 @@ ngx_cycle_t * ngx_init_cycle(ngx_cycle_t *old_cycle)
     log->log_level = NGX_LOG_DEBUG_ALL;
 #endif
 
-	// 获取配置文件中的全部参数
+	// 解析命令行传递的配置
     if (ngx_conf_param(&conf) != NGX_CONF_OK) {
         environ = senv;
         ngx_destroy_cycle_pools(&conf);

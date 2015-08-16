@@ -79,6 +79,8 @@ ngx_str_t  ngx_http_html_default_types[] = {
 };
 
 
+// static ngx_command_t  ngx_http_commands
+// http 模块命令结构 {{{
 static ngx_command_t  ngx_http_commands[] = {
 
     { ngx_string("http"),
@@ -89,7 +91,7 @@ static ngx_command_t  ngx_http_commands[] = {
       NULL },
 
       ngx_null_command
-};
+}; // }}}
 
 
 // ngx_core_module_t  ngx_http_module_ctx
@@ -119,6 +121,8 @@ ngx_module_t  ngx_http_module = {
 }; // }}}
 
 
+// static char * ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+// "http" 配置块解析 {{{
 static char *
 ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -138,6 +142,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+	// 创建 http 配置结构，保存所有 http 模块的配置信息
     *(ngx_http_conf_ctx_t **) conf = ctx;
 
 
@@ -149,6 +154,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             continue;
         }
 
+		// 重新设定 HTTP 模块序号
         ngx_modules[m]->ctx_index = ngx_http_max_module++;
     }
 
@@ -198,6 +204,8 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         mi = ngx_modules[m]->ctx_index;
 
         if (module->create_main_conf) {
+			// 调用每个模块的 create_main_conf 回调函数
+			// 创建自己的 main_conf
             ctx->main_conf[mi] = module->create_main_conf(cf);
             if (ctx->main_conf[mi] == NULL) {
                 return NGX_CONF_ERROR;
@@ -205,6 +213,8 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         if (module->create_srv_conf) {
+			// 调用每个模块的 create_srv_conf 回调函数
+			// 创建自己的 srv_conf
             ctx->srv_conf[mi] = module->create_srv_conf(cf);
             if (ctx->srv_conf[mi] == NULL) {
                 return NGX_CONF_ERROR;
@@ -212,6 +222,8 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
 
         if (module->create_loc_conf) {
+			// 调用每个模块的 create_loc_conf 回调函数
+			// 创建自己的 loc_conf
             ctx->loc_conf[mi] = module->create_loc_conf(cf);
             if (ctx->loc_conf[mi] == NULL) {
                 return NGX_CONF_ERROR;
@@ -230,6 +242,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         module = ngx_modules[m]->ctx;
 
         if (module->preconfiguration) {
+			// 调用每个模块的 preconfiguration 回调函数
             if (module->preconfiguration(cf) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
@@ -265,12 +278,15 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         /* init http{} main_conf's */
 
         if (module->init_main_conf) {
+			// 调用每个模块的 init_main_conf 回调函数
+			// 初始化自己的 main_conf
             rv = module->init_main_conf(cf, ctx->main_conf[mi]);
             if (rv != NGX_CONF_OK) {
                 goto failed;
             }
         }
 
+		// 合并同名配置项
         rv = ngx_http_merge_servers(cf, cmcf, module, mi);
         if (rv != NGX_CONF_OK) {
             goto failed;
@@ -317,6 +333,10 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
+	// 初始化所有的变量
+	// 不仅包括HTTP core模块的变量
+	// 也包括其他的HTTP模块导出的变量，以及配置文件中使用 set 命令设置的变量
+	// 这里的初始化包括初始化hash表，以及初始化数组索引
     if (ngx_http_variables_init_vars(cf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -329,6 +349,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     *cf = pcf;
 
 
+	// 初始化 phase_engine 结构
     if (ngx_http_init_phase_handlers(cf, cmcf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -336,6 +357,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* optimize the lists of ports, addresses and server names */
 
+	// 创建 http 连接，并设置为监听状态
     if (ngx_http_optimize_servers(cf, cmcf, cmcf->ports) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -347,7 +369,7 @@ failed:
     *cf = pcf;
 
     return rv;
-}
+} // }}}
 
 
 static ngx_int_t
@@ -563,6 +585,9 @@ ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 }
 
 
+// static char *
+// ngx_http_merge_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
+// 调用各 http 模块的 merge_xxx_conf 回调函数，合并同名配置 {{{
 static char *
 ngx_http_merge_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     ngx_http_module_t *module, ngx_uint_t ctx_index)
@@ -622,7 +647,7 @@ failed:
     *ctx = saved;
 
     return rv;
-}
+} // }}}
 
 
 static char *

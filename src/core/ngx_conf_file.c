@@ -59,7 +59,7 @@ static ngx_uint_t argument_number[] = {
 
 
 // char * ngx_conf_param(ngx_conf_t *cf)
-// 获取配置文件中的全部参数 {{{
+// 解析命令行传递的配置 {{{
 char *
 ngx_conf_param(ngx_conf_t *cf)
 {
@@ -176,6 +176,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 
 
     for ( ;; ) {
+		// 读取一行指令
         rc = ngx_conf_read_token(cf);
 
         /*
@@ -252,6 +253,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         }
 
 
+		// 解析配置项
         rc = ngx_conf_handler(cf, rc);
 
         if (rc == NGX_ERROR) {
@@ -263,6 +265,7 @@ failed:
 
     rc = NGX_ERROR;
 
+	// 完成配置项解析，释放资源
 done:
 
     if (filename) {
@@ -288,6 +291,8 @@ done:
 } // }}}
 
 
+// static ngx_int_t ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
+// 配置项解析 {{{
 static ngx_int_t
 ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 {
@@ -396,6 +401,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
                 }
             }
 
+			// 调用命令创建回调函数
             rv = cmd->set(cf, cmd, conf);
 
             if (rv == NGX_CONF_OK) {
@@ -432,7 +438,7 @@ invalid:
                        name->data);
 
     return NGX_ERROR;
-}
+} // }}}
 
 
 // static ngx_int_t ngx_conf_read_token(ngx_conf_t *cf)
@@ -704,7 +710,6 @@ ngx_conf_read_token(ngx_conf_t *cf)
                     return NGX_ERROR;
                 }
 
-				// 为 args 新元素赋值
                 for (dst = word->data, src = start, len = 0;
                      src < b->pos - 1;
                      len++)

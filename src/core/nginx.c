@@ -1437,6 +1437,9 @@ ngx_get_cpu_affinity(ngx_uint_t n)
 }
 
 
+// static char *
+// ngx_set_worker_processes(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+// 获取配置文件中配置项 worker_processes {{{
 static char *
 ngx_set_worker_processes(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -1451,11 +1454,13 @@ ngx_set_worker_processes(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     value = (ngx_str_t *) cf->args->elts;
 
+	// worker_processes auto 则将 worker 数设为 cpu 核心数
     if (ngx_strcmp(value[1].data, "auto") == 0) {
         ccf->worker_processes = ngx_ncpu;
         return NGX_CONF_OK;
     }
 
+	// 否则设置为相应的数字
     ccf->worker_processes = ngx_atoi(value[1].data, value[1].len);
 
     if (ccf->worker_processes == NGX_ERROR) {
@@ -1463,4 +1468,4 @@ ngx_set_worker_processes(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     return NGX_CONF_OK;
-}
+} // }}}

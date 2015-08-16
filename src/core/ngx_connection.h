@@ -18,57 +18,65 @@ typedef struct ngx_listening_s  ngx_listening_t;
 // struct ngx_listening_s
 // socket 属性结构 {{{
 struct ngx_listening_s {
-    ngx_socket_t        fd;
+    ngx_socket_t        fd;			// socketfd
 
-    struct sockaddr    *sockaddr;
+    struct sockaddr    *sockaddr;	// 地址结构
     socklen_t           socklen;    /* size of sockaddr */
-    size_t              addr_text_max_len;
-    ngx_str_t           addr_text; // 点分十进制IP字符串
+    size_t              addr_text_max_len;	// addr_text 的最大长度
+    ngx_str_t           addr_text;	// 点分十进制IP字符串
 
-    int                 type;
+    int                 type;		// 套接字类型 SOCK_STREAM 表示 tcp
 
+	// 允许正在通过三次握手建立tcp连接但还没有任何进程开始处理的连接最大个数
     int                 backlog;
-    int                 rcvbuf;
-    int                 sndbuf;
+    int                 rcvbuf;		// 接收缓冲区大小
+    int                 sndbuf;		// 发送缓冲区大小
 #if (NGX_HAVE_KEEPALIVE_TUNABLE)
-    int                 keepidle;
-    int                 keepintvl;
+    int                 keepidle;	// 保持 TCP/IP 连接的时间
+    int                 keepintvl;	// 两次探测的时间间隔，默认 150（75秒探测一次）
+	// 关闭一个非活跃连接之前进行探测的最大次数，默认为 8 次
     int                 keepcnt;
 #endif
 
     /* handler of accepted connection */
-    ngx_connection_handler_pt   handler;
+	// ngx_http_init_connection
+    ngx_connection_handler_pt   handler;	//当新的tcp连接成功建立后的处理方法
 
+	// 目前主要用于HTTP或者mail等模块，用于保存当前监听端口对应着的所有主机名
     void               *servers;  /* array of ngx_http_in_addr_t, for example */
 
-    ngx_log_t           log;
-    ngx_log_t          *logp;
+    ngx_log_t           log;		// 日志
+    ngx_log_t          *logp;		// 日志指针
 
+	// 如果为新的tcp连接创建内存池，则内存池的初始大小应该是 pool_size
     size_t              pool_size;
     /* should be here because of the AcceptEx() preread */
     size_t              post_accept_buffer_size;
     /* should be here because of the deferred accept */
-    ngx_msec_t          post_accept_timeout;
+    ngx_msec_t          post_accept_timeout;	// 连接空闲超时
 
-    ngx_listening_t    *previous;
-    ngx_connection_t   *connection;
+    ngx_listening_t    *previous;	// 用于组成单链表
+    ngx_connection_t   *connection;	// 当前监听句柄对应的连接结构
 
-    unsigned            open:1;
+    unsigned            open:1;		// 为1表示监听句柄有效，为0表示正常关闭
+	// 为1表示不关闭原先打开的监听端口，为0表示关闭曾经打开的监听端口
     unsigned            remain:1;
+	// 为1表示跳过设置当前ngx_listening_t结构体中的套接字，为0时正常初始化套接字
     unsigned            ignore:1;
 
     unsigned            bound:1;       /* already bound */
     unsigned            inherited:1;   /* inherited from previous process */
     unsigned            nonblocking_accept:1;
-    unsigned            listen:1;
-    unsigned            nonblocking:1;
+    unsigned            listen:1;	// 为1表示当前结构体对应的套接字已经监听
+    unsigned            nonblocking:1;	// 是否非阻塞
+	// 是否进程间共享
     unsigned            shared:1;    /* shared between threads or processes */
-    unsigned            addr_ntop:1;
+    unsigned            addr_ntop:1;	// 为1表示将网络地址转变为字符串形式的地址
 
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
-    unsigned            ipv6only:1;
+    unsigned            ipv6only:1;	// 仅支持 IPV6
 #endif
-    unsigned            keepalive:2;
+    unsigned            keepalive:2;	// 保持长连接
 
 #if (NGX_HAVE_DEFERRED_ACCEPT)
     unsigned            deferred_accept:1;

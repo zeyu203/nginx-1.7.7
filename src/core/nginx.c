@@ -376,6 +376,7 @@ main(int argc, char *const *argv)
 	//     &ngx_http_uwsgi_module,						// NGX_HTTP_MODULE
 	//     &ngx_http_scgi_module,						// NGX_HTTP_MODULE
 	//     &ngx_http_memcached_module,					// NGX_HTTP_MODULE
+	//     &ngx_http_stub_status_module,				// NGX_HTTP_MODULE
 	//     &ngx_http_empty_gif_module,					// NGX_HTTP_MODULE
 	//     &ngx_http_browser_module,					// NGX_HTTP_MODULE
 	//     &ngx_http_upstream_hash_module,				// NGX_HTTP_MODULE

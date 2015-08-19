@@ -206,6 +206,13 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (module->create_main_conf) {
 			// 调用每个模块的 create_main_conf 回调函数
 			// 创建自己的 main_conf
+			//
+			// ngx_http_core_module				ngx_http_core_create_main_conf
+			// ngx_http_log_module				ngx_http_log_create_main_conf
+			// ngx_http_upstream_module			ngx_http_upstream_create_main_conf
+			// ngx_http_map_module				ngx_http_map_create_conf
+			// ngx_http_ssi_filter_module		ngx_http_ssi_create_main_conf
+			// ngx_http_charset_filter_module	ngx_http_charset_create_main_conf
             ctx->main_conf[mi] = module->create_main_conf(cf);
             if (ctx->main_conf[mi] == NULL) {
                 return NGX_CONF_ERROR;
@@ -215,6 +222,12 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (module->create_srv_conf) {
 			// 调用每个模块的 create_srv_conf 回调函数
 			// 创建自己的 srv_conf
+			//
+			// ngx_http_core_module					ngx_http_core_create_srv_conf
+			// ngx_http_ssl_module					ngx_http_ssl_create_srv_conf
+			// ngx_http_upstream_hash_module		ngx_http_upstream_hash_create_conf
+			// ngx_http_upstream_least_conn_module	ngx_http_upstream_least_conn_create_conf
+			// ngx_http_upstream_keepalive_module	ngx_http_upstream_keepalive_create_conf
             ctx->srv_conf[mi] = module->create_srv_conf(cf);
             if (ctx->srv_conf[mi] == NULL) {
                 return NGX_CONF_ERROR;
@@ -224,6 +237,30 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (module->create_loc_conf) {
 			// 调用每个模块的 create_loc_conf 回调函数
 			// 创建自己的 loc_conf
+			//
+			// ngx_http_core_module				ngx_http_core_create_loc_conf
+			// ngx_http_log_module				ngx_http_log_create_loc_conf
+			// ngx_http_gzip_static_module		ngx_http_gzip_static_create_conf
+			// ngx_http_autoindex_module		ngx_http_autoindex_create_loc_conf
+			// ngx_http_index_module			ngx_http_index_create_loc_conf
+			// ngx_http_auth_basic_module		ngx_http_auth_basic_create_loc_conf
+			// ngx_http_access_module			ngx_http_access_create_loc_conf
+			// ngx_http_limit_conn_module		ngx_http_limit_conn_create_conf
+			// ngx_http_limit_req_module		ngx_http_limit_req_create_conf
+			// ngx_http_referer_module			ngx_http_referer_create_conf
+			// ngx_http_rewrite_module			ngx_http_rewrite_create_loc_conf
+			// ngx_http_proxy_module			ngx_http_proxy_create_loc_conf
+			// ngx_http_fastcgi_module			ngx_http_fastcgi_create_loc_conf
+			// ngx_http_uwsgi_module			ngx_http_uwsgi_create_loc_conf
+			// ngx_http_scgi_module				ngx_http_scgi_create_loc_conf
+			// ngx_http_memcached_module		ngx_http_memcached_create_loc_conf
+			// ngx_http_browser_module			ngx_http_browser_create_conf
+			// ngx_http_gzip_filter_module		ngx_http_gzip_create_conf
+			// ngx_http_ssi_filter_module		ngx_http_ssi_create_loc_conf
+			// ngx_http_charset_filter_module	ngx_http_charset_create_loc_conf
+			// ngx_http_userid_filter_module	ngx_http_userid_create_conf
+			// ngx_http_headers_filter_module	ngx_http_headers_create_conf
+			// ngx_http_copy_filter_module		ngx_http_copy_filter_create_conf
             ctx->loc_conf[mi] = module->create_loc_conf(cf);
             if (ctx->loc_conf[mi] == NULL) {
                 return NGX_CONF_ERROR;
@@ -243,6 +280,17 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
         if (module->preconfiguration) {
 			// 调用每个模块的 preconfiguration 回调函数
+			//
+			// ngx_http_core_module				ngx_http_core_preconfiguration
+			// ngx_http_upstream_module			ngx_http_upstream_add_variables
+			// ngx_http_ssl_module				ngx_http_ssl_add_variables
+			// ngx_http_proxy_module			ngx_http_proxy_add_variables
+			// ngx_http_fastcgi_module			ngx_http_fastcgi_add_variables
+			// ngx_http_browser_module			ngx_http_browser_add_variable
+			// ngx_http_stub_status_module		ngx_http_stub_status_add_variables
+			// ngx_http_gzip_filter_module		ngx_http_gzip_add_variables
+			// ngx_http_ssi_filter_module		ngx_http_ssi_preconfiguration
+			// ngx_http_userid_filter_module	ngx_http_userid_add_variables
             if (module->preconfiguration(cf) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
@@ -280,6 +328,10 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (module->init_main_conf) {
 			// 调用每个模块的 init_main_conf 回调函数
 			// 初始化自己的 main_conf
+			//
+			// ngx_http_core_module			ngx_http_core_init_main_conf
+			// ngx_http_upstream_module		ngx_http_upstream_init_main_conf
+			// ngx_http_ssi_filter_module	ngx_http_ssi_init_main_conf
             rv = module->init_main_conf(cf, ctx->main_conf[mi]);
             if (rv != NGX_CONF_OK) {
                 goto failed;
@@ -327,6 +379,32 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         module = ngx_modules[m]->ctx;
 
         if (module->postconfiguration) {
+			// 调用每个 HTTP 模块的 postconfiguration 回调函数
+			//
+			// ngx_http_log_module					ngx_http_log_init
+			// ngx_http_static_module				ngx_http_static_init
+			// ngx_http_gzip_static_module			ngx_http_gzip_static_init
+			// ngx_http_autoindex_module			ngx_http_autoindex_init
+			// ngx_http_index_module				ngx_http_index_init
+			// ngx_http_auth_basic_module			ngx_http_auth_basic_init
+			// ngx_http_access_module				ngx_http_access_init
+			// ngx_http_limit_conn_module			ngx_http_limit_conn_init
+			// ngx_http_limit_req_module			ngx_http_limit_req_init
+			// ngx_http_rewrite_module				ngx_http_rewrite_init
+			// ngx_http_ssl_module					ngx_http_ssl_init
+			// ngx_http_write_filter_module			ngx_http_write_filter_init
+			// ngx_http_header_filter_module		ngx_http_header_filter_init
+			// ngx_http_chunked_filter_module		ngx_http_chunked_filter_init
+			// ngx_http_range_body_filter_module	ngx_http_range_body_filter_init
+			// ngx_http_gzip_filter_module			ngx_http_gzip_filter_init
+			// ngx_http_postpone_filter_module		ngx_http_postpone_filter_init
+			// ngx_http_ssi_filter_module			ngx_http_ssi_filter_init
+			// ngx_http_charset_filter_module		ngx_http_charset_postconfiguration
+			// ngx_http_userid_filter_module		ngx_http_userid_init
+			// ngx_http_headers_filter_module		ngx_http_headers_filter_init
+			// ngx_http_copy_filter_module			ngx_http_copy_filter_init
+			// ngx_http_range_body_filter_module	ngx_http_range_body_filter_init
+			// ngx_http_not_modified_filter_module	ngx_http_not_modified_filter_init
             if (module->postconfiguration(cf) != NGX_OK) {
                 return NGX_CONF_ERROR;
             }
@@ -610,6 +688,10 @@ ngx_http_merge_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
         ctx->srv_conf = cscfp[s]->ctx->srv_conf;
 
         if (module->merge_srv_conf) {
+			// 调用每个 HTTP 模块的 merge_srv_conf 合并 srv_conf 与 main_conf
+			//
+			// ngx_http_core_module	ngx_http_core_merge_srv_conf
+			// ngx_http_ssl_module	ngx_http_ssl_merge_srv_conf
             rv = module->merge_srv_conf(cf, saved.srv_conf[ctx_index],
                                         cscfp[s]->ctx->srv_conf[ctx_index]);
             if (rv != NGX_CONF_OK) {
@@ -623,6 +705,31 @@ ngx_http_merge_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
 
             ctx->loc_conf = cscfp[s]->ctx->loc_conf;
 
+			// 调用每个 HTTP 模块的 merge_loc_conf 合并 loc_conf 与 serv_conf
+			//
+			// ngx_http_core_module				ngx_http_core_merge_loc_conf
+			// ngx_http_log_module				ngx_http_log_merge_loc_conf
+			// ngx_http_gzip_static_module		ngx_http_gzip_static_merge_conf
+			// ngx_http_autoindex_module		ngx_http_autoindex_merge_loc_conf
+			// ngx_http_index_module			ngx_http_index_merge_loc_conf
+			// ngx_http_auth_basic_module		ngx_http_auth_basic_merge_loc_conf
+			// ngx_http_access_module			ngx_http_access_merge_loc_conf
+			// ngx_http_limit_conn_module		ngx_http_limit_conn_merge_conf
+			// ngx_http_limit_req_module		ngx_http_limit_req_merge_conf
+			// ngx_http_referer_module			ngx_http_referer_merge_conf
+			// ngx_http_rewrite_module			ngx_http_rewrite_merge_loc_conf
+			// ngx_http_proxy_module			ngx_http_proxy_merge_loc_conf
+			// ngx_http_fastcgi_module			ngx_http_fastcgi_merge_loc_conf
+			// ngx_http_uwsgi_module			ngx_http_uwsgi_merge_loc_conf
+			// ngx_http_scgi_module				ngx_http_scgi_merge_loc_conf
+			// ngx_http_memcached_module		ngx_http_memcached_merge_loc_conf
+			// ngx_http_browser_module			ngx_http_browser_merge_conf
+			// ngx_http_gzip_filter_module		ngx_http_gzip_merge_conf
+			// ngx_http_ssi_filter_module		ngx_http_ssi_merge_loc_conf
+			// ngx_http_charset_filter_module	ngx_http_charset_merge_loc_conf
+			// ngx_http_userid_filter_module	ngx_http_userid_merge_conf
+			// ngx_http_headers_filter_module	ngx_http_headers_merge_conf
+			// ngx_http_copy_filter_module		ngx_http_copy_filter_merge_conf
             rv = module->merge_loc_conf(cf, saved.loc_conf[ctx_index],
                                         cscfp[s]->ctx->loc_conf[ctx_index]);
             if (rv != NGX_CONF_OK) {
@@ -650,6 +757,10 @@ failed:
 } // }}}
 
 
+// static char *
+// ngx_http_merge_locations(ngx_conf_t *cf, ngx_queue_t *locations,
+//     void **loc_conf, ngx_http_module_t *module, ngx_uint_t ctx_index)
+// 递归合并 loc_conf {{{
 static char *
 ngx_http_merge_locations(ngx_conf_t *cf, ngx_queue_t *locations,
     void **loc_conf, ngx_http_module_t *module, ngx_uint_t ctx_index)
@@ -692,7 +803,7 @@ ngx_http_merge_locations(ngx_conf_t *cf, ngx_queue_t *locations,
     *ctx = saved;
 
     return NGX_CONF_OK;
-}
+} // }}}
 
 
 static ngx_int_t

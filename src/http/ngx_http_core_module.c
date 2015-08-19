@@ -3432,6 +3432,8 @@ ngx_http_core_preconfiguration(ngx_conf_t *cf)
 }
 
 
+// static void * ngx_http_core_create_main_conf(ngx_conf_t *cf)
+// 创建 main_conf {{{
 static void *
 ngx_http_core_create_main_conf(ngx_conf_t *cf)
 {
@@ -3456,9 +3458,11 @@ ngx_http_core_create_main_conf(ngx_conf_t *cf)
     cmcf->variables_hash_bucket_size = NGX_CONF_UNSET_UINT;
 
     return cmcf;
-}
+} // }}}
 
 
+// static char * ngx_http_core_init_main_conf(ngx_conf_t *cf, void *conf)
+// 初始化 main_conf {{{
 static char *
 ngx_http_core_init_main_conf(ngx_conf_t *cf, void *conf)
 {
@@ -3483,7 +3487,7 @@ ngx_http_core_init_main_conf(ngx_conf_t *cf, void *conf)
     }
 
     return NGX_CONF_OK;
-}
+} // }}}
 
 
 static void *

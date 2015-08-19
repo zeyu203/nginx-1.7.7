@@ -142,11 +142,13 @@ struct ngx_http_phase_handler_s {
 };
 
 
+// struct ngx_http_phase_engine_t
+// http 处理引擎 {{{
 typedef struct {
     ngx_http_phase_handler_t  *handlers;
     ngx_uint_t                 server_rewrite_index;
     ngx_uint_t                 location_rewrite_index;
-} ngx_http_phase_engine_t;
+} ngx_http_phase_engine_t; // }}}
 
 
 typedef struct {
@@ -154,7 +156,10 @@ typedef struct {
 } ngx_http_phase_t;
 
 
+// struct ngx_http_core_main_conf_t
+// ngx_http_core_module 模块的 main_conf {{{
 typedef struct {
+	// server 层配置解析与存储
     ngx_array_t                servers;         /* ngx_http_core_srv_conf_t */
 
     ngx_http_phase_engine_t    phase_engine;
@@ -179,7 +184,7 @@ typedef struct {
     ngx_uint_t                 try_files;       /* unsigned  try_files:1 */
 
     ngx_http_phase_t           phases[NGX_HTTP_LOG_PHASE + 1];
-} ngx_http_core_main_conf_t;
+} ngx_http_core_main_conf_t; // }}}
 
 
 typedef struct {

@@ -135,11 +135,13 @@ typedef struct ngx_http_phase_handler_s  ngx_http_phase_handler_t;
 typedef ngx_int_t (*ngx_http_phase_handler_pt)(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph);
 
+// struct ngx_http_phase_handler_s
+// http 处理引擎链表节点 {{{
 struct ngx_http_phase_handler_s {
     ngx_http_phase_handler_pt  checker;
     ngx_http_handler_pt        handler;
     ngx_uint_t                 next;
-};
+}; // }}}
 
 
 // struct ngx_http_phase_engine_t
@@ -159,30 +161,44 @@ typedef struct {
 // struct ngx_http_core_main_conf_t
 // ngx_http_core_module 模块的 main_conf {{{
 typedef struct {
-	// server 层配置解析与存储
+	// 存储所有的ngx_http_core_srv_conf_t，元素的个数等于server块的个数
     ngx_array_t                servers;         /* ngx_http_core_srv_conf_t */
 
+	// 存储 http 处理引擎，处理 http 连接时，会依次调用
+	// 通过 handlers 域的 next 域构成链表
     ngx_http_phase_engine_t    phase_engine;
 
+	// 存储所有的 request header
     ngx_hash_t                 headers_in_hash;
 
+	// 存储所有的变量，比如通过rewrite模块的set指令设置的变量，会存储在这个hash中
+	// 诸如$http_XXX和$cookie_XXX等内建变量不会在此分配空间
     ngx_hash_t                 variables_hash;
 
+	// ngx_http_variable_t类型的数组，所有被索引的nginx变量被存储在这个数组中
     ngx_array_t                variables;       /* ngx_http_variable_t */
     ngx_uint_t                 ncaptures;
 
+	// server names的hash表的允许的最大bucket数量，默认值是512
     ngx_uint_t                 server_names_hash_max_size;
+	// server names的hash表中每个桶允许占用的最大空间，默认值是ngx_cacheline_size
     ngx_uint_t                 server_names_hash_bucket_size;
 
+	// variables的hash表的允许的最大bucket数量，默认值是512
     ngx_uint_t                 variables_hash_max_size;
+	// variables的hash表中每个桶允许占用的最大空间，默认值是64
     ngx_uint_t                 variables_hash_bucket_size;
 
+	// 存储所有的变量名，以及变量名和变量内容的kv数组
+	// 初始化variables_hash后，会被置为NULL
     ngx_hash_keys_arrays_t    *variables_keys;
 
+	// 保存监听的所有端口，ngx_http_port_t类型，其中包含socket地址信息
     ngx_array_t               *ports;
 
     ngx_uint_t                 try_files;       /* unsigned  try_files:1 */
 
+	// 所有的phase的数组，其中每个元素是该phase上注册的handler的数组
     ngx_http_phase_t           phases[NGX_HTTP_LOG_PHASE + 1];
 } ngx_http_core_main_conf_t; // }}}
 

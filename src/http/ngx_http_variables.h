@@ -32,14 +32,17 @@ typedef ngx_int_t (*ngx_http_get_variable_pt) (ngx_http_request_t *r,
 #define NGX_HTTP_VAR_NOHASH       8
 
 
+// struct ngx_http_variable_s
+// http 变量结构 {{{
 struct ngx_http_variable_s {
     ngx_str_t                     name;   /* must be first to build the hash */
     ngx_http_set_variable_pt      set_handler;
     ngx_http_get_variable_pt      get_handler;
     uintptr_t                     data;
     ngx_uint_t                    flags;
+	// 所在变量数组中的下标
     ngx_uint_t                    index;
-};
+}; // }}}
 
 
 ngx_http_variable_t *ngx_http_add_variable(ngx_conf_t *cf, ngx_str_t *name,

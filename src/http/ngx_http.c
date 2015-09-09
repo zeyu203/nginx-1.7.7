@@ -161,6 +161,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* the http main_conf context, it is the same in the all http contexts */
 
+	// 为所有模块的 main_conf 分配存储空间
     ctx->main_conf = ngx_pcalloc(cf->pool,
                                  sizeof(void *) * ngx_http_max_module);
     if (ctx->main_conf == NULL) {
@@ -173,6 +174,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
      * the server{}s' srv_conf's
      */
 
+	// 为所有模块的 srv_conf 分配存储空间
     ctx->srv_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->srv_conf == NULL) {
         return NGX_CONF_ERROR;
@@ -184,6 +186,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
      * the server{}s' loc_conf's
      */
 
+	// 为所有模块的 loc_conf 分配存储空间
     ctx->loc_conf = ngx_pcalloc(cf->pool, sizeof(void *) * ngx_http_max_module);
     if (ctx->loc_conf == NULL) {
         return NGX_CONF_ERROR;
@@ -268,6 +271,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         }
     }
 
+	// 解析所有的模块配置前先保存 cf，解析后还原
     pcf = *cf;
     cf->ctx = ctx;
 

@@ -524,6 +524,8 @@ ngx_parse_addr(ngx_pool_t *pool, ngx_addr_t *addr, u_char *text, size_t len)
 }
 
 
+// ngx_int_t ngx_parse_url(ngx_pool_t *pool, ngx_url_t *u)
+// url 解析 {{{
 ngx_int_t
 ngx_parse_url(ngx_pool_t *pool, ngx_url_t *u)
 {
@@ -540,7 +542,7 @@ ngx_parse_url(ngx_pool_t *pool, ngx_url_t *u)
     }
 
     return ngx_parse_inet_url(pool, u);
-}
+} // }}}
 
 
 static ngx_int_t

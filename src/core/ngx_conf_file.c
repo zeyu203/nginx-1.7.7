@@ -193,6 +193,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             goto done;
         }
 
+		// module 块解析完成
         if (rc == NGX_CONF_BLOCK_DONE) {
 
             if (type != parse_block) {
@@ -214,6 +215,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
             goto done;
         }
 
+		// 需要进入 module 块解析
         if (rc == NGX_CONF_BLOCK_START) {
 
             if (type == parse_param) {
@@ -759,6 +761,8 @@ ngx_conf_read_token(ngx_conf_t *cf)
 } // }}}
 
 
+// char * ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+// include 命令解析，将指定配置文件引入 {{{
 char *
 ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -822,7 +826,7 @@ ngx_conf_include(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_close_glob(&gl);
 
     return rv;
-}
+} // }}}
 
 
 ngx_int_t

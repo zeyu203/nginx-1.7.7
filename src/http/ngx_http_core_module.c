@@ -3067,6 +3067,7 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 
     *cf = pcf;
 
+	// 如果没有监听任何端口，则监听默认的 80 或 8000端口
     if (rv == NGX_CONF_OK && !cscf->listen) {
         ngx_memzero(&lsopt, sizeof(ngx_http_listen_opt_t));
 
@@ -3992,6 +3993,9 @@ ngx_http_core_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 }
 
 
+// static char *
+// ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+// HTTP listen 配置解析 {{{
 static char *
 ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -4008,10 +4012,12 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_memzero(&u, sizeof(ngx_url_t));
 
+	// value ["listen", "192.168.1.2:9200"]
     u.url = value[1];
     u.listen = 1;
     u.default_port = 80;
 
+	// 解析 url 到 ngx_url_t 结构
     if (ngx_parse_url(cf->pool, &u) != NGX_OK) {
         if (u.err) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
@@ -4022,6 +4028,7 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+	// 初始化 socket 配置结构
     ngx_memzero(&lsopt, sizeof(ngx_http_listen_opt_t));
 
     ngx_memcpy(&lsopt.u.sockaddr, u.sockaddr, u.socklen);
@@ -4330,12 +4337,13 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
+	// 将
     if (ngx_http_add_listen(cf, cscf, &lsopt) == NGX_OK) {
         return NGX_CONF_OK;
     }
 
     return NGX_CONF_ERROR;
-}
+} // }}}
 
 
 static char *

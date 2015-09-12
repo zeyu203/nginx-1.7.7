@@ -74,6 +74,8 @@ typedef struct {
 } ngx_addr_t;
 
 
+// struct ngx_url_t
+// nginx URL 存储结构 {{{
 typedef struct {
     ngx_str_t                 url;
     ngx_str_t                 host;
@@ -99,7 +101,7 @@ typedef struct {
     ngx_uint_t                naddrs;
 
     char                     *err;
-} ngx_url_t;
+} ngx_url_t; // }}}
 
 
 in_addr_t ngx_inet_addr(u_char *text, size_t len);

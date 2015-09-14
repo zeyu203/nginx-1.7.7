@@ -4337,7 +4337,7 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_ERROR;
     }
 
-	// 将
+	// 将监听连接加入全局变量统一管理
     if (ngx_http_add_listen(cf, cscf, &lsopt) == NGX_OK) {
         return NGX_CONF_OK;
     }
@@ -4346,6 +4346,9 @@ ngx_http_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 } // }}}
 
 
+// static char *
+// ngx_http_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+// 虚拟主机配置解析 {{{
 static char *
 ngx_http_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
@@ -4444,7 +4447,7 @@ ngx_http_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     return NGX_CONF_OK;
-}
+} // }}}
 
 
 static char *

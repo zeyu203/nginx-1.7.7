@@ -205,6 +205,8 @@ typedef struct {
 } ngx_http_core_main_conf_t; // }}}
 
 
+// struct ngx_http_core_srv_conf_t
+// 主机配置结构 {{{
 typedef struct {
     /* array of the ngx_http_server_name_t, "server_name" directive */
     ngx_array_t                 server_names;
@@ -232,19 +234,21 @@ typedef struct {
 #endif
 
     ngx_http_core_loc_conf_t  **named_locations;
-} ngx_http_core_srv_conf_t;
+} ngx_http_core_srv_conf_t; // }}}
 
 
 /* list of structures to find core_srv_conf quickly at run time */
 
 
+// struct ngx_http_server_name_t
+// 虚拟主机名结构 {{{
 typedef struct {
 #if (NGX_PCRE)
     ngx_http_regex_t          *regex;
 #endif
     ngx_http_core_srv_conf_t  *server;   /* virtual name server conf */
     ngx_str_t                  name;
-} ngx_http_server_name_t;
+} ngx_http_server_name_t; // }}}
 
 
 typedef struct {
@@ -294,13 +298,17 @@ typedef struct {
 } ngx_http_port_t;
 
 
+// struct ngx_http_conf_port_t
+// 配置 port 结构 {{{
 typedef struct {
     ngx_int_t                  family;
     in_port_t                  port;
     ngx_array_t                addrs;     /* array of ngx_http_conf_addr_t */
-} ngx_http_conf_port_t;
+} ngx_http_conf_port_t; // }}}
 
 
+// struct ngx_http_conf_addr_t
+// 配置地址结构 {{{
 typedef struct {
     ngx_http_listen_opt_t      opt;
 
@@ -316,7 +324,7 @@ typedef struct {
     /* the default server configuration for this address:port */
     ngx_http_core_srv_conf_t  *default_server;
     ngx_array_t                servers;  /* array of ngx_http_core_srv_conf_t */
-} ngx_http_conf_addr_t;
+} ngx_http_conf_addr_t; // }}}
 
 
 typedef struct {

@@ -440,7 +440,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* optimize the lists of ports, addresses and server names */
 
-	// 创建 http 连接，并设置为监听状态
+	// 优化解析到的地址结构
     if (ngx_http_optimize_servers(cf, cmcf, cmcf->ports) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -1284,6 +1284,10 @@ inclusive:
 }
 
 
+// ngx_int_t
+// ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
+//     ngx_http_listen_opt_t *lsopt)
+// 将 ip、port 加入配置结构的 ports 数组中 {{{
 ngx_int_t
 ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_listen_opt_t *lsopt)
@@ -1340,11 +1344,13 @@ ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 
         /* a port is already in the port list */
 
+		// 将当前 IP 添加到对应的 port 下的 address 数组中
         return ngx_http_add_addresses(cf, cscf, &port[i], lsopt);
     }
 
     /* add a port to the port list */
 
+	// 将尚未添加到 port 数组中的 port 加入 ports 数组中
     port = ngx_array_push(cmcf->ports);
     if (port == NULL) {
         return NGX_ERROR;
@@ -1354,10 +1360,15 @@ ngx_http_add_listen(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     port->port = p;
     port->addrs.elts = NULL;
 
+	// 创建新的 port 结构，并将 ip 添加到对应的 address 数组中
     return ngx_http_add_address(cf, cscf, port, lsopt);
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
+//     ngx_http_conf_port_t *port, ngx_http_listen_opt_t *lsopt)
+// 解析虚拟主机配置，然后将地址加入 ports数组中 {{{
 static ngx_int_t
 ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_conf_port_t *port, ngx_http_listen_opt_t *lsopt)
@@ -1418,6 +1429,8 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 
         /* the address is already in the address list */
 
+		// 新加入的地址已经在地址列表中存在了
+		// 将新的虚拟主机信息加入到这个地址的虚拟主机列表中
         if (ngx_http_add_server(cf, cscf, &addr[i]) != NGX_OK) {
             return NGX_ERROR;
         }
@@ -1470,8 +1483,9 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 
     /* add the address to the addresses list that bound to this port */
 
+	// 添加新地址信息到port的地址列表中
     return ngx_http_add_address(cf, cscf, port, lsopt);
-}
+} // }}}
 
 
 /*
@@ -1479,6 +1493,10 @@ ngx_http_add_addresses(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
  * configurations to the port list
  */
 
+// static ngx_int_t
+// ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
+//     ngx_http_conf_port_t *port, ngx_http_listen_opt_t *lsopt)
+// 将地址添加到配置结构的 ports 数组中 {{{
 static ngx_int_t
 ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_conf_port_t *port, ngx_http_listen_opt_t *lsopt)
@@ -1522,11 +1540,15 @@ ngx_http_add_address(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     addr->servers.elts = NULL;
 
     return ngx_http_add_server(cf, cscf, addr);
-}
+} // }}}
 
 
 /* add the server core module configuration to the address:port */
 
+// static ngx_int_t
+// ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
+//     ngx_http_conf_addr_t *addr)
+// 将地址加入虚拟主机列表 {{{
 static ngx_int_t
 ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_conf_addr_t *addr)
@@ -1561,9 +1583,12 @@ ngx_http_add_server(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     *server = cscf;
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
+// 优化解析到的地址结构，并创建连接结构初始化 {{{
 static ngx_int_t
 ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     ngx_array_t *ports)
@@ -1579,6 +1604,7 @@ ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     port = ports->elts;
     for (p = 0; p < ports->nelts; p++) {
 
+		// 排序便于查询
         ngx_sort(port[p].addrs.elts, (size_t) port[p].addrs.nelts,
                  sizeof(ngx_http_conf_addr_t), ngx_http_cmp_conf_addrs);
 
@@ -1596,21 +1622,27 @@ ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
 #endif
                )
             {
+				// 将虚拟主机信息存入hash结构，便于查询
                 if (ngx_http_server_names(cf, cmcf, &addr[a]) != NGX_OK) {
                     return NGX_ERROR;
                 }
             }
         }
 
+		// 创建连接结构并初始化
         if (ngx_http_init_listening(cf, &port[p]) != NGX_OK) {
             return NGX_ERROR;
         }
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_http_server_names(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
+//     ngx_http_conf_addr_t *addr)
+// 将虚拟主机信息存入哈希表中，优化查询 {{{
 static ngx_int_t
 ngx_http_server_names(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     ngx_http_conf_addr_t *addr)
@@ -1764,7 +1796,7 @@ failed:
     ngx_destroy_pool(ha.temp_pool);
 
     return NGX_ERROR;
-}
+} // }}}
 
 
 static ngx_int_t
@@ -1813,6 +1845,9 @@ ngx_http_cmp_dns_wildcards(const void *one, const void *two)
 }
 
 
+// static ngx_int_t
+// ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
+// 创建连接结构并初始化 {{{
 static ngx_int_t
 ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
 {
@@ -1889,7 +1924,7 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_listening_t *

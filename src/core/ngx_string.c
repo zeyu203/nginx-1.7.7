@@ -1865,6 +1865,9 @@ ngx_str_rbtree_lookup(ngx_rbtree_t *rbtree, ngx_str_t *val, uint32_t hash)
 
 /* ngx_sort() is implemented as insertion sort because we need stable sort */
 
+// void ngx_sort(void *base, size_t n, size_t size,
+//     ngx_int_t (*cmp)(const void *, const void *))
+// 排序函数 {{{
 void
 ngx_sort(void *base, size_t n, size_t size,
     ngx_int_t (*cmp)(const void *, const void *))
@@ -1893,7 +1896,7 @@ ngx_sort(void *base, size_t n, size_t size,
     }
 
     ngx_free(p);
-}
+} // }}}
 
 
 #if (NGX_MEMCPY_LIMIT)

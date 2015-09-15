@@ -440,7 +440,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     /* optimize the lists of ports, addresses and server names */
 
-	// 优化解析到的地址结构
+	// 优化解析到的地址结构并创建、初始化监听结构
     if (ngx_http_optimize_servers(cf, cmcf, cmcf->ports) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -986,6 +986,9 @@ ngx_http_init_static_location_trees(ngx_conf_t *cf,
 }
 
 
+// ngx_int_t ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
+//     ngx_http_core_loc_conf_t *clcf)
+// 将 location 配置加入到 locations 配置链表中 {{{
 ngx_int_t
 ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
     ngx_http_core_loc_conf_t *clcf)
@@ -1030,7 +1033,7 @@ ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
     ngx_queue_insert_tail(*locations, &lq->queue);
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t
@@ -1927,6 +1930,9 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
 } // }}}
 
 
+// static ngx_listening_t *
+// ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
+// 创建连接结构并初始化 {{{
 static ngx_listening_t *
 ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
 {
@@ -1998,7 +2004,7 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
 #endif
 
     return ls;
-}
+} // }}}
 
 
 static ngx_int_t

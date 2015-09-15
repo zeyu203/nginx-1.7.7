@@ -16,6 +16,9 @@ ngx_os_io_t  ngx_io;
 static void ngx_drain_connections(void);
 
 
+// ngx_listening_t *
+// ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
+// 创建监听结构 {{{
 ngx_listening_t *
 ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
 {
@@ -87,7 +90,7 @@ ngx_create_listening(ngx_conf_t *cf, void *sockaddr, socklen_t socklen)
 #endif
 
     return ls;
-}
+} // }}}
 
 
 // ngx_int_t ngx_set_inherited_sockets(ngx_cycle_t *cycle)

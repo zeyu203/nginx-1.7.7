@@ -808,6 +808,8 @@ static ngx_http_module_t  ngx_http_core_module_ctx = {
 };
 
 
+// ngx_module_t  ngx_http_core_module
+// nginx http 核心模块，配置了大量重要命令的解析回调函数 {{{
 ngx_module_t  ngx_http_core_module = {
     NGX_MODULE_V1,
     &ngx_http_core_module_ctx,             /* module context */
@@ -821,7 +823,7 @@ ngx_module_t  ngx_http_core_module = {
     NULL,                                  /* exit process */
     NULL,                                  /* exit master */
     NGX_MODULE_V1_PADDING
-};
+}; // }}}
 
 
 ngx_str_t  ngx_http_core_get_method = { 3, (u_char *) "GET " };
@@ -3106,6 +3108,9 @@ ngx_http_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 } // }}}
 
 
+// static char *
+// ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
+// location 块配置解析 {{{
 static char *
 ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
 {
@@ -3284,6 +3289,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
         }
     }
 
+	// 将 location 配置加入到 locations 配置链表中
     if (ngx_http_add_location(cf, &pclcf->locations, clcf) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -3297,7 +3303,7 @@ ngx_http_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     *cf = save;
 
     return rv;
-}
+} // }}}
 
 
 static ngx_int_t

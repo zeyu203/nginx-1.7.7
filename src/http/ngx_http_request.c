@@ -191,6 +191,8 @@ ngx_http_header_t  ngx_http_headers_in[] = {
 };
 
 
+// void ngx_http_init_connection(ngx_connection_t *c)
+// http 连接建立回调 {{{
 void
 ngx_http_init_connection(ngx_connection_t *c)
 {
@@ -367,7 +369,7 @@ ngx_http_init_connection(ngx_connection_t *c)
         ngx_http_close_connection(c);
         return;
     }
-}
+} // }}}
 
 
 static void

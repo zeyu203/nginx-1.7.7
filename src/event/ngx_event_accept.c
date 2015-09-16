@@ -527,9 +527,11 @@ ngx_close_accepted_connection(ngx_connection_t *c)
 }
 
 
+// u_char * ngx_accept_log_error(ngx_log_t *log, u_char *buf, size_t len)
+// accept 出错 log 处理 {{{
 u_char *
 ngx_accept_log_error(ngx_log_t *log, u_char *buf, size_t len)
 {
     return ngx_snprintf(buf, len, " while accepting new connection on %V",
                         log->data);
-}
+} // }}}

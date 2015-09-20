@@ -1671,12 +1671,14 @@ ngx_http_server_names(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
 
     ha.pool = cf->pool;
 
+	// 初始化 nginx 哈希表初始化结构 ngx_hash_keys_array_t ha
     if (ngx_hash_keys_array_init(&ha, NGX_HASH_LARGE) != NGX_OK) {
         goto failed;
     }
 
     cscfp = addr->servers.elts;
 
+	// 向 ha 中插入全部虚拟主机信息数据
     for (s = 0; s < addr->servers.nelts; s++) {
 
         name = cscfp[s]->server_names.elts;
@@ -1690,6 +1692,8 @@ ngx_http_server_names(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
             }
 #endif
 
+			// 向哈希表初始化结构 ngx_hash_keys_array_t ha 中插入 key value
+			// 支持通配符，不区分大小写
             rc = ngx_hash_add_key(&ha, &name[n].name, name[n].server,
                                   NGX_HASH_WILDCARD_KEY);
 
@@ -1712,6 +1716,7 @@ ngx_http_server_names(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
         }
     }
 
+	// 哈希表描述结构 ngx_hash_init_t 限制信息写入
     hash.key = ngx_hash_key_lc;
     hash.max_size = cmcf->server_names_hash_max_size;
     hash.bucket_size = cmcf->server_names_hash_bucket_size;
@@ -1735,6 +1740,7 @@ ngx_http_server_names(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
         hash.hash = NULL;
         hash.temp_pool = ha.temp_pool;
 
+		// 初始化 nginx 通配符哈希表结构
         if (ngx_hash_wildcard_init(&hash, ha.dns_wc_head.elts,
                                    ha.dns_wc_head.nelts)
             != NGX_OK)
@@ -1771,6 +1777,7 @@ ngx_http_server_names(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
         return NGX_OK;
     }
 
+	// 正则表达式的支持
     addr->nregex = regex;
     addr->regex = ngx_palloc(cf->pool, regex * sizeof(ngx_http_server_name_t));
     if (addr->regex == NULL) {

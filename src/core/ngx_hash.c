@@ -9,6 +9,9 @@
 #include <ngx_core.h>
 
 
+// void *
+// ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
+// 通过 key 查找对应的哈希值 {{{
 void *
 ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
 {
@@ -38,6 +41,7 @@ ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
 
         return elt->value;
 
+	// 有碰撞则查找相邻的下一元素
     next:
 
         elt = (ngx_hash_elt_t *) ngx_align_ptr(&elt->name[0] + elt->len,
@@ -46,9 +50,12 @@ ngx_hash_find(ngx_hash_t *hash, ngx_uint_t key, u_char *name, size_t len)
     }
 
     return NULL;
-}
+} // }}}
 
 
+// void *
+// ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
+// 按照前置散列表规则查询指定字符串 {{{
 void *
 ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
 {
@@ -140,9 +147,12 @@ ngx_hash_find_wc_head(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
     }
 
     return hwc->value;
-}
+} // }}}
 
 
+// void *
+// ngx_hash_find_wc_tail(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
+// 按照后置散列表规则查询指定字符串 {{{
 void *
 ngx_hash_find_wc_tail(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
 {
@@ -204,9 +214,13 @@ ngx_hash_find_wc_tail(ngx_hash_wildcard_t *hwc, u_char *name, size_t len)
     }
 
     return hwc->value;
-}
+} // }}}
 
 
+// void *
+// ngx_hash_find_combined(ngx_hash_combined_t *hash, ngx_uint_t key,
+//     u_char *name, size_t len)
+// 按照前置、后置散列表规则查询指定字符串 {{{
 void *
 ngx_hash_find_combined(ngx_hash_combined_t *hash, ngx_uint_t key, u_char *name,
     size_t len)
@@ -242,12 +256,16 @@ ngx_hash_find_combined(ngx_hash_combined_t *hash, ngx_uint_t key, u_char *name,
     }
 
     return NULL;
-}
+} // }}}
 
 
 #define NGX_HASH_ELT_SIZE(name)                                               \
     (sizeof(void *) + ngx_align((name)->key.len + 2, sizeof(void *)))
 
+
+// ngx_int_t
+// ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
+// 创建哈希表 {{{
 ngx_int_t
 ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
 {
@@ -257,7 +275,9 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
     ngx_uint_t       i, n, key, size, start, bucket_size;
     ngx_hash_elt_t  *elt, **buckets;
 
+	// 检查names数组的每一个元素，判断桶的大小是否足够分配
     for (n = 0; n < nelts; n++) {
+		// 哈希桶大小不足
         if (hinit->bucket_size < NGX_HASH_ELT_SIZE(&names[n]) + sizeof(void *))
         {
             ngx_log_error(NGX_LOG_EMERG, hinit->pool->log, 0,
@@ -268,6 +288,7 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
         }
     }
 
+	// 临时用于保存 hash 数据的空间
     test = ngx_alloc(hinit->max_size * sizeof(u_short), hinit->pool->log);
     if (test == NULL) {
         return NGX_ERROR;
@@ -291,7 +312,9 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
                 continue;
             }
 
+			// 计算 key 哈希函数计算结果对 size 取余，得到桶编号
             key = names[n].key_hash % size;
+			// 计算每个 name 的长度并保存在 test[key] 中
             test[key] = (u_short) (test[key] + NGX_HASH_ELT_SIZE(&names[n]));
 
 #if 0
@@ -300,6 +323,7 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
                           size, key, test[key], &names[n].key);
 #endif
 
+			// 若超出桶大小则到下一桶重新计算
             if (test[key] > (u_short) bucket_size) {
                 goto next;
             }
@@ -314,6 +338,7 @@ ngx_hash_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names, ngx_uint_t nelts)
 
     size--;
 
+	// 说明任何桶都不够容纳下某个 name
     ngx_log_error(NGX_LOG_WARN, hinit->pool->log, 0,
                   "could not build optimal %s, you should increase "
                   "either %s_max_size: %i or %s_bucket_size: %i; "
@@ -338,6 +363,7 @@ found:
 
     len = 0;
 
+	// 让 test[i] 存储对应数据的大小 + sizeof(void *)
     for (i = 0; i < size; i++) {
         if (test[i] == sizeof(void *)) {
             continue;
@@ -349,6 +375,7 @@ found:
     }
 
     if (hinit->hash == NULL) {
+		// 为哈希结构在内存池中分配空间
         hinit->hash = ngx_pcalloc(hinit->pool, sizeof(ngx_hash_wildcard_t)
                                              + size * sizeof(ngx_hash_elt_t *));
         if (hinit->hash == NULL) {
@@ -367,6 +394,7 @@ found:
         }
     }
 
+	// 分配整块内存用于存储完整的哈希表结构并对齐
     elts = ngx_palloc(hinit->pool, len + ngx_cacheline_size);
     if (elts == NULL) {
         ngx_free(test);
@@ -375,6 +403,7 @@ found:
 
     elts = ngx_align_ptr(elts, ngx_cacheline_size);
 
+	// 将整块连续内存打散成每个桶
     for (i = 0; i < size; i++) {
         if (test[i] == sizeof(void *)) {
             continue;
@@ -389,19 +418,23 @@ found:
         test[i] = 0;
     }
 
+	// 将传进来的每一个hash数据存入hash表
     for (n = 0; n < nelts; n++) {
         if (names[n].key.data == NULL) {
             continue;
         }
 
+		// 为即将存入的数据分配空间
         key = names[n].key_hash % size;
         elt = (ngx_hash_elt_t *) ((u_char *) buckets[key] + test[key]);
 
+		// 存入数据
         elt->value = names[n].value;
         elt->len = (u_short) names[n].key.len;
 
         ngx_strlow(elt->name, names[n].key.data, names[n].key.len);
 
+		// 存储下一个要被存入的长度偏移
         test[key] = (u_short) (test[key] + NGX_HASH_ELT_SIZE(&names[n]));
     }
 
@@ -451,9 +484,13 @@ found:
 #endif
 
     return NGX_OK;
-}
+} // }}}
 
 
+// ngx_int_t
+// ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
+//     ngx_uint_t nelts)
+// 通配符散列表初始化 {{{
 ngx_int_t
 ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
     ngx_uint_t nelts)
@@ -465,6 +502,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
     ngx_hash_init_t       h;
     ngx_hash_wildcard_t  *wdc;
 
+	// 在临时内存池上创建 ngx_hash_key_t 动态数组用于存放关键字
     if (ngx_array_init(&curr_names, hinit->temp_pool, nelts,
                        sizeof(ngx_hash_key_t))
         != NGX_OK)
@@ -472,6 +510,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
         return NGX_ERROR;
     }
 
+	// 在临时内存池上创建 ngx_hash_key_t 动态数组用于存放去掉通配符后的关键字
     if (ngx_array_init(&next_names, hinit->temp_pool, nelts,
                        sizeof(ngx_hash_key_t))
         != NGX_OK)
@@ -488,6 +527,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 
         dot = 0;
 
+		// 遍历查找 '.'
         for (len = 0; len < names[n].key.len; len++) {
             if (names[n].key.data[len] == '.') {
                 dot = 1;
@@ -495,6 +535,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
             }
         }
 
+		// 将 '.' 前的关键字插入到 curr_names 数组中
         name = ngx_array_push(&curr_names);
         if (name == NULL) {
             return NGX_ERROR;
@@ -518,6 +559,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 
         next_names.nelts = 0;
 
+		// 如果names[n] 在 '.' 后还有剩余关键字，将剩余关键字放入 next_names 中
         if (names[n].key.len != len) {
             next_name = ngx_array_push(&next_names);
             if (next_name == NULL) {
@@ -535,6 +577,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
 #endif
         }
 
+		// 剩下的全部放入 next_names
         for (i = n + 1; i < nelts; i++) {
             if (ngx_strncmp(names[n].key.data, names[i].key.data, len) != 0) {
                 break;
@@ -568,6 +611,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
             h = *hinit;
             h.hash = NULL;
 
+			// 递归创建哈希表
             if (ngx_hash_wildcard_init(&h, (ngx_hash_key_t *) next_names.elts,
                                        next_names.nelts)
                 != NGX_OK)
@@ -575,12 +619,14 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
                 return NGX_ERROR;
             }
 
+			// 将用户 value 放入新的哈希表
             wdc = (ngx_hash_wildcard_t *) h.hash;
 
             if (names[n].key.len == len) {
                 wdc->value = names[n].value;
             }
 
+			// 将当前 value 指向新的哈希表
             name->value = (void *) ((uintptr_t) wdc | (dot ? 3 : 2));
 
         } else if (dot) {
@@ -588,6 +634,7 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
         }
     }
 
+	// 将最外层hash初始化
     if (ngx_hash_init(hinit, (ngx_hash_key_t *) curr_names.elts,
                       curr_names.nelts)
         != NGX_OK)
@@ -596,9 +643,11 @@ ngx_hash_wildcard_init(ngx_hash_init_t *hinit, ngx_hash_key_t *names,
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// ngx_uint_t ngx_hash_key(u_char *data, size_t len)
+// 哈希函数，获取 data 对应的哈希 key 值 {{{
 ngx_uint_t
 ngx_hash_key(u_char *data, size_t len)
 {
@@ -606,14 +655,17 @@ ngx_hash_key(u_char *data, size_t len)
 
     key = 0;
 
+	// 计算hash_key
     for (i = 0; i < len; i++) {
         key = ngx_hash(key, data[i]);
     }
 
     return key;
-}
+} // }}}
 
 
+// ngx_uint_t ngx_hash_key_lc(u_char *data, size_t len)
+// 哈希函数，获取 data 对应的哈希 key 值（不区分大小写） {{{
 ngx_uint_t
 ngx_hash_key_lc(u_char *data, size_t len)
 {
@@ -621,14 +673,19 @@ ngx_hash_key_lc(u_char *data, size_t len)
 
     key = 0;
 
+	// 计算hash_key
     for (i = 0; i < len; i++) {
         key = ngx_hash(key, ngx_tolower(data[i]));
     }
 
     return key;
-}
+} // }}}
 
 
+// ngx_uint_t ngx_hash_strlow(u_char *dst, u_char *src, size_t n)
+// 哈希函数，将 src 转换为小写存入 dst 指向的地址内
+// 返回 dst 对应的哈希 key 值 {{{
+// 实现了不区分大小写的哈希函数，同时计算 data 对应的全小写版本
 ngx_uint_t
 ngx_hash_strlow(u_char *dst, u_char *src, size_t n)
 {
@@ -644,9 +701,12 @@ ngx_hash_strlow(u_char *dst, u_char *src, size_t n)
     }
 
     return key;
-}
+} // }}}
 
 
+// ngx_int_t
+// ngx_hash_keys_array_init(ngx_hash_keys_arrays_t *ha, ngx_uint_t type)
+// ngx_hash_keys_arrays_t 结构初始化 {{{
 ngx_int_t
 ngx_hash_keys_array_init(ngx_hash_keys_arrays_t *ha, ngx_uint_t type)
 {
@@ -699,9 +759,13 @@ ngx_hash_keys_array_init(ngx_hash_keys_arrays_t *ha, ngx_uint_t type)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// ngx_int_t
+// ngx_hash_add_key(ngx_hash_keys_arrays_t *ha, ngx_str_t *key, void *value,
+//     ngx_uint_t flags)
+// 向 ngx_hash_keys_arrays_t 结构中添加 key、value {{{
 ngx_int_t
 ngx_hash_add_key(ngx_hash_keys_arrays_t *ha, ngx_str_t *key, void *value,
     ngx_uint_t flags)
@@ -724,19 +788,23 @@ ngx_hash_add_key(ngx_hash_keys_arrays_t *ha, ngx_str_t *key, void *value,
 
         n = 0;
 
+		// 判断是否符合通配符哈希的条件
         for (i = 0; i < key->len; i++) {
 
             if (key->data[i] == '*') {
+				// 说明不是第一次遇到 *，错误的情况
                 if (++n > 1) {
                     return NGX_DECLINED;
                 }
             }
 
+			// 点和点不能相邻
             if (key->data[i] == '.' && key->data[i + 1] == '.') {
                 return NGX_DECLINED;
             }
         }
 
+		// 首个位置遇到 .，说明是 ".example.com" 的情况，需要适配通配符
         if (key->len > 1 && key->data[0] == '.') {
             skip = 1;
             goto wildcard;
@@ -744,11 +812,13 @@ ngx_hash_add_key(ngx_hash_keys_arrays_t *ha, ngx_str_t *key, void *value,
 
         if (key->len > 2) {
 
+			// "*.example.com"
             if (key->data[0] == '*' && key->data[1] == '.') {
                 skip = 2;
                 goto wildcard;
             }
 
+			// "www.example.*"
             if (key->data[i - 2] == '.' && key->data[i - 1] == '*') {
                 skip = 0;
                 last -= 2;
@@ -756,6 +826,7 @@ ngx_hash_add_key(ngx_hash_keys_arrays_t *ha, ngx_str_t *key, void *value,
             }
         }
 
+		// * 不是出现在指定的位置
         if (n) {
             return NGX_DECLINED;
         }
@@ -765,6 +836,7 @@ ngx_hash_add_key(ngx_hash_keys_arrays_t *ha, ngx_str_t *key, void *value,
 
     k = 0;
 
+	// 完全匹配的 hash
     for (i = 0; i < last; i++) {
         if (!(flags & NGX_HASH_READONLY_KEY)) {
             key->data[i] = ngx_tolower(key->data[i]);
@@ -776,6 +848,7 @@ ngx_hash_add_key(ngx_hash_keys_arrays_t *ha, ngx_str_t *key, void *value,
 
     /* check conflicts in exact hash */
 
+	// 去掉重复的 key
     name = ha->keys_hash[k].elts;
 
     if (name) {
@@ -974,4 +1047,4 @@ wildcard:
     hk->value = value;
 
     return NGX_OK;
-}
+} // }}}

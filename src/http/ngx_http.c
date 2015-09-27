@@ -357,10 +357,13 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
         clcf = cscfp[s]->ctx->loc_conf[ngx_http_core_module.ctx_index];
 
+		// 对所有 location 配置结构 ngx_http_core_conf_t 组成双向链表进行递归排序
+		// 并对无名的 location 配置进行拆分
         if (ngx_http_init_locations(cf, cscfp[s], clcf) != NGX_OK) {
             return NGX_CONF_ERROR;
         }
 
+		// 创建静态三叉排序树
         if (ngx_http_init_static_location_trees(cf, clcf) != NGX_OK) {
             return NGX_CONF_ERROR;
         }
@@ -811,6 +814,10 @@ ngx_http_merge_locations(ngx_conf_t *cf, ngx_queue_t *locations,
 } // }}}
 
 
+// static ngx_int_t
+// ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
+//     ngx_http_core_loc_conf_t *pclcf)
+// 对所有 location 配置结构 ngx_http_core_conf_t 组成双向链表进行递归排序 {{{
 static ngx_int_t
 ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
     ngx_http_core_loc_conf_t *pclcf)
@@ -881,6 +888,7 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
         }
     }
 
+	// 出现了无名的 location 则拆分双向链表
     if (q != ngx_queue_sentinel(locations)) {
         ngx_queue_split(locations, q, &tail);
     }
@@ -937,9 +945,12 @@ ngx_http_init_locations(ngx_conf_t *cf, ngx_http_core_srv_conf_t *cscf,
 #endif
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static ngx_int_t ngx_http_init_static_location_trees(ngx_conf_t *cf,
+//     ngx_http_core_loc_conf_t *pclcf)
+// 为 location 配置创建静态三叉排序树 {{{
 static ngx_int_t
 ngx_http_init_static_location_trees(ngx_conf_t *cf,
     ngx_http_core_loc_conf_t *pclcf)
@@ -954,10 +965,12 @@ ngx_http_init_static_location_trees(ngx_conf_t *cf,
         return NGX_OK;
     }
 
+	// 为空直接返回
     if (ngx_queue_empty(locations)) {
         return NGX_OK;
     }
 
+	// 遍历、递归创建树结构
     for (q = ngx_queue_head(locations);
          q != ngx_queue_sentinel(locations);
          q = ngx_queue_next(q))
@@ -971,19 +984,22 @@ ngx_http_init_static_location_trees(ngx_conf_t *cf,
         }
     }
 
+	// 对相同前缀 location 配置合并、去重
     if (ngx_http_join_exact_locations(cf, locations) != NGX_OK) {
         return NGX_ERROR;
     }
 
+	// A 节点是 B 的前缀，则使 A 节点成为 B 节点的前缀节点
     ngx_http_create_locations_list(locations, ngx_queue_head(locations));
 
+	// 创建三叉排序树
     pclcf->static_locations = ngx_http_create_locations_tree(cf, locations, 0);
     if (pclcf->static_locations == NULL) {
         return NGX_ERROR;
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 // ngx_int_t ngx_http_add_location(ngx_conf_t *cf, ngx_queue_t **locations,
@@ -1109,6 +1125,9 @@ ngx_http_cmp_locations(const ngx_queue_t *one, const ngx_queue_t *two)
 }
 
 
+// static ngx_int_t
+// ngx_http_join_exact_locations(ngx_conf_t *cf, ngx_queue_t *locations)
+// 对相同前缀 location 配置合并、去重 {{{
 static ngx_int_t
 ngx_http_join_exact_locations(ngx_conf_t *cf, ngx_queue_t *locations)
 {
@@ -1147,9 +1166,12 @@ ngx_http_join_exact_locations(ngx_conf_t *cf, ngx_queue_t *locations)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static void
+// ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q)
+// A 节点是 B 的前缀，则使 A 节点成为 B 节点的前缀节点 {{{
 static void
 ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q)
 {
@@ -1158,12 +1180,14 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q)
     ngx_queue_t                *x, tail;
     ngx_http_location_queue_t  *lq, *lx;
 
+	// 为空直接返回
     if (q == ngx_queue_last(locations)) {
         return;
     }
 
     lq = (ngx_http_location_queue_t *) q;
 
+	// 对于精准匹配的节点则不会称为某些节点的前缀，直接跳过该节点
     if (lq->inclusive == NULL) {
         ngx_http_create_locations_list(locations, ngx_queue_next(q));
         return;
@@ -1178,6 +1202,7 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q)
     {
         lx = (ngx_http_location_queue_t *) x;
 
+		// 长度不同则不是相同后缀
         if (len > lx->name->len
             || ngx_filename_cmp(name, lx->name->data, len) != 0)
         {
@@ -1192,7 +1217,9 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q)
         return;
     }
 
+	// location从q节点开始分割，location 成为 q 节点之前的一段 list
     ngx_queue_split(locations, q, &tail);
+	// q 节点的 list 初始为从 q 节点开始到最后的一段 list
     ngx_queue_add(&lq->list, &tail);
 
     if (x == ngx_queue_sentinel(locations)) {
@@ -1200,13 +1227,17 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q)
         return;
     }
 
+	// 再次分割，lq->list剩下p.next到x.prev的一段了 
     ngx_queue_split(&lq->list, x, &tail);
+	// 放到location 中去
     ngx_queue_add(locations, &tail);
 
+	//递归 p.next 到 x.prev
     ngx_http_create_locations_list(&lq->list, ngx_queue_head(&lq->list));
 
+	// 递归 x.next 到 location 最后
     ngx_http_create_locations_list(locations, x);
-}
+} // }}}
 
 
 /*
@@ -1214,6 +1245,9 @@ ngx_http_create_locations_list(ngx_queue_t *locations, ngx_queue_t *q)
  * order: node, left subtree, right subtree, inclusive subtree
  */
 
+// static ngx_http_location_tree_node_t *
+// ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
+// 创建三叉排序树 {{{
 static ngx_http_location_tree_node_t *
 ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
     size_t prefix)
@@ -1223,9 +1257,11 @@ ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
     ngx_http_location_queue_t      *lq;
     ngx_http_location_tree_node_t  *node;
 
+	// 取中间节点
     q = ngx_queue_middle(locations);
 
     lq = (ngx_http_location_queue_t *) q;
+	// len是name减去prefix的长度
     len = lq->name->len - prefix;
 
     node = ngx_palloc(cf->pool,
@@ -1244,6 +1280,7 @@ ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
                            || (lq->inclusive && lq->inclusive->auto_redirect));
 
     node->len = (u_char) len;
+	// 不存储公共前缀
     ngx_memcpy(node->name, &lq->name->data[prefix], len);
 
     ngx_queue_split(locations, q, &tail);
@@ -1256,6 +1293,7 @@ ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
         goto inclusive;
     }
 
+	// 递归构建node的左节点
     node->left = ngx_http_create_locations_tree(cf, locations, prefix);
     if (node->left == NULL) {
         return NULL;
@@ -1267,6 +1305,7 @@ ngx_http_create_locations_tree(ngx_conf_t *cf, ngx_queue_t *locations,
         goto inclusive;
     }
 
+	// 递归构建node的右节点
     node->right = ngx_http_create_locations_tree(cf, &tail, prefix);
     if (node->right == NULL) {
         return NULL;
@@ -1278,13 +1317,14 @@ inclusive:
         return node;
     }
 
+	// 根据 list 指针构造 node 的 tree 指针
     node->tree = ngx_http_create_locations_tree(cf, &lq->list, prefix + len);
     if (node->tree == NULL) {
         return NULL;
     }
 
     return node;
-}
+} // }}}
 
 
 // ngx_int_t

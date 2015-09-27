@@ -209,15 +209,21 @@ typedef struct {
 // 主机配置结构 {{{
 typedef struct {
     /* array of the ngx_http_server_name_t, "server_name" directive */
+	// 存储所有server的配置结构
     ngx_array_t                 server_names;
 
     /* server ctx */
+	// 指向 http 模块 server 配置上下文
     ngx_http_conf_ctx_t        *ctx;
 
+	// 主机名
     ngx_str_t                   server_name;
 
+	// 连接池大小限制
     size_t                      connection_pool_size;
+	// 请求连接池大小限制
     size_t                      request_pool_size;
+	// header 大小限制
     size_t                      client_header_buffer_size;
 
     ngx_bufs_t                  large_client_header_buffers;
@@ -301,8 +307,8 @@ typedef struct {
 // struct ngx_http_conf_port_t
 // 配置 port 结构 {{{
 typedef struct {
-    ngx_int_t                  family;
-    in_port_t                  port;
+    ngx_int_t                  family;	// ip 地址协议族
+    in_port_t                  port;	// 端口号
     ngx_array_t                addrs;     /* array of ngx_http_conf_addr_t */
 } ngx_http_conf_port_t; // }}}
 
@@ -310,19 +316,19 @@ typedef struct {
 // struct ngx_http_conf_addr_t
 // 配置地址结构 {{{
 typedef struct {
-    ngx_http_listen_opt_t      opt;
+    ngx_http_listen_opt_t      opt;				// listen socket的配置信息存储结构
 
-    ngx_hash_t                 hash;
-    ngx_hash_wildcard_t       *wc_head;
-    ngx_hash_wildcard_t       *wc_tail;
+    ngx_hash_t                 hash;			// 存储虚拟地址的哈希结构
+    ngx_hash_wildcard_t       *wc_head;			// 前缀通配符哈希结构
+    ngx_hash_wildcard_t       *wc_tail;			// 后缀通配符哈希结构
 
 #if (NGX_PCRE)
-    ngx_uint_t                 nregex;
-    ngx_http_server_name_t    *regex;
+    ngx_uint_t                 nregex;			// 正则表达式解析器索引
+    ngx_http_server_name_t    *regex;			// 正则表达式解析器
 #endif
 
     /* the default server configuration for this address:port */
-    ngx_http_core_srv_conf_t  *default_server;
+    ngx_http_core_srv_conf_t  *default_server;	// 默认 server 配置结构
     ngx_array_t                servers;  /* array of ngx_http_core_srv_conf_t */
 } ngx_http_conf_addr_t; // }}}
 
@@ -484,29 +490,37 @@ struct ngx_http_core_loc_conf_s {
 };
 
 
+// struct ngx_http_location_queue_t
+// 存储所有 location 配置的双向链表结构 {{{
 typedef struct {
+	// 双向链表结构
     ngx_queue_t                      queue;
+	// 处理嵌套 location 配置的情况，指向子级 location 配置结构
     ngx_http_core_loc_conf_t        *exact;
+	// 处理嵌套 location 配置的情况，指向父级 location 配置结构
     ngx_http_core_loc_conf_t        *inclusive;
+	// 当前 location 名
     ngx_str_t                       *name;
     u_char                          *file_name;
     ngx_uint_t                       line;
     ngx_queue_t                      list;
-} ngx_http_location_queue_t;
+} ngx_http_location_queue_t; // }}}
 
 
+// struct ngx_http_location_tree_node_s
+// location 三叉排序树结构 {{{
 struct ngx_http_location_tree_node_s {
-    ngx_http_location_tree_node_t   *left;
-    ngx_http_location_tree_node_t   *right;
-    ngx_http_location_tree_node_t   *tree;
+    ngx_http_location_tree_node_t   *left;			// 左节点
+    ngx_http_location_tree_node_t   *right;			// 右节点
+    ngx_http_location_tree_node_t   *tree;			// 中间节点
 
-    ngx_http_core_loc_conf_t        *exact;
-    ngx_http_core_loc_conf_t        *inclusive;
+    ngx_http_core_loc_conf_t        *exact;			// 前缀
+    ngx_http_core_loc_conf_t        *inclusive;		// 范围匹配
 
     u_char                           auto_redirect;
-    u_char                           len;
-    u_char                           name[1];
-};
+    u_char                           len;			// value 的长度
+    u_char                           name[1];		// value 首字母
+}; // }}}
 
 
 void ngx_http_core_run_phases(ngx_http_request_t *r);

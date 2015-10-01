@@ -112,25 +112,47 @@ typedef struct {
 } ngx_http_listen_opt_t; // }}}
 
 
+// enum ngx_http_phases
+// 11 个 HTTP 处理阶段枚举类型 {{{
 typedef enum {
+	// 接收到完整 HTTP 头部后处理阶段
     NGX_HTTP_POST_READ_PHASE = 0,
 
+	// 在 URI 与 location 匹配前修改请求的 URI（重定向）
     NGX_HTTP_SERVER_REWRITE_PHASE,
 
+	// 根据请求 URI 匹配 location 表达式
+	// 该阶段只能由 ngx_http_core_module 模块实现
     NGX_HTTP_FIND_CONFIG_PHASE,
+
+	// 匹配 location 后修改请求 URI
     NGX_HTTP_REWRITE_PHASE,
+
+	// 防止递归修改 URI 造成死循环
+	// 该阶段只能由 ngx_http_core_module 模块实现
     NGX_HTTP_POST_REWRITE_PHASE,
 
+	// HTTP 模块介入处理阶段
     NGX_HTTP_PREACCESS_PHASE,
 
+	// nginx 服务器访问限制
+	// 如果 nginx 不允许访问则返回 NGX_HTTP_FORBIDDEN 或 NGX_HTTP_UNAUTHORIZED
     NGX_HTTP_ACCESS_PHASE,
+
+	// 向用户发送拒绝服务的错误响应
     NGX_HTTP_POST_ACCESS_PHASE,
 
+	// 如果 HTTP 请求访问静态文件资源
+	// try_files 配置项可以使这个请求顺序的访问多个静态文件资源
+	// 直到某个静态文件资源符合选取条件
     NGX_HTTP_TRY_FILES_PHASE,
+
+	// 处理 HTTP 请求内容，大部分 HTTP 模块会介入该阶段
     NGX_HTTP_CONTENT_PHASE,
 
+	// 处理请求后记录日志
     NGX_HTTP_LOG_PHASE
-} ngx_http_phases;
+} ngx_http_phases; // }}}
 
 typedef struct ngx_http_phase_handler_s  ngx_http_phase_handler_t;
 
@@ -138,26 +160,35 @@ typedef ngx_int_t (*ngx_http_phase_handler_pt)(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph);
 
 // struct ngx_http_phase_handler_s
-// http 处理引擎链表节点 {{{
+// http 请求处理各阶段数组元素 {{{
 struct ngx_http_phase_handler_s {
+	// 仅可由 HTTP 框架实现，控制 HTTP 请求的处理流程
     ngx_http_phase_handler_pt  checker;
+	// HTTP 模块实现的处理方法
     ngx_http_handler_pt        handler;
+	// 下一个处理阶段中第一个 ngx_http_phase_handler_t 处理方法
+	// 用于自定义执行顺序
     ngx_uint_t                 next;
 }; // }}}
 
 
 // struct ngx_http_phase_engine_t
-// http 处理引擎 {{{
+// http 处理引擎，存储所有 ngx_http_phase_handler_t {{{
 typedef struct {
+	// 各阶段回调函数结构首地址
     ngx_http_phase_handler_t  *handlers;
+	// 存储 NGX_HTTP_SERVER_REWRITE_PHASE 阶段第一个回调函数序号，用于快速跳转
     ngx_uint_t                 server_rewrite_index;
+	// 存储 NGX_HTTP_REWRITE_PHASE 阶段第一个毁掉函数序号，用于快速跳转
     ngx_uint_t                 location_rewrite_index;
 } ngx_http_phase_engine_t; // }}}
 
 
+// struct ngx_http_phase_t
+// http 请求处理各阶段数组，用于初始化 ngx_http_phase_engine_t {{{
 typedef struct {
     ngx_array_t                handlers;
-} ngx_http_phase_t;
+} ngx_http_phase_t; // }}}
 
 
 // struct ngx_http_core_main_conf_t

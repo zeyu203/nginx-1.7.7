@@ -126,6 +126,8 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 
 #else /* ! NGX_HAVE_KQUEUE */
 
+// ssize_t ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
+// 调用 recv 从 TCP 流上读取数据 {{{
 ssize_t
 ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
 {
@@ -178,6 +180,6 @@ ngx_unix_recv(ngx_connection_t *c, u_char *buf, size_t size)
     }
 
     return n;
-}
+} // }}}
 
 #endif /* NGX_HAVE_KQUEUE */

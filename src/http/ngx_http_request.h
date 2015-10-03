@@ -169,7 +169,10 @@ typedef struct {
 } ngx_http_header_out_t;
 
 
+// struct ngx_http_headers_in_t
+// 请求头结构 {{{
 typedef struct {
+	// 请求头链表，保存所有头信息
     ngx_list_t                        headers;
 
     ngx_table_elt_t                  *host;
@@ -237,9 +240,11 @@ typedef struct {
     unsigned                          chrome:1;
     unsigned                          safari:1;
     unsigned                          konqueror:1;
-} ngx_http_headers_in_t;
+} ngx_http_headers_in_t; // }}}
 
 
+// struct ngx_http_headers_out_t
+// 响应头描述结构 {{{
 typedef struct {
     ngx_list_t                        headers;
 
@@ -272,7 +277,7 @@ typedef struct {
     off_t                             content_length_n;
     time_t                            date_time;
     time_t                            last_modified_time;
-} ngx_http_headers_out_t;
+} ngx_http_headers_out_t; // }}}
 
 
 typedef void (*ngx_http_client_body_handler_pt)(ngx_http_request_t *r);
@@ -291,8 +296,12 @@ typedef struct {
 
 typedef struct ngx_http_addr_conf_s  ngx_http_addr_conf_t;
 
+// struct ngx_http_connection_t
+// http 连接描述结构 {{{
 typedef struct {
+	// 地址配置，包含了虚拟地址结构
     ngx_http_addr_conf_t             *addr_conf;
+	// http 配置上下文
     ngx_http_conf_ctx_t              *conf_ctx;
 
 #if (NGX_HTTP_SSL && defined SSL_CTRL_SET_TLSEXT_HOSTNAME)
@@ -312,7 +321,7 @@ typedef struct {
     unsigned                          ssl:1;
 #endif
     unsigned                          proxy_protocol:1;
-} ngx_http_connection_t;
+} ngx_http_connection_t; // }}}
 
 
 typedef void (*ngx_http_cleanup_pt)(void *data);
@@ -356,16 +365,24 @@ typedef ngx_int_t (*ngx_http_handler_pt)(ngx_http_request_t *r);
 typedef void (*ngx_http_event_handler_pt)(ngx_http_request_t *r);
 
 
+// struct ngx_http_request_s
+// HTTP 请求描述结构 {{{
 struct ngx_http_request_s {
     uint32_t                          signature;         /* "HTTP" */
 
+	// 请求对应的连接结构
     ngx_connection_t                 *connection;
 
+	// HTTP 模块上下文
     void                            **ctx;
+	// main 配置
     void                            **main_conf;
+	// server 配置
     void                            **srv_conf;
+	// local 配置
     void                            **loc_conf;
 
+	// 事件读写回调函数
     ngx_http_event_handler_pt         read_event_handler;
     ngx_http_event_handler_pt         write_event_handler;
 
@@ -377,41 +394,61 @@ struct ngx_http_request_s {
     ngx_array_t                      *upstream_states;
                                          /* of ngx_http_upstream_state_t */
 
+	// 内存池
     ngx_pool_t                       *pool;
+	// 保存一些消息体的内容
     ngx_buf_t                        *header_in;
 
+	// 请求头部描述结构
     ngx_http_headers_in_t             headers_in;
+	// 响应头部描述结构
     ngx_http_headers_out_t            headers_out;
 
+	// 请求体描述结构
     ngx_http_request_body_t          *request_body;
 
+	// 请求相关时间戳
     time_t                            lingering_time;
     time_t                            start_sec;
     ngx_msec_t                        start_msec;
 
     ngx_uint_t                        method;
+	// HTTP 版本
     ngx_uint_t                        http_version;
 
+	// 请求串
     ngx_str_t                         request_line;
+	// URI
     ngx_str_t                         uri;
+	// 参数
     ngx_str_t                         args;
+	// 额外信息
     ngx_str_t                         exten;
     ngx_str_t                         unparsed_uri;
 
     ngx_str_t                         method_name;
     ngx_str_t                         http_protocol;
 
+	// 上次还没发完的 buf
     ngx_chain_t                      *out;
+	// 当前 request 链中最上面的 request
     ngx_http_request_t               *main;
+	// 当前 request 的父 request
     ngx_http_request_t               *parent;
+	// 缓存父 request 数据（也就是将要发送数据的request)
     ngx_http_postponed_request_t     *postponed;
+	// 保存子请求的 post request，也就是保存了需要被发送的 request
     ngx_http_post_subrequest_t       *post_subrequest;
+	// 所有需要处理的 request 链表，也就是说它即包含子请求也包含父请求
     ngx_http_posted_request_t        *posted_requests;
 
+	// 请求处理阶段
     ngx_int_t                         phase_handler;
+	// 生成内容的处理函数
     ngx_http_handler_pt               content_handler;
     ngx_uint_t                        access_code;
 
+	// 所有变量
     ngx_http_variable_value_t        *variables;
 
 #if (NGX_PCRE)
@@ -420,21 +457,27 @@ struct ngx_http_request_s {
     u_char                           *captures_data;
 #endif
 
+	// 发送限制速率
     size_t                            limit_rate;
     size_t                            limit_rate_after;
 
     /* used to learn the Apache compatible response length without a header */
+	// 请求头大小
     size_t                            header_size;
 
+	// 请求长度
     off_t                             request_length;
 
+	// 状态
     ngx_uint_t                        err_status;
 
+	// http 连接结构
     ngx_http_connection_t            *http_connection;
 #if (NGX_HTTP_SPDY)
     ngx_http_spdy_stream_t           *spdy_stream;
 #endif
 
+	// log 回调
     ngx_http_log_handler_pt           log_handler;
 
     ngx_http_cleanup_t               *cleanup;
@@ -459,6 +502,7 @@ struct ngx_http_request_s {
     /* URI with " " */
     unsigned                          space_in_uri:1;
 
+	// 是否有效
     unsigned                          invalid_header:1;
 
     unsigned                          add_uri_to_alias:1;
@@ -505,6 +549,7 @@ struct ngx_http_request_s {
 
     unsigned                          pipeline:1;
     unsigned                          chunked:1;
+	// 只返回 HEADER
     unsigned                          header_only:1;
     unsigned                          keepalive:1;
     unsigned                          lingering_close:1;
@@ -569,7 +614,7 @@ struct ngx_http_request_s {
 
     unsigned                          http_minor:16;
     unsigned                          http_major:16;
-};
+} // }}};
 
 
 typedef struct {

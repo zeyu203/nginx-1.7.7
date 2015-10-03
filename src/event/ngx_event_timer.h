@@ -55,6 +55,8 @@ ngx_event_del_timer(ngx_event_t *ev)
 }
 
 
+// static ngx_inline void ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer)
+// 将时间添加到定时器 {{{
 static ngx_inline void
 ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer)
 {
@@ -96,7 +98,7 @@ ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer)
     ngx_mutex_unlock(ngx_event_timer_mutex);
 
     ev->timer_set = 1;
-}
+} // }}}
 
 
 #endif /* _NGX_EVENT_TIMER_H_INCLUDED_ */

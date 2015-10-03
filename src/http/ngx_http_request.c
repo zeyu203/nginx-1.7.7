@@ -208,6 +208,7 @@ ngx_http_init_connection(ngx_connection_t *c)
     ngx_http_in6_addr_t    *addr6;
 #endif
 
+	// 创建 http 连接描述结构
     hc = ngx_pcalloc(c->pool, sizeof(ngx_http_connection_t));
     if (hc == NULL) {
         ngx_http_close_connection(c);
@@ -220,6 +221,7 @@ ngx_http_init_connection(ngx_connection_t *c)
 
     port = c->listening->servers;
 
+	// 只有当有多个虚拟地址时才需要获取本地 IP 地址
     if (port->naddrs > 1) {
 
         /*
@@ -228,6 +230,7 @@ ngx_http_init_connection(ngx_connection_t *c)
          * is required to determine a server address
          */
 
+		// 获取本地地址，初始化 c->local_socklen
         if (ngx_connection_local_sockaddr(c, NULL, 0) != NGX_OK) {
             ngx_http_close_connection(c);
             return;
@@ -311,6 +314,7 @@ ngx_http_init_connection(ngx_connection_t *c)
     c->log_error = NGX_ERROR_INFO;
 
     rev = c->read;
+	// 赋值 http 请求处理回调函数
     rev->handler = ngx_http_wait_request_handler;
     c->write->handler = ngx_http_empty_handler;
 
@@ -345,6 +349,7 @@ ngx_http_init_connection(ngx_connection_t *c)
     }
 #endif
 
+	// 是否使用代理
     if (hc->addr_conf->proxy_protocol) {
         hc->proxy_protocol = 1;
         c->log->action = "reading PROXY protocol";
@@ -358,13 +363,17 @@ ngx_http_init_connection(ngx_connection_t *c)
             return;
         }
 
+		// ngx_http_wait_request_handler
         rev->handler(rev);
         return;
     }
 
+	// 将事件添加至定时器，以监控收到的连接是否超时
     ngx_add_timer(rev, c->listening->post_accept_timeout);
+	// 将连接放进连接池中
     ngx_reusable_connection(c, 1);
 
+	// 将事件添加到事件队列中
     if (ngx_handle_read_event(rev, 0) != NGX_OK) {
         ngx_http_close_connection(c);
         return;
@@ -372,6 +381,8 @@ ngx_http_init_connection(ngx_connection_t *c)
 } // }}}
 
 
+// static void ngx_http_wait_request_handler(ngx_event_t *rev)
+// http 请求接收 {{{
 static void
 ngx_http_wait_request_handler(ngx_event_t *rev)
 {
@@ -387,12 +398,14 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0, "http wait request handler");
 
+	// 连接超时
     if (rev->timedout) {
         ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT, "client timed out");
         ngx_http_close_connection(c);
         return;
     }
 
+	// 连接已关闭
     if (c->close) {
         ngx_http_close_connection(c);
         return;
@@ -403,6 +416,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     size = cscf->client_header_buffer_size;
 
+	// 创建并初始化缓冲结构
     b = c->buffer;
 
     if (b == NULL) {
@@ -427,8 +441,11 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
         b->end = b->last + size;
     }
 
+	// ngx_unix_recv
+	// 调用 recv 从 TCP 流上读取数据
     n = c->recv(c, b->last, size);
 
+	// 需要重新加入队列
     if (n == NGX_AGAIN) {
 
         if (!rev->timer_set) {
@@ -489,19 +506,25 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
     c->log->action = "reading client request line";
 
+	// 从连接池中删除连接
     ngx_reusable_connection(c, 0);
 
+	// 创建 HTTP 请求描述结构
     c->data = ngx_http_create_request(c);
     if (c->data == NULL) {
         ngx_http_close_connection(c);
         return;
     }
 
+	// 请求处理回调函数
     rev->handler = ngx_http_process_request_line;
+	// 解析 HTTP 请求行
     ngx_http_process_request_line(rev);
-}
+} // }}}
 
 
+// ngx_http_request_t * ngx_http_create_request(ngx_connection_t *c)
+// 创建 HTTP 请求结构并初始化 {{{
 ngx_http_request_t *
 ngx_http_create_request(ngx_connection_t *c)
 {
@@ -610,7 +633,7 @@ ngx_http_create_request(ngx_connection_t *c)
 #endif
 
     return r;
-}
+} // }}}
 
 
 #if (NGX_HTTP_SSL)

@@ -1043,6 +1043,8 @@ ngx_close_connection(ngx_connection_t *c)
 }
 
 
+// void ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable)
+// 将连接放进连接池中或将连接从连接池中删除（reusable == 1?） {{{
 void
 ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable)
 {
@@ -1069,7 +1071,7 @@ ngx_reusable_connection(ngx_connection_t *c, ngx_uint_t reusable)
         (void) ngx_atomic_fetch_add(ngx_stat_waiting, 1);
 #endif
     }
-}
+} // }}}
 
 
 // static void ngx_drain_connections(void)
@@ -1099,6 +1101,9 @@ ngx_drain_connections(void)
 } // }}}
 
 
+// ngx_int_t ngx_connection_local_sockaddr(ngx_connection_t *c, ngx_str_t *s,
+//     ngx_uint_t port)
+// 调用 getsockname 获取本地地址 {{{
 ngx_int_t
 ngx_connection_local_sockaddr(ngx_connection_t *c, ngx_str_t *s,
     ngx_uint_t port)
@@ -1164,11 +1169,12 @@ ngx_connection_local_sockaddr(ngx_connection_t *c, ngx_str_t *s,
         return NGX_OK;
     }
 
+	// 将ip数字转换成点分字符串
     s->len = ngx_sock_ntop(c->local_sockaddr, c->local_socklen,
                            s->data, s->len, port);
 
     return NGX_OK;
-}
+} // }}}
 
 
 ngx_int_t

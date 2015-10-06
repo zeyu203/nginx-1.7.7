@@ -518,7 +518,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
 
 	// 请求处理回调函数
     rev->handler = ngx_http_process_request_line;
-	// 解析 HTTP 请求行
+	// HTTP 请求行处理
     ngx_http_process_request_line(rev);
 } // }}}
 
@@ -925,6 +925,8 @@ ngx_http_ssl_servername(ngx_ssl_conn_t *ssl_conn, int *ad, void *arg)
 #endif
 
 
+// static void ngx_http_process_request_line(ngx_event_t *rev)
+// HTTP 请求行处理 {{{
 static void
 ngx_http_process_request_line(ngx_event_t *rev)
 {
@@ -940,6 +942,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, rev->log, 0,
                    "http process request line");
 
+	// 已超时则退出
     if (rev->timedout) {
         ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT, "client timed out");
         c->timedout = 1;
@@ -952,6 +955,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
     for ( ;; ) {
 
         if (rc == NGX_AGAIN) {
+			// 读取请求头
             n = ngx_http_read_request_header(r);
 
             if (n == NGX_AGAIN || n == NGX_ERROR) {
@@ -959,6 +963,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
             }
         }
 
+		// 解析请求行
         rc = ngx_http_parse_request_line(r, r->header_in);
 
         if (rc == NGX_OK) {
@@ -979,6 +984,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
                 r->http_protocol.len = r->request_end - r->http_protocol.data;
             }
 
+			// 处理请求中的 URI
             if (ngx_http_process_request_uri(r) != NGX_OK) {
                 return;
             }
@@ -1071,9 +1077,11 @@ ngx_http_process_request_line(ngx_event_t *rev)
             }
         }
     }
-}
+} // }}}
 
 
+// ngx_int_t ngx_http_process_request_uri(ngx_http_request_t *r)
+// 处理 HTTP 请求中的 URI {{{
 ngx_int_t
 ngx_http_process_request_uri(ngx_http_request_t *r)
 {
@@ -1188,7 +1196,7 @@ ngx_http_process_request_uri(ngx_http_request_t *r)
                    "http exten: \"%V\"", &r->exten);
 
     return NGX_OK;
-}
+} // }}}
 
 
 static void
@@ -1378,6 +1386,8 @@ ngx_http_process_request_headers(ngx_event_t *rev)
 }
 
 
+// static ssize_t ngx_http_read_request_header(ngx_http_request_t *r)
+// 读取请求头 {{{
 static ssize_t
 ngx_http_read_request_header(ngx_http_request_t *r)
 {
@@ -1402,6 +1412,7 @@ ngx_http_read_request_header(ngx_http_request_t *r)
         n = NGX_AGAIN;
     }
 
+	// 需要重新加入队列
     if (n == NGX_AGAIN) {
         if (!rev->timer_set) {
             cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
@@ -1432,7 +1443,7 @@ ngx_http_read_request_header(ngx_http_request_t *r)
     r->header_in->last += n;
 
     return n;
-}
+} // }}}
 
 
 static ngx_int_t

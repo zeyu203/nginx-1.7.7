@@ -412,6 +412,22 @@ struct ngx_http_request_s {
     time_t                            start_sec;
     ngx_msec_t                        start_msec;
 
+	// HTTP 请求方法
+	// NGX_HTTP_GET
+	// NGX_HTTP_PUT
+	// NGX_HTTP_POST
+	// NGX_HTTP_COPY
+	// NGX_HTTP_MOVE
+	// NGX_HTTP_LOCK
+	// NGX_HTTP_HEAD
+	// NGX_HTTP_MKCOL
+	// NGX_HTTP_PATCH
+	// NGX_HTTP_TRACE
+	// NGX_HTTP_DELETE
+	// NGX_HTTP_UNLOCK
+	// NGX_HTTP_OPTIONS
+	// NGX_HTTP_PROPFIND
+	// NGX_HTTP_PROPPATCH
     ngx_uint_t                        method;
 	// HTTP 版本
     ngx_uint_t                        http_version;
@@ -582,6 +598,7 @@ struct ngx_http_request_s {
 
     /* used to parse HTTP headers */
 
+	// HTTP 头部解析的过程中存储的解析状态
     ngx_uint_t                        state;
 
     ngx_uint_t                        header_hash;

@@ -955,7 +955,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
     for ( ;; ) {
 
         if (rc == NGX_AGAIN) {
-			// 读取请求头
+			// 从请求中读取请求头
             n = ngx_http_read_request_header(r);
 
             if (n == NGX_AGAIN || n == NGX_ERROR) {
@@ -994,6 +994,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
                 host.len = r->host_end - r->host_start;
                 host.data = r->host_start;
 
+				// 检测 host 是否合法
                 rc = ngx_http_validate_host(&host, r->pool, 0);
 
                 if (rc == NGX_DECLINED) {
@@ -1004,10 +1005,12 @@ ngx_http_process_request_line(ngx_event_t *rev)
                 }
 
                 if (rc == NGX_ERROR) {
+					// 出错则关闭请求，释放资源
                     ngx_http_close_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
                     return;
                 }
 
+				// 为请求设定虚拟主机
                 if (ngx_http_set_virtual_server(r, &host) == NGX_ERROR) {
                     return;
                 }
@@ -1015,6 +1018,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
                 r->headers_in.server = host;
             }
 
+			// HTTP 1.0 以前版本请求处理
             if (r->http_version < NGX_HTTP_VERSION_10) {
 
                 if (r->headers_in.server.len == 0
@@ -1024,6 +1028,9 @@ ngx_http_process_request_line(ngx_event_t *rev)
                     return;
                 }
 
+				// HTTP 1.0 以前版本请求处理
+				// HTTP 0.9 是最原始的http协议
+				// 没有定义任何请求头，不需要读取请求头的操作
                 ngx_http_process_request(r);
                 return;
             }
@@ -1040,11 +1047,13 @@ ngx_http_process_request_line(ngx_event_t *rev)
             c->log->action = "reading client request headers";
 
             rev->handler = ngx_http_process_request_headers;
+			// 请求 header 处理
             ngx_http_process_request_headers(rev);
 
             return;
         }
 
+		// 无需再次处理则结束请求
         if (rc != NGX_AGAIN) {
 
             /* there was error while a request line parsing */
@@ -1057,6 +1066,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
 
         /* NGX_AGAIN: a request line parsing is still incomplete */
 
+		// 请求还需要继续处理
         if (r->header_in->pos == r->header_in->end) {
 
             rv = ngx_http_alloc_large_header_buffer(r, 1);
@@ -1387,7 +1397,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
 
 
 // static ssize_t ngx_http_read_request_header(ngx_http_request_t *r)
-// 读取请求头 {{{
+// 从请求中读取请求头 {{{
 static ssize_t
 ngx_http_read_request_header(ngx_http_request_t *r)
 {
@@ -1858,6 +1868,8 @@ ngx_http_process_request_header(ngx_http_request_t *r)
 }
 
 
+// void ngx_http_process_request(ngx_http_request_t *r)
+// http 请求处理 {{{
 void
 ngx_http_process_request(ngx_http_request_t *r)
 {
@@ -1937,9 +1949,12 @@ ngx_http_process_request(ngx_http_request_t *r)
     ngx_http_handler(r);
 
     ngx_http_run_posted_requests(c);
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_http_validate_host(ngx_str_t *host, ngx_pool_t *pool, ngx_uint_t alloc)
+// 检测 host 是否合法 {{{
 static ngx_int_t
 ngx_http_validate_host(ngx_str_t *host, ngx_pool_t *pool, ngx_uint_t alloc)
 {
@@ -2028,9 +2043,12 @@ ngx_http_validate_host(ngx_str_t *host, ngx_pool_t *pool, ngx_uint_t alloc)
     host->len = host_len;
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
+// 为请求设定虚拟主机 {{{
 static ngx_int_t
 ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
 {
@@ -2047,12 +2065,14 @@ ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
 
 #if (NGX_HTTP_SSL && defined SSL_CTRL_SET_TLSEXT_HOSTNAME)
 
+	// HTTPS 协议域名解析
     if (hc->ssl_servername) {
         if (hc->ssl_servername->len == host->len
             && ngx_strncmp(hc->ssl_servername->data,
                            host->data, host->len) == 0)
         {
 #if (NGX_PCRE)
+			// 根据正则表达式解析域名
             if (hc->ssl_servername_regex
                 && ngx_http_regex_exec(r, hc->ssl_servername_regex,
                                           hc->ssl_servername) != NGX_OK)
@@ -2067,6 +2087,7 @@ ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
 
 #endif
 
+	// 根据 host 查询对应的虚拟主机
     rc = ngx_http_find_virtual_server(r->connection,
                                       hc->addr_conf->virtual_names,
                                       host, r, &cscf);
@@ -2092,6 +2113,7 @@ ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
             ngx_log_error(NGX_LOG_INFO, r->connection->log, 0,
                           "client attempted to request the server name "
                           "different from that one was negotiated");
+			// 请求的最后处理并中止
             ngx_http_finalize_request(r, NGX_HTTP_BAD_REQUEST);
             return NGX_ERROR;
         }
@@ -2111,9 +2133,14 @@ ngx_http_set_virtual_server(ngx_http_request_t *r, ngx_str_t *host)
     ngx_http_set_connection_log(r->connection, clcf->error_log);
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_http_find_virtual_server(ngx_connection_t *c,
+//     ngx_http_virtual_names_t *virtual_names, ngx_str_t *host,
+//     ngx_http_request_t *r, ngx_http_core_srv_conf_t **cscfp)
+// 在虚拟主机 hash 表中查找 host 对应的虚拟主机 {{{
 static ngx_int_t
 ngx_http_find_virtual_server(ngx_connection_t *c,
     ngx_http_virtual_names_t *virtual_names, ngx_str_t *host,
@@ -2125,6 +2152,7 @@ ngx_http_find_virtual_server(ngx_connection_t *c,
         return NGX_DECLINED;
     }
 
+	// 从哈希表中获取相应的值
     cscf = ngx_hash_find_combined(&virtual_names->names,
                                   ngx_hash_key(host->data, host->len),
                                   host->data, host->len);
@@ -2179,6 +2207,7 @@ ngx_http_find_virtual_server(ngx_connection_t *c,
 
         for (i = 0; i < virtual_names->nregex; i++) {
 
+			// 调用 pcre_exec 解析正则表达式
             n = ngx_http_regex_exec(r, sn[i].regex, host);
 
             if (n == NGX_DECLINED) {
@@ -2197,7 +2226,7 @@ ngx_http_find_virtual_server(ngx_connection_t *c,
 #endif /* NGX_PCRE */
 
     return NGX_DECLINED;
-}
+} // }}}
 
 
 static void
@@ -2262,6 +2291,9 @@ ngx_http_run_posted_requests(ngx_connection_t *c)
 }
 
 
+// ngx_int_t
+// ngx_http_post_request(ngx_http_request_t *r, ngx_http_posted_request_t *pr)
+// 将请求放置到请求列表中 {{{
 ngx_int_t
 ngx_http_post_request(ngx_http_request_t *r, ngx_http_posted_request_t *pr)
 {
@@ -2282,7 +2314,7 @@ ngx_http_post_request(ngx_http_request_t *r, ngx_http_posted_request_t *pr)
     *p = pr;
 
     return NGX_OK;
-}
+} // }}}
 
 
 void
@@ -2340,6 +2372,7 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         || rc == NGX_HTTP_NO_CONTENT)
     {
         if (rc == NGX_HTTP_CLOSE) {
+			// 中止请求
             ngx_http_terminate_request(r, rc);
             return;
         }
@@ -2474,6 +2507,8 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
 }
 
 
+// static void ngx_http_terminate_request(ngx_http_request_t *r, ngx_int_t rc)
+// 中止请求 {{{
 static void
 ngx_http_terminate_request(ngx_http_request_t *r, ngx_int_t rc)
 {
@@ -2514,14 +2549,17 @@ ngx_http_terminate_request(ngx_http_request_t *r, ngx_int_t rc)
         e = ngx_http_ephemeral(mr);
         mr->posted_requests = NULL;
         mr->write_event_handler = ngx_http_terminate_handler;
+		// 将请求放置到 terminal_posted_request 链表中
         (void) ngx_http_post_request(mr, &e->terminal_posted_request);
         return;
     }
 
     ngx_http_close_request(mr, rc);
-}
+} // }}}
 
 
+// static void ngx_http_terminate_handler(ngx_http_request_t *r)
+// 关闭请求回调函数 {{{
 static void
 ngx_http_terminate_handler(ngx_http_request_t *r)
 {
@@ -2531,7 +2569,7 @@ ngx_http_terminate_handler(ngx_http_request_t *r)
     r->count = 1;
 
     ngx_http_close_request(r, 0);
-}
+} // }}}
 
 
 static void
@@ -3416,6 +3454,8 @@ ngx_http_post_action(ngx_http_request_t *r)
 }
 
 
+// static void ngx_http_close_request(ngx_http_request_t *r, ngx_int_t rc)
+// 关闭请求，释放资源 {{{
 static void
 ngx_http_close_request(ngx_http_request_t *r, ngx_int_t rc)
 {
@@ -3446,7 +3486,7 @@ ngx_http_close_request(ngx_http_request_t *r, ngx_int_t rc)
 
     ngx_http_free_request(r, rc);
     ngx_http_close_connection(c);
-}
+} // }}}
 
 
 void

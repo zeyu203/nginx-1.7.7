@@ -2367,6 +2367,9 @@ ngx_http_regex_compile(ngx_conf_t *cf, ngx_regex_compile_t *rc)
 }
 
 
+// ngx_int_t
+// ngx_http_regex_exec(ngx_http_request_t *r, ngx_http_regex_t *re, ngx_str_t *s)
+// 解析正则表达式 {{{
 ngx_int_t
 ngx_http_regex_exec(ngx_http_request_t *r, ngx_http_regex_t *re, ngx_str_t *s)
 {
@@ -2391,6 +2394,7 @@ ngx_http_regex_exec(ngx_http_request_t *r, ngx_http_regex_t *re, ngx_str_t *s)
         len = 0;
     }
 
+	// 调用 PCRE 解析正则表达式 pcre_exec
     rc = ngx_regex_exec(re->regex, s, r->captures, len);
 
     if (rc == NGX_REGEX_NO_MATCHED) {
@@ -2433,7 +2437,7 @@ ngx_http_regex_exec(ngx_http_request_t *r, ngx_http_regex_t *re, ngx_str_t *s)
     r->captures_data = s->data;
 
     return NGX_OK;
-}
+} // }}}
 
 #endif
 

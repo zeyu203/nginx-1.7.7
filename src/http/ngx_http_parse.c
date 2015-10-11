@@ -825,6 +825,10 @@ done:
 } // }}}
 
 
+// ngx_int_t
+// ngx_http_parse_header_line(ngx_http_request_t *r, ngx_buf_t *b,
+//     ngx_uint_t allow_underscores)
+// 请求 HEADER 的解析 {{{
 ngx_int_t
 ngx_http_parse_header_line(ngx_http_request_t *r, ngx_buf_t *b,
     ngx_uint_t allow_underscores)
@@ -1091,7 +1095,7 @@ header_done:
     r->state = sw_start;
 
     return NGX_HTTP_PARSE_HEADER_DONE;
-}
+} // }}}
 
 
 ngx_int_t

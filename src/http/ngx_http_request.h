@@ -156,11 +156,13 @@ typedef enum {
 } ngx_http_state_e;
 
 
+// struct ngx_http_header_t
+// header 处理函数对应关系 {{{
 typedef struct {
     ngx_str_t                         name;
     ngx_uint_t                        offset;
     ngx_http_header_handler_pt        handler;
-} ngx_http_header_t;
+} ngx_http_header_t; // }}}
 
 
 typedef struct {

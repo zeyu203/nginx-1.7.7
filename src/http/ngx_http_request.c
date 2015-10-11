@@ -77,6 +77,7 @@ static char *ngx_http_client_errors[] = {
 };
 
 
+// header 指令处理结构数组 {{{
 ngx_http_header_t  ngx_http_headers_in[] = {
     { ngx_string("Host"), offsetof(ngx_http_headers_in_t, host),
                  ngx_http_process_host },
@@ -188,7 +189,7 @@ ngx_http_header_t  ngx_http_headers_in[] = {
                  ngx_http_process_multi_header_lines },
 
     { ngx_null_string, 0, NULL }
-};
+}; // }}}
 
 
 // void ngx_http_init_connection(ngx_connection_t *c)
@@ -1209,6 +1210,8 @@ ngx_http_process_request_uri(ngx_http_request_t *r)
 } // }}}
 
 
+// static void ngx_http_process_request_headers(ngx_event_t *rev)
+// HTTP 请求 HEADER 的处理与解析 {{{
 static void
 ngx_http_process_request_headers(ngx_event_t *rev)
 {
@@ -1244,6 +1247,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
 
         if (rc == NGX_AGAIN) {
 
+			// 存储空间已满则开辟更大的空间
             if (r->header_in->pos == r->header_in->end) {
 
                 rv = ngx_http_alloc_large_header_buffer(r, 0);
@@ -1282,6 +1286,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
                 }
             }
 
+			// 从请求中读取请求头
             n = ngx_http_read_request_header(r);
 
             if (n == NGX_AGAIN || n == NGX_ERROR) {
@@ -1292,9 +1297,11 @@ ngx_http_process_request_headers(ngx_event_t *rev)
         /* the host header could change the server configuration context */
         cscf = ngx_http_get_module_srv_conf(r, ngx_http_core_module);
 
+		// header 解析
         rc = ngx_http_parse_header_line(r, r->header_in,
                                         cscf->underscores_in_headers);
 
+		// 解析完成 HEADER 的一行 {{{
         if (rc == NGX_OK) {
 
             r->request_length += r->header_in->pos - r->header_name_start;
@@ -1344,6 +1351,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
             hh = ngx_hash_find(&cmcf->headers_in_hash, h->hash,
                                h->lowcase_key, h->key.len);
 
+			// ngx_http_headers_in
             if (hh && hh->handler(r, h, hh->offset) != NGX_OK) {
                 return;
             }
@@ -1353,8 +1361,9 @@ ngx_http_process_request_headers(ngx_event_t *rev)
                            &h->key, &h->value);
 
             continue;
-        }
+        } // }}}
 
+		// HEADER 解析完成，需要继续解析请求体 {{{
         if (rc == NGX_HTTP_PARSE_HEADER_DONE) {
 
             /* a whole header has been parsed successfully */
@@ -1366,16 +1375,18 @@ ngx_http_process_request_headers(ngx_event_t *rev)
 
             r->http_state = NGX_HTTP_PROCESS_REQUEST_STATE;
 
+			// 请求 HEADER 校验
             rc = ngx_http_process_request_header(r);
 
             if (rc != NGX_OK) {
                 return;
             }
 
+			// HTTP 请求处理
             ngx_http_process_request(r);
 
             return;
-        }
+        } // }}}
 
         if (rc == NGX_AGAIN) {
 
@@ -1393,7 +1404,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
         ngx_http_finalize_request(r, NGX_HTTP_BAD_REQUEST);
         return;
     }
-}
+} // }}}
 
 
 // static ssize_t ngx_http_read_request_header(ngx_http_request_t *r)
@@ -1456,6 +1467,10 @@ ngx_http_read_request_header(ngx_http_request_t *r)
 } // }}}
 
 
+// static ngx_int_t
+// ngx_http_alloc_large_header_buffer(ngx_http_request_t *r,
+//     ngx_uint_t request_line)
+// 为 HEADER 开辟一块更大的存储空间 {{{
 static ngx_int_t
 ngx_http_alloc_large_header_buffer(ngx_http_request_t *r,
     ngx_uint_t request_line)
@@ -1597,7 +1612,7 @@ ngx_http_alloc_large_header_buffer(ngx_http_request_t *r,
     r->header_in = b;
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t
@@ -1640,6 +1655,10 @@ ngx_http_process_unique_header_line(ngx_http_request_t *r, ngx_table_elt_t *h,
 }
 
 
+// static ngx_int_t
+// ngx_http_process_host(ngx_http_request_t *r, ngx_table_elt_t *h,
+//     ngx_uint_t offset)
+// HEADER 中 Host 处理 {{{
 static ngx_int_t
 ngx_http_process_host(ngx_http_request_t *r, ngx_table_elt_t *h,
     ngx_uint_t offset)
@@ -1678,7 +1697,7 @@ ngx_http_process_host(ngx_http_request_t *r, ngx_table_elt_t *h,
     r->headers_in.server = host;
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t
@@ -1798,6 +1817,8 @@ ngx_http_process_multi_header_lines(ngx_http_request_t *r, ngx_table_elt_t *h,
 }
 
 
+// ngx_int_t ngx_http_process_request_header(ngx_http_request_t *r)
+// 请求 HEADER 校验 {{{
 ngx_int_t
 ngx_http_process_request_header(ngx_http_request_t *r)
 {
@@ -1865,7 +1886,7 @@ ngx_http_process_request_header(ngx_http_request_t *r)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 // void ngx_http_process_request(ngx_http_request_t *r)

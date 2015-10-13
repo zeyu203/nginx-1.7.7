@@ -137,6 +137,8 @@ ngx_module_t  ngx_http_limit_conn_module = {
 };
 
 
+// static ngx_int_t ngx_http_limit_conn_handler(ngx_http_request_t *r)
+// NGX_HTTP_PREACCESS_PHASE 阶段回调函数，对连接做一些限制 {{{
 static ngx_int_t
 ngx_http_limit_conn_handler(ngx_http_request_t *r)
 {
@@ -250,7 +252,7 @@ ngx_http_limit_conn_handler(ngx_http_request_t *r)
     }
 
     return NGX_DECLINED;
-}
+} // }}}
 
 
 static void

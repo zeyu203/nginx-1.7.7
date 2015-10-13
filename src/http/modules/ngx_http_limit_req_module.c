@@ -153,6 +153,8 @@ ngx_module_t  ngx_http_limit_req_module = {
 };
 
 
+// static ngx_int_t ngx_http_limit_req_handler(ngx_http_request_t *r)
+// NGX_HTTP_PREACCESS_PHASE 阶段回调函数，对请求做一些限制 {{{
 static ngx_int_t
 ngx_http_limit_req_handler(ngx_http_request_t *r)
 {
@@ -279,7 +281,7 @@ ngx_http_limit_req_handler(ngx_http_request_t *r)
     ngx_add_timer(r->connection->write, delay);
 
     return NGX_AGAIN;
-}
+} // ]}}
 
 
 static void

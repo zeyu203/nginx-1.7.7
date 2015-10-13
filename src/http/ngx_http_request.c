@@ -1952,6 +1952,7 @@ ngx_http_process_request(ngx_http_request_t *r)
 
 #endif
 
+	// 如果设置了定时器则删除定时器
     if (c->read->timer_set) {
         ngx_del_timer(c->read);
     }
@@ -1967,6 +1968,7 @@ ngx_http_process_request(ngx_http_request_t *r)
     c->write->handler = ngx_http_request_handler;
     r->read_event_handler = ngx_http_block_reading;
 
+	// http 请求处理回调调用函数
     ngx_http_handler(r);
 
     ngx_http_run_posted_requests(c);

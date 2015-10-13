@@ -829,6 +829,8 @@ ngx_module_t  ngx_http_core_module = {
 ngx_str_t  ngx_http_core_get_method = { 3, (u_char *) "GET " };
 
 
+// void ngx_http_handler(ngx_http_request_t *r)
+// 调用 ngx_http_core_run_phases 完成 11 个 HTTP 处理阶段的处理 {{{
 void
 ngx_http_handler(ngx_http_request_t *r)
 {
@@ -870,10 +872,13 @@ ngx_http_handler(ngx_http_request_t *r)
 #endif
 
     r->write_event_handler = ngx_http_core_run_phases;
+	// 11 个 HTTP 处理阶段
     ngx_http_core_run_phases(r);
-}
+} // }}}
 
 
+// void ngx_http_core_run_phases(ngx_http_request_t *r)
+// 11 个 HTTP 处理阶段 {{{
 void
 ngx_http_core_run_phases(ngx_http_request_t *r)
 {
@@ -887,15 +892,32 @@ ngx_http_core_run_phases(ngx_http_request_t *r)
 
     while (ph[r->phase_handler].checker) {
 
+		// 所有的处理阶段回调函数构成了一个链表
+		// NGX_HTTP_SERVER_REWRITE_PHASE	ngx_http_core_rewrite_phase
+		// NGX_HTTP_FIND_CONFIG_PHASE		ngx_http_core_find_config_phase
+		// NGX_HTTP_REWRITE_PHASE			ngx_http_core_rewrite_phase
+		// NGX_HTTP_POST_REWRITE_PHASE		ngx_http_core_post_rewrite_phase
+		// NGX_HTTP_PREACCESS_PHASE			ngx_http_core_generic_phase
+		// NGX_HTTP_POST_READ_PHASE			ngx_http_limit_conn_handler
+		// NGX_HTTP_ACCESS_PHASE			ngx_http_core_access_phase
+		// NGX_HTTP_POST_ACCESS_PHASE		ngx_http_core_post_access_phase
+		// NGX_HTTP_CONTENT_PHASE			ngx_http_core_content_phase
+		// NGX_HTTP_TRY_FILES_PHASE			ngx_http_core_try_files_phase
         rc = ph[r->phase_handler].checker(r, &ph[r->phase_handler]);
 
+		// 全部回调完成
         if (rc == NGX_OK) {
             return;
         }
     }
-}
+} // }}}
 
 
+// ngx_int_t
+// ngx_http_core_generic_phase(ngx_http_request_t *r,
+//     ngx_http_phase_handler_t *ph)
+// NGX_HTTP_POST_READ_PHASE、NGX_HTTP_PREACCESS_PHASE 阶段 checker
+// 仅仅调用 handler {{{
 ngx_int_t
 ngx_http_core_generic_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
 {
@@ -909,6 +931,8 @@ ngx_http_core_generic_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "generic phase: %ui", r->phase_handler);
 
+	// NGX_HTTP_PREACCESS_PHASE ngx_http_limit_req_handler
+	// NGX_HTTP_POST_READ_PHASE ngx_http_limit_conn_handler
     rc = ph->handler(r);
 
     if (rc == NGX_OK) {
@@ -930,9 +954,14 @@ ngx_http_core_generic_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
     ngx_http_finalize_request(r, rc);
 
     return NGX_OK;
-}
+} // }}}
 
 
+// ngx_int_t
+// ngx_http_core_rewrite_phase(ngx_http_request_t *r,
+//     ngx_http_phase_handler_t *ph)
+// NGX_HTTP_SERVER_REWRITE_PHASE、NGX_HTTP_REWRITE_PHASE 阶段 checker 函数
+// 用于 rewrite uri {{{
 ngx_int_t
 ngx_http_core_rewrite_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
 {
@@ -941,6 +970,7 @@ ngx_http_core_rewrite_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "rewrite phase: %ui", r->phase_handler);
 
+	// ngx_http_rewrite_handler
     rc = ph->handler(r);
 
     if (rc == NGX_DECLINED) {
@@ -957,9 +987,12 @@ ngx_http_core_rewrite_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
     ngx_http_finalize_request(r, rc);
 
     return NGX_OK;
-}
+} // }}}
 
 
+// ngx_int_t ngx_http_core_find_config_phase(ngx_http_request_t *r,
+//     ngx_http_phase_handler_t *ph)
+// NGX_HTTP_FIND_CONFIG_PHASE 阶段 checker，根据请求 URI 匹配 location 表达式 {{{
 ngx_int_t
 ngx_http_core_find_config_phase(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph)
@@ -972,6 +1005,7 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
     r->content_handler = NULL;
     r->uri_changed = 0;
 
+	// 根据 URI 查找 location
     rc = ngx_http_core_find_location(r);
 
     if (rc == NGX_ERROR) {
@@ -981,6 +1015,7 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
 
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
+	// 非内部请求访问内部 location 是非法的
     if (!r->internal && clcf->internal) {
         ngx_http_finalize_request(r, NGX_HTTP_NOT_FOUND);
         return NGX_OK;
@@ -991,12 +1026,14 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
                    (clcf->noname ? "*" : (clcf->exact_match ? "=" : "")),
                    &clcf->name);
 
+	// 根据匹配的 location 设置 request 的属性
     ngx_http_update_location_config(r);
 
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http cl:%O max:%O",
                    r->headers_in.content_length_n, clcf->client_max_body_size);
 
+	// 请求内容大小是否超过限制
     if (r->headers_in.content_length_n != -1
         && !r->discard_body
         && clcf->client_max_body_size
@@ -1012,6 +1049,7 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
         return NGX_OK;
     }
 
+	// 处理重定向
     if (rc == NGX_DONE) {
         ngx_http_clear_location(r);
 
@@ -1052,9 +1090,12 @@ ngx_http_core_find_config_phase(ngx_http_request_t *r,
 
     r->phase_handler++;
     return NGX_AGAIN;
-}
+} // }}}
 
 
+// ngx_int_t ngx_http_core_post_rewrite_phase(ngx_http_request_t *r,
+//     ngx_http_phase_handler_t *ph)
+// NGX_HTTP_POST_REWRITE_PHASE 阶段 checker，防止递归修改 URI 造成死循环 {{{
 ngx_int_t
 ngx_http_core_post_rewrite_phase(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph)
@@ -1064,6 +1105,7 @@ ngx_http_core_post_rewrite_phase(ngx_http_request_t *r,
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "post rewrite phase: %ui", r->phase_handler);
 
+	// 不需要重写 URI，直接返回
     if (!r->uri_changed) {
         r->phase_handler++;
         return NGX_AGAIN;
@@ -1079,6 +1121,7 @@ ngx_http_core_post_rewrite_phase(ngx_http_request_t *r,
      *     unsigned  uri_changes:4
      */
 
+	// uri_changes 保存重写次数，初始值为 11，为 0 说明被重写了 10 次以上，禁止
     r->uri_changes--;
 
     if (r->uri_changes == 0) {
@@ -1096,9 +1139,13 @@ ngx_http_core_post_rewrite_phase(ngx_http_request_t *r,
     r->loc_conf = cscf->ctx->loc_conf;
 
     return NGX_AGAIN;
-}
+} // }}}
 
 
+// ngx_int_t
+// ngx_http_core_access_phase(ngx_http_request_t *r,
+//     ngx_http_phase_handler_t *ph)
+// NGX_HTTP_POST_ACCESS_PHASE 阶段 checker，判断用户是否有权限访问 {{{
 ngx_int_t
 ngx_http_core_access_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
 {
@@ -1113,6 +1160,8 @@ ngx_http_core_access_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "access phase: %ui", r->phase_handler);
 
+	// ngx_http_access_handler，访问权限判断
+	// ngx_http_auth_basic_handler, ngx_http_auth_basic_module 提供密码验证
     rc = ph->handler(r);
 
     if (rc == NGX_DECLINED) {
@@ -1159,9 +1208,13 @@ ngx_http_core_access_phase(ngx_http_request_t *r, ngx_http_phase_handler_t *ph)
 
     ngx_http_finalize_request(r, rc);
     return NGX_OK;
-}
+} // }}}
 
 
+// ngx_int_t ngx_http_core_post_access_phase(ngx_http_request_t *r,
+//     ngx_http_phase_handler_t *ph)
+// NGX_HTTP_POST_ACCESS_PHASE 阶段 checker
+// 根据 NGX_HTTP_ACCESS_PHASE 阶段的返回将对应的错误信息返回给用户 {{{
 ngx_int_t
 ngx_http_core_post_access_phase(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph)
@@ -1186,9 +1239,13 @@ ngx_http_core_post_access_phase(ngx_http_request_t *r,
 
     r->phase_handler++;
     return NGX_AGAIN;
-}
+} // }}}
 
 
+// ngx_int_t ngx_http_core_try_files_phase(ngx_http_request_t *r,
+//     ngx_http_phase_handler_t *ph)
+// NGX_HTTP_TRY_FILES_PHASE 阶段 checker
+// 尝试从多个静态文件中找出需要访问的静态文件 {{{
 ngx_int_t
 ngx_http_core_try_files_phase(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph)
@@ -1393,9 +1450,12 @@ ngx_http_core_try_files_phase(ngx_http_request_t *r,
     }
 
     /* not reached */
-}
+} // }}}
 
 
+// ngx_int_t ngx_http_core_content_phase(ngx_http_request_t *r,
+//     ngx_http_phase_handler_t *ph)
+// NGX_HTTP_CONTENT_PHASE 阶段 checker，生成 HTTP 响应 {{{
 ngx_int_t
 ngx_http_core_content_phase(ngx_http_request_t *r,
     ngx_http_phase_handler_t *ph)
@@ -1404,6 +1464,10 @@ ngx_http_core_content_phase(ngx_http_request_t *r,
     ngx_int_t  rc;
     ngx_str_t  path;
 
+	// 在 NGX_HTTP_FIND_CONFIG_PHASE 阶段
+	// 如果发现 location 有对应的 handler 需要执行
+	// 则会赋值给 content_handler，在此执行
+	// 从而就不会去执行其他的 handler 了
     if (r->content_handler) {
         r->write_event_handler = ngx_http_request_empty_handler;
         ngx_http_finalize_request(r, r->content_handler(r));
@@ -1413,6 +1477,8 @@ ngx_http_core_content_phase(ngx_http_request_t *r,
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "content phase: %ui", r->phase_handler);
 
+	// 执行各个模块的 handler
+	// ngx_http_index_module ngx_http_index_handler
     rc = ph->handler(r);
 
     if (rc != NGX_DECLINED) {
@@ -1446,9 +1512,11 @@ ngx_http_core_content_phase(ngx_http_request_t *r,
 
     ngx_http_finalize_request(r, NGX_HTTP_NOT_FOUND);
     return NGX_OK;
-}
+} // }}}
 
 
+// void ngx_http_update_location_config(ngx_http_request_t *r)
+// 更新 location 的 request 相关配置 {{{
 void
 ngx_http_update_location_config(ngx_http_request_t *r)
 {
@@ -1528,7 +1596,7 @@ ngx_http_update_location_config(ngx_http_request_t *r)
     if (clcf->handler) {
         r->content_handler = clcf->handler;
     }
-}
+} // }}}
 
 
 /*
@@ -1539,6 +1607,8 @@ ngx_http_update_location_config(ngx_http_request_t *r)
  * NGX_DECLINED - no match
  */
 
+// static ngx_int_t ngx_http_core_find_location(ngx_http_request_t *r)
+// 根据请求 URI 查找对应的 location {{{
 static ngx_int_t
 ngx_http_core_find_location(ngx_http_request_t *r)
 {
@@ -1554,6 +1624,7 @@ ngx_http_core_find_location(ngx_http_request_t *r)
 
     pclcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
+	// 静态查找
     rc = ngx_http_core_find_static_location(r, pclcf->static_locations);
 
     if (rc == NGX_AGAIN) {
@@ -1577,6 +1648,7 @@ ngx_http_core_find_location(ngx_http_request_t *r)
 
 #if (NGX_PCRE)
 
+	// 通过正则匹配查找 URI 对应的 location
     if (noregex == 0 && pclcf->regex_locations) {
 
         for (clcfp = pclcf->regex_locations; *clcfp; clcfp++) {
@@ -1606,7 +1678,7 @@ ngx_http_core_find_location(ngx_http_request_t *r)
 #endif
 
     return rc;
-}
+} // }}}
 
 
 /*
@@ -1616,6 +1688,9 @@ ngx_http_core_find_location(ngx_http_request_t *r)
  * NGX_DECLINED - no match
  */
 
+// static ngx_int_t ngx_http_core_find_static_location(ngx_http_request_t *r,
+//     ngx_http_location_tree_node_t *node)
+// 通过静态配置查找 URI 对应的 location {{{
 static ngx_int_t
 ngx_http_core_find_static_location(ngx_http_request_t *r,
     ngx_http_location_tree_node_t *node)
@@ -1692,7 +1767,7 @@ ngx_http_core_find_static_location(ngx_http_request_t *r,
 
         node = node->left;
     }
-}
+} // }}}
 
 
 void *

@@ -92,6 +92,8 @@ ngx_module_t  ngx_http_auth_basic_module = {
 };
 
 
+// static ngx_int_t ngx_http_auth_basic_handler(ngx_http_request_t *r)
+// ngx_http_auth_basic_module 提供密码验证 {{{
 static ngx_int_t
 ngx_http_auth_basic_handler(ngx_http_request_t *r)
 {
@@ -284,7 +286,7 @@ ngx_http_auth_basic_handler(ngx_http_request_t *r)
                   &r->headers_in.user, &user_file);
 
     return ngx_http_auth_basic_set_realm(r, &realm);
-}
+} // }}}
 
 
 static ngx_int_t

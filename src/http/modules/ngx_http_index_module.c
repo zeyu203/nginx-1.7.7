@@ -93,6 +93,8 @@ ngx_module_t  ngx_http_index_module = {
  * it only indicates that path points to a regular file, not a directory.
  */
 
+// static ngx_int_t ngx_http_index_handler(ngx_http_request_t *r)
+// NGX_HTTP_CONTENT_PHASE 阶段 handler 用于生成 HTTP 响应 {{{
 static ngx_int_t
 ngx_http_index_handler(ngx_http_request_t *r)
 {
@@ -278,7 +280,7 @@ ngx_http_index_handler(ngx_http_request_t *r)
     }
 
     return NGX_DECLINED;
-}
+} // }}}
 
 
 static ngx_int_t

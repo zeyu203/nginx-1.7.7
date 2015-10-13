@@ -119,6 +119,8 @@ ngx_module_t  ngx_http_access_module = {
 };
 
 
+// static ngx_int_t ngx_http_access_handler(ngx_http_request_t *r)
+// NGX_HTTP_POST_ACCESS_PHASE 阶段 handler，判断用户是否有权限访问 {{{
 static ngx_int_t
 ngx_http_access_handler(ngx_http_request_t *r)
 {
@@ -137,6 +139,7 @@ ngx_http_access_handler(ngx_http_request_t *r)
     case AF_INET:
         if (alcf->rules) {
             sin = (struct sockaddr_in *) r->connection->sockaddr;
+			// 根据地址结构判断是否可以访问
             return ngx_http_access_inet(r, alcf, sin->sin_addr.s_addr);
         }
         break;
@@ -152,10 +155,12 @@ ngx_http_access_handler(ngx_http_request_t *r)
             addr += p[13] << 16;
             addr += p[14] << 8;
             addr += p[15];
+			// 根据地址结构判断是否可以访问
             return ngx_http_access_inet(r, alcf, htonl(addr));
         }
 
         if (alcf->rules6) {
+			// 根据地址结构判断是否可以访问
             return ngx_http_access_inet6(r, alcf, p);
         }
 
@@ -167,6 +172,7 @@ ngx_http_access_handler(ngx_http_request_t *r)
 
     case AF_UNIX:
         if (alcf->rules_un) {
+			// 根据地址结构判断是否可以访问
             return ngx_http_access_unix(r, alcf);
         }
 
@@ -176,9 +182,13 @@ ngx_http_access_handler(ngx_http_request_t *r)
     }
 
     return NGX_DECLINED;
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_http_access_inet(ngx_http_request_t *r, ngx_http_access_loc_conf_t *alcf,
+//     in_addr_t addr)
+// 判断 IP 是否可访问 {{{
 static ngx_int_t
 ngx_http_access_inet(ngx_http_request_t *r, ngx_http_access_loc_conf_t *alcf,
     in_addr_t addr)
@@ -199,7 +209,7 @@ ngx_http_access_inet(ngx_http_request_t *r, ngx_http_access_loc_conf_t *alcf,
     }
 
     return NGX_DECLINED;
-}
+} // }}}
 
 
 #if (NGX_HAVE_INET6)
@@ -272,6 +282,8 @@ ngx_http_access_unix(ngx_http_request_t *r, ngx_http_access_loc_conf_t *alcf)
 #endif
 
 
+// static ngx_int_t ngx_http_access_found(ngx_http_request_t *r, ngx_uint_t deny)
+// 判断是否 403 FORBIDDEN {{{
 static ngx_int_t
 ngx_http_access_found(ngx_http_request_t *r, ngx_uint_t deny)
 {
@@ -280,6 +292,8 @@ ngx_http_access_found(ngx_http_request_t *r, ngx_uint_t deny)
     if (deny) {
         clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
+		// NGX_HTTP_SATISFY_ALL 必须满足所有的 access
+		// NGX_HTTP_SATISFY_ANY 只需要满足一个
         if (clcf->satisfy == NGX_HTTP_SATISFY_ALL) {
             ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                           "access forbidden by rule");
@@ -289,7 +303,7 @@ ngx_http_access_found(ngx_http_request_t *r, ngx_uint_t deny)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 static char *

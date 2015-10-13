@@ -133,6 +133,8 @@ ngx_module_t  ngx_http_rewrite_module = {
 };
 
 
+// static ngx_int_t ngx_http_rewrite_handler(ngx_http_request_t *r)
+// NGX_HTTP_SERVER_REWRITE_PHASE 阶段 handler URI rewrite 回调函数 {{{
 static ngx_int_t
 ngx_http_rewrite_handler(ngx_http_request_t *r)
 {
@@ -189,7 +191,7 @@ ngx_http_rewrite_handler(ngx_http_request_t *r)
     }
 
     return r->err_status;
-}
+} // }}}
 
 
 static ngx_int_t

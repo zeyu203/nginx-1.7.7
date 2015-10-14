@@ -1964,13 +1964,16 @@ ngx_http_process_request(ngx_http_request_t *r)
     r->stat_writing = 1;
 #endif
 
+	// 重设连接的读写回调函数
     c->read->handler = ngx_http_request_handler;
     c->write->handler = ngx_http_request_handler;
+	// 重设请求读事件回调函数
     r->read_event_handler = ngx_http_block_reading;
 
 	// http 请求处理回调调用函数
     ngx_http_handler(r);
 
+	// post 请求处理
     ngx_http_run_posted_requests(c);
 } // }}}
 
@@ -2279,6 +2282,8 @@ ngx_http_request_handler(ngx_event_t *ev)
 }
 
 
+// void ngx_http_run_posted_requests(ngx_connection_t *c)
+// 处理 posted_requests 队列中的 POST 请求 {{{
 void
 ngx_http_run_posted_requests(ngx_connection_t *c)
 {
@@ -2309,9 +2314,10 @@ ngx_http_run_posted_requests(ngx_connection_t *c)
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                        "http posted request: \"%V?%V\"", &r->uri, &r->args);
 
+		// ngx_http_core_run_phases
         r->write_event_handler(r);
     }
-}
+} // }}}
 
 
 // ngx_int_t

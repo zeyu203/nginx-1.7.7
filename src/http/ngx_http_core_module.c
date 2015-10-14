@@ -840,6 +840,7 @@ ngx_http_handler(ngx_http_request_t *r)
 
     r->connection->unexpected_eof = 0;
 
+	// 设置初始执行的 HTTP 处理阶段，如果不需要重定向，则跳过前几个阶段
     if (!r->internal) {
         switch (r->headers_in.connection_type) {
         case 0:
@@ -871,6 +872,7 @@ ngx_http_handler(ngx_http_request_t *r)
     r->gzip_vary = 0;
 #endif
 
+	// 设置请求写事件回调函数
     r->write_event_handler = ngx_http_core_run_phases;
 	// 11 个 HTTP 处理阶段
     ngx_http_core_run_phases(r);
@@ -898,7 +900,7 @@ ngx_http_core_run_phases(ngx_http_request_t *r)
 		// NGX_HTTP_REWRITE_PHASE			ngx_http_core_rewrite_phase
 		// NGX_HTTP_POST_REWRITE_PHASE		ngx_http_core_post_rewrite_phase
 		// NGX_HTTP_PREACCESS_PHASE			ngx_http_core_generic_phase
-		// NGX_HTTP_POST_READ_PHASE			ngx_http_limit_conn_handler
+		// NGX_HTTP_POST_READ_PHASE			ngx_http_core_generic_phase
 		// NGX_HTTP_ACCESS_PHASE			ngx_http_core_access_phase
 		// NGX_HTTP_POST_ACCESS_PHASE		ngx_http_core_post_access_phase
 		// NGX_HTTP_CONTENT_PHASE			ngx_http_core_content_phase

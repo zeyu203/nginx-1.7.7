@@ -179,7 +179,7 @@ typedef struct {
     ngx_http_phase_handler_t  *handlers;
 	// 存储 NGX_HTTP_SERVER_REWRITE_PHASE 阶段第一个回调函数序号，用于快速跳转
     ngx_uint_t                 server_rewrite_index;
-	// 存储 NGX_HTTP_REWRITE_PHASE 阶段第一个毁掉函数序号，用于快速跳转
+	// 存储 NGX_HTTP_REWRITE_PHASE 阶段第一个回调函数序号，用于快速跳转
     ngx_uint_t                 location_rewrite_index;
 } ngx_http_phase_engine_t; // }}}
 

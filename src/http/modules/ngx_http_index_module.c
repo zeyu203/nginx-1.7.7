@@ -135,6 +135,7 @@ ngx_http_index_handler(ngx_http_request_t *r)
         if (index[i].lengths == NULL) {
 
             if (index[i].name.data[0] == '/') {
+				// 重定向到 index 配置补全的 URI
                 return ngx_http_internal_redirect(r, &index[i].name, &r->args);
             }
 

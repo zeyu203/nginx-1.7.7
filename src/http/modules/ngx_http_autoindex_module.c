@@ -134,6 +134,8 @@ static u_char tail[] =
 ;
 
 
+// static ngx_int_t ngx_http_autoindex_handler(ngx_http_request_t *r)
+// 获取通过 index 补全的真实 URI {{{
 static ngx_int_t
 ngx_http_autoindex_handler(ngx_http_request_t *r)
 {
@@ -173,6 +175,7 @@ ngx_http_autoindex_handler(ngx_http_request_t *r)
 
     /* NGX_DIR_MASK_LEN is lesser than NGX_HTTP_AUTOINDEX_PREALLOCATE */
 
+	// 获取 uri 对应的文件路径
     last = ngx_http_map_uri_to_path(r, &path, &root,
                                     NGX_HTTP_AUTOINDEX_PREALLOCATE);
     if (last == NULL) {
@@ -189,6 +192,7 @@ ngx_http_autoindex_handler(ngx_http_request_t *r)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http autoindex: \"%s\"", path.data);
 
+	// 尝试打开文件
     if (ngx_open_dir(&path, &dir) == NGX_ERROR) {
         err = ngx_errno;
 
@@ -581,7 +585,7 @@ ngx_http_autoindex_handler(ngx_http_request_t *r)
     out.next = NULL;
 
     return ngx_http_output_filter(r, &out);
-}
+} // }}}
 
 
 static int ngx_libc_cdecl

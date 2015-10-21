@@ -140,6 +140,9 @@ ngx_open_file_cache_cleanup(void *data)
 }
 
 
+// ngx_int_t ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
+//     ngx_open_file_info_t *of, ngx_pool_t *pool)
+// 如果文件没有打开，则打开文件，载入缓存，保存文件属性 {{{
 ngx_int_t
 ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
     ngx_open_file_info_t *of, ngx_pool_t *pool)
@@ -153,6 +156,7 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
     ngx_pool_cleanup_file_t        *clnf;
     ngx_open_file_cache_cleanup_t  *ofcln;
 
+	// 初始化
     of->fd = NGX_INVALID_FILE;
     of->err = 0;
 
@@ -483,7 +487,7 @@ failed:
     }
 
     return NGX_ERROR;
-}
+} // }}}
 
 
 #if (NGX_HAVE_OPENAT)

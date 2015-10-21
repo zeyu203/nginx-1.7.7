@@ -1480,7 +1480,15 @@ ngx_http_core_content_phase(ngx_http_request_t *r,
                    "content phase: %ui", r->phase_handler);
 
 	// 执行各个模块的 handler
-	// ngx_http_index_module ngx_http_index_handler
+	//
+	// 检测并补全默认的 index URI
+	// ngx_http_index_module		ngx_http_index_handler
+	// 获取通过 index 补全的真实 URI，并获取文件内容
+	// ngx_http_autoindex_module	ngx_http_autoindex_handler
+	// 对文件进行 gzip 压缩
+	// ngx_http_gzip_static_module	ngx_http_gzip_static_handler
+	// 设置 response header 和 body，处理静态文件响应
+	// ngx_http_static_module		ngx_http_static_handler
     rc = ph->handler(r);
 
     if (rc != NGX_DECLINED) {
@@ -2089,6 +2097,10 @@ ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
 }
 
 
+// u_char *
+// ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *path,
+//     size_t *root_length, size_t reserved)
+// 获取 uri 对应的文件路径 {{{
 u_char *
 ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *path,
     size_t *root_length, size_t reserved)
@@ -2097,6 +2109,7 @@ ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *path,
     size_t                     alias;
     ngx_http_core_loc_conf_t  *clcf;
 
+	// 获取 location 配置
     clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
     alias = clcf->alias;
@@ -2159,7 +2172,7 @@ ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *path,
     last = ngx_cpystrn(last, r->uri.data + alias, r->uri.len - alias + 1);
 
     return last;
-}
+} // }}}
 
 
 ngx_int_t
@@ -2669,6 +2682,9 @@ ngx_http_subrequest(ngx_http_request_t *r,
 }
 
 
+// ngx_int_t ngx_http_internal_redirect(ngx_http_request_t *r,
+//     ngx_str_t *uri, ngx_str_t *args)
+// 重定向 URI  {{{
 ngx_int_t
 ngx_http_internal_redirect(ngx_http_request_t *r,
     ngx_str_t *uri, ngx_str_t *args)
@@ -2721,7 +2737,7 @@ ngx_http_internal_redirect(ngx_http_request_t *r,
     ngx_http_handler(r);
 
     return NGX_DONE;
-}
+} // }}}
 
 
 ngx_int_t
@@ -2834,6 +2850,9 @@ ngx_http_cleanup_add(ngx_http_request_t *r, size_t size)
 }
 
 
+// ngx_int_t ngx_http_set_disable_symlinks(ngx_http_request_t *r,
+//     ngx_http_core_loc_conf_t *clcf, ngx_str_t *path, ngx_open_file_info_t *of)
+// 处理符号链接 {{{
 ngx_int_t
 ngx_http_set_disable_symlinks(ngx_http_request_t *r,
     ngx_http_core_loc_conf_t *clcf, ngx_str_t *path, ngx_open_file_info_t *of)
@@ -2881,7 +2900,7 @@ ngx_http_set_disable_symlinks(ngx_http_request_t *r,
 #endif
 
     return NGX_OK;
-}
+} // }}}
 
 
 ngx_int_t

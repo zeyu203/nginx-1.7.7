@@ -45,6 +45,8 @@ ngx_module_t  ngx_http_static_module = {
 };
 
 
+// static ngx_int_t ngx_http_static_handler(ngx_http_request_t *r)
+// HTTP 静态文件处理 {{{
 static ngx_int_t
 ngx_http_static_handler(ngx_http_request_t *r)
 {
@@ -59,10 +61,12 @@ ngx_http_static_handler(ngx_http_request_t *r)
     ngx_open_file_info_t       of;
     ngx_http_core_loc_conf_t  *clcf;
 
+	// 限制请求类型
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD|NGX_HTTP_POST))) {
         return NGX_HTTP_NOT_ALLOWED;
     }
 
+	// 末尾为 / 说明需要补全、重定向
     if (r->uri.data[r->uri.len - 1] == '/') {
         return NGX_DECLINED;
     }
@@ -74,6 +78,9 @@ ngx_http_static_handler(ngx_http_request_t *r)
      * so we do not need to reserve memory for '/' for possible redirect
      */
 
+	// 获取 uri 对应的文件路径
+	// path 保存完整路径，root 保存 dir 字符串的长度
+	// 返回字符串尾部
     last = ngx_http_map_uri_to_path(r, &path, &root, 0);
     if (last == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -95,10 +102,12 @@ ngx_http_static_handler(ngx_http_request_t *r)
     of.errors = clcf->open_file_cache_errors;
     of.events = clcf->open_file_cache_events;
 
+	// 处理符号链接
     if (ngx_http_set_disable_symlinks(r, clcf, &path, &of) != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+	// 打开文件缓存
     if (ngx_open_cached_file(clcf->open_file_cache, &path, &of, r->pool)
         != NGX_OK)
     {
@@ -208,6 +217,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
         return NGX_HTTP_NOT_ALLOWED;
     }
 
+	// 处理请求包体并丢弃
     rc = ngx_http_discard_request_body(r);
 
     if (rc != NGX_OK) {
@@ -246,6 +256,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+	// 发送头部
     rc = ngx_http_send_header(r);
 
     if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
@@ -267,8 +278,9 @@ ngx_http_static_handler(ngx_http_request_t *r)
     out.buf = b;
     out.next = NULL;
 
+	// 把产生的内容传递给后续的filter去处理
     return ngx_http_output_filter(r, &out);
-}
+} // }}}
 
 
 static ngx_int_t

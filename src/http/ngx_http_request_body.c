@@ -488,6 +488,8 @@ ngx_http_write_request_body(ngx_http_request_t *r)
 }
 
 
+// ngx_int_t ngx_http_discard_request_body(ngx_http_request_t *r)
+// 丢弃请求包体 {{{
 ngx_int_t
 ngx_http_discard_request_body(ngx_http_request_t *r)
 {
@@ -502,10 +504,14 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
     }
 #endif
 
+	// 已经处理过，则不需要再次处理
     if (r != r->main || r->discard_body || r->request_body) {
         return NGX_OK;
     }
 
+	// http1.1 expect 机制
+	// 如果客户端发送了expect头，而服务端不希望接收请求体时，必须返回417
+	// ngxin 并没有返回 417 而是简单地丢弃了请求包体
     if (ngx_http_test_expect(r) != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
@@ -514,19 +520,24 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, rev->log, 0, "http set discard body");
 
+	// 删除读事件计时器
     if (rev->timer_set) {
         ngx_del_timer(rev);
     }
 
+	// 请求不具有请求体
     if (r->headers_in.content_length_n <= 0 && !r->headers_in.chunked) {
         return NGX_OK;
     }
 
     size = r->header_in->last - r->header_in->pos;
 
+	// 请求中已经具有请求体，无需再次读取请求
     if (size || r->headers_in.chunked) {
+		// 处理请求体并丢弃
         rc = ngx_http_discard_request_body_filter(r, r->header_in);
 
+		// 需要继续接受请求体
         if (rc != NGX_OK) {
             return rc;
         }
@@ -536,6 +547,7 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
         }
     }
 
+	// 读取请求包体并丢弃
     rc = ngx_http_read_discarded_request_body(r);
 
     if (rc == NGX_OK) {
@@ -559,7 +571,7 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
     r->discard_body = 1;
 
     return NGX_OK;
-}
+} // }}}
 
 
 void
@@ -633,6 +645,8 @@ ngx_http_discarded_request_body_handler(ngx_http_request_t *r)
 }
 
 
+// static ngx_int_t ngx_http_read_discarded_request_body(ngx_http_request_t *r)
+// 读取请求包体 {{{
 static ngx_int_t
 ngx_http_read_discarded_request_body(ngx_http_request_t *r)
 {
@@ -686,9 +700,12 @@ ngx_http_read_discarded_request_body(ngx_http_request_t *r)
             return rc;
         }
     }
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_http_discard_request_body_filter(ngx_http_request_t *r, ngx_buf_t *b)
+// 读取并丢弃请求包体 {{{
 static ngx_int_t
 ngx_http_discard_request_body_filter(ngx_http_request_t *r, ngx_buf_t *b)
 {
@@ -775,9 +792,11 @@ ngx_http_discard_request_body_filter(ngx_http_request_t *r, ngx_buf_t *b)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
+// static ngx_int_t ngx_http_test_expect(ngx_http_request_t *r)
+// 如果客户端发送了expect头，而服务端不希望接收请求体则丢弃包体 {{{
 static ngx_int_t
 ngx_http_test_expect(ngx_http_request_t *r)
 {
@@ -817,7 +836,7 @@ ngx_http_test_expect(ngx_http_request_t *r)
     /* we assume that such small packet should be send successfully */
 
     return NGX_ERROR;
-}
+} // }}}
 
 
 static ngx_int_t

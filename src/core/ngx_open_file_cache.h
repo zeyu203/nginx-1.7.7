@@ -16,16 +16,22 @@
 #define NGX_OPEN_FILE_DIRECTIO_OFF  NGX_MAX_OFF_T_VALUE
 
 
+// struct ngx_open_file_info_t
+// 已打开文件信息 {{{
 typedef struct {
     ngx_fd_t                 fd;
     ngx_file_uniq_t          uniq;
+	// 修改时间
     time_t                   mtime;
     off_t                    size;
     off_t                    fs_size;
     off_t                    directio;
     size_t                   read_ahead;
 
+	// 错误描述
+	// typedef int           ngx_err_t;
     ngx_err_t                err;
+	// 出错信息
     char                    *failed;
 
     time_t                   valid;
@@ -48,7 +54,7 @@ typedef struct {
     unsigned                 is_link:1;
     unsigned                 is_exec:1;
     unsigned                 is_directio:1;
-} ngx_open_file_info_t;
+} ngx_open_file_info_t; // }}}
 
 
 typedef struct ngx_cached_open_file_s  ngx_cached_open_file_t;

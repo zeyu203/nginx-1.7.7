@@ -79,6 +79,8 @@ ngx_module_t  ngx_http_gzip_static_module = {
 };
 
 
+// static ngx_int_t ngx_http_gzip_static_handler(ngx_http_request_t *r)
+// 对文件进行 gzip 压缩 {{{
 static ngx_int_t
 ngx_http_gzip_static_handler(ngx_http_request_t *r)
 {
@@ -280,7 +282,7 @@ ngx_http_gzip_static_handler(ngx_http_request_t *r)
     out.next = NULL;
 
     return ngx_http_output_filter(r, &out);
-}
+} // }}}
 
 
 static void *

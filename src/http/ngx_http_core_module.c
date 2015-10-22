@@ -1492,6 +1492,7 @@ ngx_http_core_content_phase(ngx_http_request_t *r,
     rc = ph->handler(r);
 
     if (rc != NGX_DECLINED) {
+		// 响应封装完毕，结束请求，发送
         ngx_http_finalize_request(r, rc);
         return NGX_OK;
     }
@@ -1822,6 +1823,8 @@ ngx_http_test_content_type(ngx_http_request_t *r, ngx_hash_t *types_hash)
 }
 
 
+// ngx_int_t ngx_http_set_content_type(ngx_http_request_t *r)
+// 设置响应 HEADER 的 content-type {{{
 ngx_int_t
 ngx_http_set_content_type(ngx_http_request_t *r)
 {
@@ -1860,6 +1863,7 @@ ngx_http_set_content_type(ngx_http_request_t *r)
             hash = ngx_hash(hash, c);
         }
 
+		// 获取文件类型对应的 content-type
         type = ngx_hash_find(&clcf->types_hash, hash,
                              r->exten.data, r->exten.len);
 
@@ -1875,7 +1879,7 @@ ngx_http_set_content_type(ngx_http_request_t *r)
     r->headers_out.content_type = clcf->default_type;
 
     return NGX_OK;
-}
+} // }}}
 
 
 void
@@ -1902,6 +1906,8 @@ ngx_http_set_exten(ngx_http_request_t *r)
 }
 
 
+// ngx_int_t ngx_http_set_etag(ngx_http_request_t *r)
+// 设置 Etag ( Entity Tag ) 用于标识 URL 是否被改变 {{{
 ngx_int_t
 ngx_http_set_etag(ngx_http_request_t *r)
 {
@@ -1936,7 +1942,7 @@ ngx_http_set_etag(ngx_http_request_t *r)
     r->headers_out.etag = etag;
 
     return NGX_OK;
-}
+} // }}}
 
 
 void
@@ -2057,9 +2063,12 @@ ngx_http_send_response(ngx_http_request_t *r, ngx_uint_t status,
 }
 
 
+// ngx_int_t ngx_http_send_header(ngx_http_request_t *r)
+// 发送响应头 {{{
 ngx_int_t
 ngx_http_send_header(ngx_http_request_t *r)
 {
+	// 已经发送过不再重复发送
     if (r->header_sent) {
         ngx_log_error(NGX_LOG_ALERT, r->connection->log, 0,
                       "header already sent");
@@ -2071,10 +2080,24 @@ ngx_http_send_header(ngx_http_request_t *r)
         r->headers_out.status_line.len = 0;
     }
 
+	// 打包响应头
+	// 回调函数，由具体的 module 实现
+	// ngx_http_not_modified_filter_module	ngx_http_not_modified_header_filter
+	// ngx_http_headers_filter_module		ngx_http_headers_filter
+	// ngx_http_userid_filter_module		ngx_http_userid_filter
+	// ngx_http_charset_filter_module		ngx_http_charset_header_filter
+	// ngx_http_ssi_filter_module			ngx_http_ssi_header_filter
+	// ngx_http_gzip_filter_module			ngx_http_gzip_header_filter
+	// ngx_http_range_filter_module			ngx_http_range_header_filter
+	// ngx_http_chunked_filter_module		ngx_http_chunked_header_filter
+	// ngx_http_header_filter_module		ngx_http_header_filter
+	// ngx_http_write_filter_module			ngx_http_write_filter
     return ngx_http_top_header_filter(r);
-}
+} // }}}
 
 
+// ngx_int_t ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
+// 打包完整的响应 {{{
 ngx_int_t
 ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
 {
@@ -2086,6 +2109,7 @@ ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http output filter \"%V?%V\"", &r->uri, &r->args);
 
+	// 打包响应包体
     rc = ngx_http_top_body_filter(r, in);
 
     if (rc == NGX_ERROR) {
@@ -2094,7 +2118,7 @@ ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
     }
 
     return rc;
-}
+} // }}}
 
 
 // u_char *

@@ -339,6 +339,8 @@ ngx_pcalloc(ngx_pool_t *pool, size_t size)
 } // }}}
 
 
+// ngx_pool_cleanup_t * ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
+// 分配带有回调函数的内存（为 ngx_pool_cleanup_t 结构分配内存） {{{
 ngx_pool_cleanup_t *
 ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
 {
@@ -367,7 +369,7 @@ ngx_pool_cleanup_add(ngx_pool_t *p, size_t size)
     ngx_log_debug1(NGX_LOG_DEBUG_ALLOC, p->log, 0, "add cleanup: %p", c);
 
     return c;
-}
+} // }}}
 
 
 void
@@ -391,6 +393,8 @@ ngx_pool_run_cleanup_file(ngx_pool_t *p, ngx_fd_t fd)
 }
 
 
+// void ngx_pool_cleanup_file(void *data)
+// 析构回调函数 {{{
 void
 ngx_pool_cleanup_file(void *data)
 {
@@ -403,7 +407,7 @@ ngx_pool_cleanup_file(void *data)
         ngx_log_error(NGX_LOG_ALERT, c->log, ngx_errno,
                       ngx_close_file_n " \"%s\" failed", c->name);
     }
-}
+} // }}}
 
 
 void

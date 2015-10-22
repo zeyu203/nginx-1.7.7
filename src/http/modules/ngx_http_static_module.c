@@ -153,6 +153,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, log, 0, "http static fd: %d", of.fd);
 
+	// 是目录则出错
     if (of.is_dir) {
 
         ngx_log_debug0(NGX_LOG_DEBUG_HTTP, log, 0, "http dir");
@@ -213,6 +214,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
 
 #endif
 
+	// 如果是 POST 返回 405
     if (r->method & NGX_HTTP_POST) {
         return NGX_HTTP_NOT_ALLOWED;
     }
@@ -230,14 +232,17 @@ ngx_http_static_handler(ngx_http_request_t *r)
     r->headers_out.content_length_n = of.size;
     r->headers_out.last_modified_time = of.mtime;
 
+	// 设置 ETAG 响应 HEADER 标识 ( {last-modify}-{content-length} )
     if (ngx_http_set_etag(r) != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+	// 设置响应 HEADER 的 content-type
     if (ngx_http_set_content_type(r) != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+	// 文件内容为空则直接发送响应头
     if (r != r->main && of.size == 0) {
         return ngx_http_send_header(r);
     }
@@ -256,7 +261,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
-	// 发送头部
+	// 打包并发送头部
     rc = ngx_http_send_header(r);
 
     if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
@@ -278,7 +283,7 @@ ngx_http_static_handler(ngx_http_request_t *r)
     out.buf = b;
     out.next = NULL;
 
-	// 把产生的内容传递给后续的filter去处理
+	// 出错则打包包体准备发送
     return ngx_http_output_filter(r, &out);
 } // }}}
 

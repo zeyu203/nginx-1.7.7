@@ -509,9 +509,8 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
         return NGX_OK;
     }
 
-	// http1.1 expect 机制
-	// 如果客户端发送了expect头，而服务端不希望接收请求体时，必须返回417
-	// ngxin 并没有返回 417 而是简单地丢弃了请求包体
+	// http/1.1 expect 机制
+	// 客户端测试服务端是否支持 POST 大数据
     if (ngx_http_test_expect(r) != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
@@ -525,7 +524,7 @@ ngx_http_discard_request_body(ngx_http_request_t *r)
         ngx_del_timer(rev);
     }
 
-	// 请求不具有请求体
+	// 请求不具有请求体则直接返回
     if (r->headers_in.content_length_n <= 0 && !r->headers_in.chunked) {
         return NGX_OK;
     }
@@ -796,13 +795,14 @@ ngx_http_discard_request_body_filter(ngx_http_request_t *r, ngx_buf_t *b)
 
 
 // static ngx_int_t ngx_http_test_expect(ngx_http_request_t *r)
-// 如果客户端发送了expect头，而服务端不希望接收请求体则丢弃包体 {{{
+// HTTP/1.1 Expect 协议处理 {{{
 static ngx_int_t
 ngx_http_test_expect(ngx_http_request_t *r)
 {
     ngx_int_t   n;
     ngx_str_t  *expect;
 
+	// 请求不具有 expect 头则直接返回
     if (r->expect_tested
         || r->headers_in.expect == NULL
         || r->http_version < NGX_HTTP_VERSION_11)
@@ -814,6 +814,7 @@ ngx_http_test_expect(ngx_http_request_t *r)
 
     expect = &r->headers_in.expect->value;
 
+	// 非 100-continue 协议，直接返回
     if (expect->len != sizeof("100-continue") - 1
         || ngx_strncasecmp(expect->data, (u_char *) "100-continue",
                            sizeof("100-continue") - 1)
@@ -825,6 +826,8 @@ ngx_http_test_expect(ngx_http_request_t *r)
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "send 100 Continue");
 
+	// ngx_unix_send 封装 send 函数，发送网络字节流
+	// 返回响应
     n = r->connection->send(r->connection,
                             (u_char *) "HTTP/1.1 100 Continue" CRLF CRLF,
                             sizeof("HTTP/1.1 100 Continue" CRLF CRLF) - 1);

@@ -54,6 +54,8 @@ static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
 static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
 
+// static ngx_int_t ngx_http_chunked_header_filter(ngx_http_request_t *r)
+// 打包 chunck 信息到 HEADER {{{
 static ngx_int_t
 ngx_http_chunked_header_filter(ngx_http_request_t *r)
 {
@@ -94,7 +96,7 @@ ngx_http_chunked_header_filter(ngx_http_request_t *r)
     }
 
     return ngx_http_next_header_filter(r);
-}
+} // }}}
 
 
 static ngx_int_t

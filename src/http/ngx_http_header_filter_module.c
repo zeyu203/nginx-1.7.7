@@ -147,6 +147,8 @@ ngx_http_header_out_t  ngx_http_headers_out[] = {
 };
 
 
+// static ngx_int_t ngx_http_header_filter(ngx_http_request_t *r)
+// 完成 HEADER 打包 {{{
 static ngx_int_t
 ngx_http_header_filter(ngx_http_request_t *r)
 {
@@ -195,6 +197,7 @@ ngx_http_header_filter(ngx_http_request_t *r)
         }
     }
 
+	// 开始计算返回 HEADER 的长度
     len = sizeof("HTTP/1.x ") - 1 + sizeof(CRLF) - 1
           /* the end of the header */
           + sizeof(CRLF) - 1;
@@ -210,6 +213,7 @@ ngx_http_header_filter(ngx_http_request_t *r)
 
     } else {
 
+		// 打包返回状态
         status = r->headers_out.status;
 
         if (status >= NGX_HTTP_OK
@@ -438,11 +442,13 @@ ngx_http_header_filter(ngx_http_request_t *r)
                + sizeof(CRLF) - 1;
     }
 
+	// 完成长度计算，开辟对应大小的缓冲区
     b = ngx_create_temp_buf(r->pool, len);
     if (b == NULL) {
         return NGX_ERROR;
     }
 
+	// 填充 HEADER 缓冲区
     /* "HTTP/1.x " */
     b->last = ngx_cpymem(b->last, "HTTP/1.1 ", sizeof("HTTP/1.x ") - 1);
 
@@ -620,8 +626,9 @@ ngx_http_header_filter(ngx_http_request_t *r)
     out.buf = b;
     out.next = NULL;
 
+	// 将请求写入到缓冲区链表
     return ngx_http_write_filter(r, &out);
-}
+} // }}}
 
 
 static ngx_int_t

@@ -143,6 +143,8 @@ static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
 static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
 
+// static ngx_int_t ngx_http_range_header_filter(ngx_http_request_t *r)
+// 打包 range 信息到响应 HEADER ( HTTP/1.1 支持断点续传 ) {{{
 static ngx_int_t
 ngx_http_range_header_filter(ngx_http_request_t *r)
 {
@@ -266,7 +268,7 @@ next_filter:
     ngx_str_set(&r->headers_out.accept_ranges->value, "bytes");
 
     return ngx_http_next_header_filter(r);
-}
+} // }}}
 
 
 static ngx_int_t

@@ -44,6 +44,8 @@ ngx_module_t  ngx_http_write_filter_module = {
 };
 
 
+// ngx_int_t ngx_http_write_filter(ngx_http_request_t *r, ngx_chain_t *in)
+// 将请求响应写入到缓冲链表中以便一起发送 {{{
 ngx_int_t
 ngx_http_write_filter(ngx_http_request_t *r, ngx_chain_t *in)
 {
@@ -242,6 +244,7 @@ ngx_http_write_filter(ngx_http_request_t *r, ngx_chain_t *in)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http write filter limit %O", limit);
 
+	// ngx_linux_sendfile_chain	发送缓冲区链表中的数据
     chain = c->send_chain(c, r->out, limit);
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
@@ -306,7 +309,7 @@ ngx_http_write_filter(ngx_http_request_t *r, ngx_chain_t *in)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t

@@ -51,13 +51,17 @@ ngx_module_t  ngx_http_not_modified_filter_module = {
 static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
 
 
+// static ngx_int_t ngx_http_not_modified_header_filter(ngx_http_request_t *r)
+// 过滤响应头 {{{
 static ngx_int_t
 ngx_http_not_modified_header_filter(ngx_http_request_t *r)
 {
+	// 如果状态不正常或者被禁止则直接进入下一个 filter
     if (r->headers_out.status != NGX_HTTP_OK
         || r != r->main
         || r->disable_not_modified)
     {
+		// ngx_http_output_header_filter_pt
         return ngx_http_next_header_filter(r);
     }
 
@@ -106,7 +110,7 @@ ngx_http_not_modified_header_filter(ngx_http_request_t *r)
     }
 
     return ngx_http_next_header_filter(r);
-}
+} // }}}
 
 
 static ngx_uint_t

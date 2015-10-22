@@ -2346,6 +2346,8 @@ ngx_http_post_request(ngx_http_request_t *r, ngx_http_posted_request_t *pr)
 } // }}}
 
 
+// void ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
+// 请求的最终处理 {{{
 void
 ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
 {
@@ -2514,6 +2516,7 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
         r->request_complete = 1;
     }
 
+	// POST 请求响应
     if (ngx_http_post_action(r) == NGX_OK) {
         return;
     }
@@ -2533,7 +2536,7 @@ ngx_http_finalize_request(ngx_http_request_t *r, ngx_int_t rc)
     }
 
     ngx_http_finalize_connection(r);
-}
+} // }}}
 
 
 // static void ngx_http_terminate_request(ngx_http_request_t *r, ngx_int_t rc)
@@ -2636,6 +2639,7 @@ ngx_http_finalize_connection(ngx_http_request_t *r)
          && r->keepalive
          && clcf->keepalive_timeout > 0)
     {
+		// 保持长连接
         ngx_http_set_keepalive(r);
         return;
     }

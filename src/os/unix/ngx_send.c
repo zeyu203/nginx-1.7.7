@@ -10,6 +10,8 @@
 #include <ngx_event.h>
 
 
+// ssize_t ngx_unix_send(ngx_connection_t *c, u_char *buf, size_t size)
+// 封装 send 函数，发送网络字节流 {{{
 ssize_t
 ngx_unix_send(ngx_connection_t *c, u_char *buf, size_t size)
 {
@@ -70,4 +72,4 @@ ngx_unix_send(ngx_connection_t *c, u_char *buf, size_t size)
             return NGX_ERROR;
         }
     }
-}
+} // }}}

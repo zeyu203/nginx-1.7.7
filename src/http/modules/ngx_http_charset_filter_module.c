@@ -213,6 +213,8 @@ static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
 static ngx_http_output_body_filter_pt    ngx_http_next_body_filter;
 
 
+// static ngx_int_t ngx_http_charset_header_filter(ngx_http_request_t *r)
+// 过滤、打包 charset 到响应 HEADER {{{
 static ngx_int_t
 ngx_http_charset_header_filter(ngx_http_request_t *r)
 {
@@ -310,7 +312,7 @@ no_charset_map:
                   &src, &dst);
 
     return ngx_http_next_header_filter(r);
-}
+} // }}}
 
 
 static ngx_int_t

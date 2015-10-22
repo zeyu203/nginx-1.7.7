@@ -193,6 +193,8 @@ static ngx_str_t   ngx_http_userid_reset = ngx_string("uid_reset");
 static ngx_uint_t  ngx_http_userid_reset_index;
 
 
+// static ngx_int_t ngx_http_userid_filter(ngx_http_request_t *r)
+// 过滤打包 uid cookie HEADER {{{
 static ngx_int_t
 ngx_http_userid_filter(ngx_http_request_t *r)
 {
@@ -205,6 +207,7 @@ ngx_http_userid_filter(ngx_http_request_t *r)
 
     conf = ngx_http_get_module_loc_conf(r, ngx_http_userid_filter_module);
 
+	// 没有启用发送 cookie
     if (conf->enable < NGX_HTTP_USERID_V1) {
         return ngx_http_next_header_filter(r);
     }
@@ -215,12 +218,13 @@ ngx_http_userid_filter(ngx_http_request_t *r)
         return NGX_ERROR;
     }
 
+	// 设置 uid cookie
     if (ngx_http_userid_set_uid(r, ctx, conf) == NGX_OK) {
         return ngx_http_next_header_filter(r);
     }
 
     return NGX_ERROR;
-}
+} // }}}
 
 
 static ngx_int_t
@@ -356,6 +360,10 @@ ngx_http_userid_get_uid(ngx_http_request_t *r, ngx_http_userid_conf_t *conf)
 }
 
 
+// static ngx_int_t
+// ngx_http_userid_set_uid(ngx_http_request_t *r, ngx_http_userid_ctx_t *ctx,
+//     ngx_http_userid_conf_t *conf)
+// 为响应头设置 uid cookie {{{
 static ngx_int_t
 ngx_http_userid_set_uid(ngx_http_request_t *r, ngx_http_userid_ctx_t *ctx,
     ngx_http_userid_conf_t *conf)
@@ -449,7 +457,7 @@ ngx_http_userid_set_uid(ngx_http_request_t *r, ngx_http_userid_ctx_t *ctx,
     p3p->value = conf->p3p;
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t

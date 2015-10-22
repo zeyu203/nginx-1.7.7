@@ -27,6 +27,9 @@
 #define NGX_SENDFILE_MAXSIZE  2147483647L
 
 
+// ngx_chain_t *
+// ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
+// 发送缓冲区链表结构中的数据 {{{
 ngx_chain_t *
 ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
 {
@@ -283,6 +286,7 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
                            rc, file->file_pos, sent, file_size);
 
         } else {
+			// 在字节流上写入返回数据
             rc = writev(c->fd, header.elts, header.nelts);
 
             if (rc == -1) {
@@ -329,4 +333,4 @@ ngx_linux_sendfile_chain(ngx_connection_t *c, ngx_chain_t *in, off_t limit)
             return in;
         }
     }
-}
+} // }}}

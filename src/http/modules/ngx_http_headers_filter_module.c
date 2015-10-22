@@ -143,6 +143,8 @@ ngx_module_t  ngx_http_headers_filter_module = {
 static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
 
 
+// static ngx_int_t ngx_http_headers_filter(ngx_http_request_t *r)
+// 过滤、打包 conf 中指定的响应头 {{{
 static ngx_int_t
 ngx_http_headers_filter(ngx_http_request_t *r)
 {
@@ -178,12 +180,14 @@ ngx_http_headers_filter(ngx_http_request_t *r)
         break;
     }
 
+	// 需要设置响应头过期时间
     if (conf->expires != NGX_HTTP_EXPIRES_OFF && safe_status) {
         if (ngx_http_set_expires(r, conf) != NGX_OK) {
             return NGX_ERROR;
         }
     }
 
+	// 调用回调函数设置 conf 中指定的 HEADER
     if (conf->headers) {
         h = conf->headers->elts;
         for (i = 0; i < conf->headers->nelts; i++) {
@@ -203,9 +207,12 @@ ngx_http_headers_filter(ngx_http_request_t *r)
     }
 
     return ngx_http_next_header_filter(r);
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_http_set_expires(ngx_http_request_t *r, ngx_http_headers_conf_t *conf)
+// 设置响应头 Expires 过期时间 {{{
 static ngx_int_t
 ngx_http_set_expires(ngx_http_request_t *r, ngx_http_headers_conf_t *conf)
 {
@@ -214,6 +221,7 @@ ngx_http_set_expires(ngx_http_request_t *r, ngx_http_headers_conf_t *conf)
     ngx_uint_t        i;
     ngx_table_elt_t  *expires, *cc, **ccp;
 
+	// 设置响应头的 Expires 过期时间
     expires = r->headers_out.expires;
 
     if (expires == NULL) {
@@ -324,7 +332,7 @@ ngx_http_set_expires(ngx_http_request_t *r, ngx_http_headers_conf_t *conf)
                     - cc->value.data;
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t

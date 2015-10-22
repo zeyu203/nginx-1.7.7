@@ -182,11 +182,13 @@ ngx_open_cached_file(ngx_open_file_cache_t *cache, ngx_str_t *name,
             return NGX_OK;
         }
 
+		// 分配带有回调函数的内存
         cln = ngx_pool_cleanup_add(pool, sizeof(ngx_pool_cleanup_file_t));
         if (cln == NULL) {
             return NGX_ERROR;
         }
 
+		// 打开文件，保存文件信息
         rc = ngx_open_and_stat_file(name, of, pool->log);
 
         if (rc == NGX_OK && !of->is_dir) {
@@ -614,6 +616,10 @@ ngx_file_o_path_info(ngx_fd_t fd, ngx_file_info_t *fi, ngx_log_t *log)
 #endif /* NGX_HAVE_OPENAT */
 
 
+// static ngx_fd_t
+// ngx_open_file_wrapper(ngx_str_t *name, ngx_open_file_info_t *of,
+//     ngx_int_t mode, ngx_int_t create, ngx_int_t access, ngx_log_t *log)
+// 封装 open 函数，打开文件，保存文件信息到 ngx_open_file_info_t 结构 {{{
 static ngx_fd_t
 ngx_open_file_wrapper(ngx_str_t *name, ngx_open_file_info_t *of,
     ngx_int_t mode, ngx_int_t create, ngx_int_t access, ngx_log_t *log)
@@ -778,9 +784,13 @@ failed:
 
     return fd;
 #endif
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_file_info_wrapper(ngx_str_t *name, ngx_open_file_info_t *of,
+//     ngx_file_info_t *fi, ngx_log_t *log)
+// 调用 stat 函数获取文件信息 {{{
 static ngx_int_t
 ngx_file_info_wrapper(ngx_str_t *name, ngx_open_file_info_t *of,
     ngx_file_info_t *fi, ngx_log_t *log)
@@ -805,6 +815,7 @@ ngx_file_info_wrapper(ngx_str_t *name, ngx_open_file_info_t *of,
 
     if (of->disable_symlinks == NGX_DISABLE_SYMLINKS_OFF) {
 
+		// #define ngx_file_info(file, sb)  stat((const char *) file, sb)
         rc = ngx_file_info(name->data, fi);
 
         if (rc == NGX_FILE_ERROR) {
@@ -837,14 +848,20 @@ ngx_file_info_wrapper(ngx_str_t *name, ngx_open_file_info_t *of,
 
     return rc;
 #endif
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_open_and_stat_file(ngx_str_t *name, ngx_open_file_info_t *of,
+//     ngx_log_t *log)
+// 打开文件并且为文件描述结构赋值 {{{
 static ngx_int_t
 ngx_open_and_stat_file(ngx_str_t *name, ngx_open_file_info_t *of,
     ngx_log_t *log)
 {
     ngx_fd_t         fd;
+	// typedef struct stat              ngx_file_info_t;
+	// 保存文件信息
     ngx_file_info_t  fi;
 
     if (of->fd != NGX_INVALID_FILE) {
@@ -877,6 +894,7 @@ ngx_open_and_stat_file(ngx_str_t *name, ngx_open_file_info_t *of,
          * This flag has no effect on a regular files.
          */
 
+		// 打开文件，并将文件信息赋值给 of ( ngx_open_file_info_t )
         fd = ngx_open_file_wrapper(name, of, NGX_FILE_RDONLY|NGX_FILE_NONBLOCK,
                                    NGX_FILE_OPEN, 0, log);
 
@@ -891,6 +909,8 @@ ngx_open_and_stat_file(ngx_str_t *name, ngx_open_file_info_t *of,
         return NGX_ERROR;
     }
 
+	// #define ngx_fd_info(fd, sb)      fstat(fd, sb)
+	// 调用 fstat 获取文件信息
     if (ngx_fd_info(fd, &fi) == NGX_FILE_ERROR) {
         ngx_log_error(NGX_LOG_CRIT, log, ngx_errno,
                       ngx_fd_info_n " \"%V\" failed", name);
@@ -905,6 +925,7 @@ ngx_open_and_stat_file(ngx_str_t *name, ngx_open_file_info_t *of,
         return NGX_ERROR;
     }
 
+	// 如果是目录则出错
     if (ngx_is_dir(&fi)) {
         if (ngx_close_file(fd) == NGX_FILE_ERROR) {
             ngx_log_error(NGX_LOG_ALERT, log, ngx_errno,
@@ -916,6 +937,7 @@ ngx_open_and_stat_file(ngx_str_t *name, ngx_open_file_info_t *of,
     } else {
         of->fd = fd;
 
+		// 文件过大
         if (of->read_ahead && ngx_file_size(&fi) > NGX_MIN_READ_AHEAD) {
             if (ngx_read_ahead(fd, of->read_ahead) == NGX_ERROR) {
                 ngx_log_error(NGX_LOG_ALERT, log, ngx_errno,
@@ -923,6 +945,7 @@ ngx_open_and_stat_file(ngx_str_t *name, ngx_open_file_info_t *of,
             }
         }
 
+		// 文件缓冲区小于文件大小则报错
         if (of->directio <= ngx_file_size(&fi)) {
             if (ngx_directio_on(fd) == NGX_FILE_ERROR) {
                 ngx_log_error(NGX_LOG_ALERT, log, ngx_errno,
@@ -946,7 +969,7 @@ done:
     of->is_exec = ngx_is_exec(&fi);
 
     return NGX_OK;
-}
+} // }}}
 
 
 /*

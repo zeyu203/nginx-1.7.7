@@ -326,6 +326,8 @@ static ngx_http_variable_t  ngx_http_ssi_vars[] = {
 
 
 
+// static ngx_int_t ngx_http_ssi_header_filter(ngx_http_request_t *r)
+// 过滤、打包 SSI 信息到响应 HEADER {{{
 static ngx_int_t
 ngx_http_ssi_header_filter(ngx_http_request_t *r)
 {
@@ -380,7 +382,7 @@ ngx_http_ssi_header_filter(ngx_http_request_t *r)
     }
 
     return ngx_http_next_header_filter(r);
-}
+} // }}}
 
 
 static ngx_int_t

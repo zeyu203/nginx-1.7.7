@@ -426,6 +426,7 @@ struct ngx_http_core_loc_conf_s {
     ngx_array_t  *root_values;
 
     ngx_array_t  *types;
+	// 保存文件类型与返回 HEADER 中 content-type 对应关系的哈希表
     ngx_hash_t    types_hash;
     ngx_str_t     default_type;
 

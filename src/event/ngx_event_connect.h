@@ -34,6 +34,8 @@ typedef void (*ngx_event_save_peer_session_pt)(ngx_peer_connection_t *pc,
 #endif
 
 
+// struct ngx_peer_connection_s
+// 转发连接描述结构 {{{
 struct ngx_peer_connection_s {
     ngx_connection_t                *connection;
 
@@ -67,7 +69,7 @@ struct ngx_peer_connection_s {
 
                                      /* ngx_connection_log_error_e */
     unsigned                         log_error:2;
-};
+}; // }}}
 
 
 ngx_int_t ngx_event_connect_peer(ngx_peer_connection_t *pc);

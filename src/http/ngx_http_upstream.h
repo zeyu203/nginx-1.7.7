@@ -303,6 +303,8 @@ typedef struct {
 } ngx_http_upstream_headers_in_t;
 
 
+// struct ngx_http_upstream_resolved_t
+// 上游主机描述结构 {{{
 typedef struct {
     ngx_str_t                        host;
     in_port_t                        port;
@@ -315,7 +317,7 @@ typedef struct {
     socklen_t                        socklen;
 
     ngx_resolver_ctx_t              *ctx;
-} ngx_http_upstream_resolved_t;
+} ngx_http_upstream_resolved_t; // }}}
 
 
 typedef void (*ngx_http_upstream_handler_pt)(ngx_http_request_t *r,

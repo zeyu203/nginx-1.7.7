@@ -11,6 +11,8 @@
 #include <ngx_event_connect.h>
 
 
+// ngx_int_t ngx_event_connect_peer(ngx_peer_connection_t *pc)
+// 建立自身的连接 {{{
 ngx_int_t
 ngx_event_connect_peer(ngx_peer_connection_t *pc)
 {
@@ -22,11 +24,13 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
     ngx_event_t       *rev, *wev;
     ngx_connection_t  *c;
 
+	// 调用回调函数获取状态
     rc = pc->get(pc, pc->data);
     if (rc != NGX_OK) {
         return rc;
     }
 
+	// 创建 socket
     s = ngx_socket(pc->sockaddr->sa_family, SOCK_STREAM, 0);
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, pc->log, 0, "socket %d", s);
@@ -38,6 +42,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
     }
 
 
+	// 为socket分配一个空闲的连接
     c = ngx_get_connection(s, pc->log);
 
     if (c == NULL) {
@@ -104,6 +109,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 
     c->number = ngx_atomic_fetch_add(ngx_connection_counter, 1);
 
+	// 说明已经添加过
     if (ngx_add_conn) {
         if (ngx_add_conn(c) == NGX_ERROR) {
             goto failed;
@@ -113,6 +119,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
     ngx_log_debug3(NGX_LOG_DEBUG_EVENT, pc->log, 0,
                    "connect to %V, fd:%d #%uA", pc->name, s, c->number);
 
+	// 建立连接
     rc = connect(s, pc->sockaddr, pc->socklen);
 
     if (rc == -1) {
@@ -171,6 +178,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         return NGX_OK;
     }
 
+	// 如果使用 AIO 作相应的校验
     if (ngx_event_flags & NGX_USE_AIO_EVENT) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_EVENT, pc->log, ngx_socket_errno,
@@ -210,6 +218,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         event = NGX_LEVEL_EVENT;
     }
 
+	// 添加一个read事件
     if (ngx_add_event(rev, NGX_READ_EVENT, event) != NGX_OK) {
         goto failed;
     }
@@ -218,6 +227,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 
         /* NGX_EINPROGRESS */
 
+		// 如果没有可用连接，则添加一个 write 事件
         if (ngx_add_event(wev, NGX_WRITE_EVENT, event) != NGX_OK) {
             goto failed;
         }
@@ -233,11 +243,12 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 
 failed:
 
+	// 调用失败，关闭连接
     ngx_close_connection(c);
     pc->connection = NULL;
 
     return NGX_ERROR;
-}
+} // }}}
 
 
 ngx_int_t

@@ -418,6 +418,8 @@ ngx_conf_bitmask_t  ngx_http_upstream_ignore_headers_masks[] = {
 };
 
 
+// ngx_int_t ngx_http_upstream_create(ngx_http_request_t *r)
+// 在请求中创建 upstream，初始化 r->upstream {{{
 ngx_int_t
 ngx_http_upstream_create(ngx_http_request_t *r)
 {
@@ -451,9 +453,11 @@ ngx_http_upstream_create(ngx_http_request_t *r)
     u->headers_in.last_modified_time = -1;
 
     return NGX_OK;
-}
+} // }}}
 
 
+// void ngx_http_upstream_init(ngx_http_request_t *r)
+// upstream 机制的启动与初始化 {{{
 void
 ngx_http_upstream_init(ngx_http_request_t *r)
 {
@@ -464,6 +468,7 @@ ngx_http_upstream_init(ngx_http_request_t *r)
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http init upstream, client timer: %d", c->read->timer_set);
 
+	// google SPDY 协议处理
 #if (NGX_HTTP_SPDY)
     if (r->spdy_stream) {
         ngx_http_upstream_init_request(r);
@@ -471,10 +476,12 @@ ngx_http_upstream_init(ngx_http_request_t *r)
     }
 #endif
 
+	// 如果已经设置定时器则删除
     if (c->read->timer_set) {
         ngx_del_timer(c->read);
     }
 
+	// 边缘触发，并且写事件非活跃，则以边沿触发的形式添加写事件
     if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
 
         if (!c->write->active) {
@@ -487,10 +494,13 @@ ngx_http_upstream_init(ngx_http_request_t *r)
         }
     }
 
+	// 初始化 upstream
     ngx_http_upstream_init_request(r);
-}
+} // }}}}
 
 
+// static void ngx_http_upstream_init_request(ngx_http_request_t *r)
+// 初始化 upstream {{{
 static void
 ngx_http_upstream_init_request(ngx_http_request_t *r)
 {
@@ -654,6 +664,7 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
 
         temp.name = *host;
 
+		// 初始化 resolver
         ctx = ngx_resolve_start(clcf->resolver, &temp);
         if (ctx == NULL) {
             ngx_http_upstream_finalize_request(r, u,
@@ -670,12 +681,14 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
         }
 
         ctx->name = *host;
+		// 赋值回调函数
         ctx->handler = ngx_http_upstream_resolve_handler;
         ctx->data = r;
         ctx->timeout = clcf->resolver_timeout;
 
         u->resolved->ctx = ctx;
 
+		// 校验上游主机名
         if (ngx_resolve_name(ctx) != NGX_OK) {
             u->resolved->ctx = NULL;
             ngx_http_upstream_finalize_request(r, u,
@@ -714,8 +727,9 @@ found:
         u->peer.tries = u->conf->next_upstream_tries;
     }
 
+	// 建立到上游主机的连接
     ngx_http_upstream_connect(r, u);
-}
+} // }}}
 
 
 #if (NGX_HTTP_CACHE)
@@ -1232,6 +1246,9 @@ ngx_http_upstream_check_broken_connection(ngx_http_request_t *r,
 }
 
 
+// static void
+// ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
+// 建立到上游主机的连接 {{{
 static void
 ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
@@ -1260,6 +1277,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     u->state->response_sec = tp->sec;
     u->state->response_msec = tp->msec;
 
+	// 建立连接
     rc = ngx_event_connect_peer(&u->peer);
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
@@ -1374,7 +1392,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 #endif
 
     ngx_http_upstream_send_request(r, u);
-}
+} // }}}
 
 
 #if (NGX_HTTP_SSL)

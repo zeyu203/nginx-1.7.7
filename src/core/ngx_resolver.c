@@ -309,6 +309,9 @@ ngx_resolver_cleanup_tree(ngx_resolver_t *r, ngx_rbtree_t *tree)
 }
 
 
+// ngx_resolver_ctx_t *
+// ngx_resolve_start(ngx_resolver_t *r, ngx_resolver_ctx_t *temp)
+// 初始化 upstream 的 resolver {{{
 ngx_resolver_ctx_t *
 ngx_resolve_start(ngx_resolver_t *r, ngx_resolver_ctx_t *temp)
 {
@@ -345,9 +348,11 @@ ngx_resolve_start(ngx_resolver_t *r, ngx_resolver_ctx_t *temp)
     }
 
     return ctx;
-}
+} // }}}
 
 
+// ngx_int_t ngx_resolve_name(ngx_resolver_ctx_t *ctx)
+// 校验上游主机名 {{{
 ngx_int_t
 ngx_resolve_name(ngx_resolver_ctx_t *ctx)
 {
@@ -391,7 +396,7 @@ ngx_resolve_name(ngx_resolver_ctx_t *ctx)
     ngx_resolver_free(r, ctx);
 
     return NGX_ERROR;
-}
+} // }}}
 
 
 void

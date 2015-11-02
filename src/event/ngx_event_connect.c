@@ -12,7 +12,7 @@
 
 
 // ngx_int_t ngx_event_connect_peer(ngx_peer_connection_t *pc)
-// 建立自身的连接 {{{
+// 建立非阻塞的 socket 连接 {{{
 ngx_int_t
 ngx_event_connect_peer(ngx_peer_connection_t *pc)
 {
@@ -64,6 +64,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         }
     }
 
+	// 将 socket 设置为非阻塞模式
     if (ngx_nonblocking(s) == -1) {
         ngx_log_error(NGX_LOG_ALERT, pc->log, ngx_socket_errno,
                       ngx_nonblocking_n " failed");
@@ -109,7 +110,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
 
     c->number = ngx_atomic_fetch_add(ngx_connection_counter, 1);
 
-	// 说明已经添加过
+	// 将连接添加到 epoll
     if (ngx_add_conn) {
         if (ngx_add_conn(c) == NGX_ERROR) {
             goto failed;
@@ -163,6 +164,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         }
     }
 
+	// 已经在 epoll 中添加事件，则直接返回
     if (ngx_add_conn) {
         if (rc == -1) {
 
@@ -178,7 +180,7 @@ ngx_event_connect_peer(ngx_peer_connection_t *pc)
         return NGX_OK;
     }
 
-	// 如果使用 AIO 作相应的校验
+	// 如果使用 AIO 作相应的校验，并返回成功
     if (ngx_event_flags & NGX_USE_AIO_EVENT) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_EVENT, pc->log, ngx_socket_errno,

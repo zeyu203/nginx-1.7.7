@@ -481,7 +481,7 @@ ngx_http_upstream_init(ngx_http_request_t *r)
         ngx_del_timer(c->read);
     }
 
-	// 边缘触发，并且写事件非活跃，则以边沿触发的形式添加写事件
+	// 边缘触发，并且写事件非活跃，添加写事件到 epoll 中
     if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
 
         if (!c->write->active) {
@@ -552,6 +552,8 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
 
     u->store = (u->conf->store || u->conf->store_lengths);
 
+	// ignore_client_abort 不为 1 则在上游服务器交互时需检查下游客户端是否断开连接
+	// 这里赋值读写的检查函数
     if (!u->store && !r->post_action && !u->conf->ignore_client_abort) {
         r->read_event_handler = ngx_http_upstream_rd_check_broken_connection;
         r->write_event_handler = ngx_http_upstream_wr_check_broken_connection;
@@ -561,6 +563,7 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
         u->request_bufs = r->request_body->bufs;
     }
 
+	// 构造发往上游服务器的请求
     if (u->create_request(r) != NGX_OK) {
         ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
@@ -606,6 +609,7 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
         return;
     }
 
+	// 赋值清理回调函数
     cln->handler = ngx_http_upstream_cleanup;
     cln->data = r;
     u->cleanup = &cln->handler;
@@ -727,7 +731,7 @@ found:
         u->peer.tries = u->conf->next_upstream_tries;
     }
 
-	// 建立到上游主机的连接
+	// 建立到上游主机的连接，注册读写事件
     ngx_http_upstream_connect(r, u);
 } // }}}
 
@@ -1248,7 +1252,7 @@ ngx_http_upstream_check_broken_connection(ngx_http_request_t *r,
 
 // static void
 // ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
-// 建立到上游主机的连接 {{{
+// 建立到上游主机的连接，注册读写事件 {{{
 static void
 ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
@@ -1277,7 +1281,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
     u->state->response_sec = tp->sec;
     u->state->response_msec = tp->msec;
 
-	// 建立连接
+	// 建立非阻塞socket连接
     rc = ngx_event_connect_peer(&u->peer);
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
@@ -1291,6 +1295,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     u->state->peer = u->peer.name;
 
+	// 上游服务器忙或连接失败，则调用 ngx_http_upstream_next 尝试重新连接
     if (rc == NGX_BUSY) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "no live upstreams");
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_NOLIVE);
@@ -1308,9 +1313,11 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     c->data = r;
 
+	// 设置连接的读写回调函数
     c->write->handler = ngx_http_upstream_handler;
     c->read->handler = ngx_http_upstream_handler;
 
+	// 设置连接上游服务器的读写回调函数
     u->write_event_handler = ngx_http_upstream_send_request_handler;
     u->read_event_handler = ngx_http_upstream_process_header;
 
@@ -1377,6 +1384,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     u->request_sent = 0;
 
+	// 需要等待上游服务器的返回则将连接加入到计时器
     if (rc == NGX_AGAIN) {
         ngx_add_timer(c->write, u->conf->connect_timeout);
         return;
@@ -1391,6 +1399,7 @@ ngx_http_upstream_connect(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
 #endif
 
+	// 发送请求
     ngx_http_upstream_send_request(r, u);
 } // }}}
 
@@ -1680,6 +1689,9 @@ ngx_http_upstream_reinit(ngx_http_request_t *r, ngx_http_upstream_t *u)
 }
 
 
+// static void
+// ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u)
+// upstream 机制中，给上游服务器发送请求 {{{
 static void
 ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
@@ -1691,6 +1703,7 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u)
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, c->log, 0,
                    "http upstream send request");
 
+	// 如果尝试连接上游服务器失败，则调用 ngx_http_upstream_next 反复尝试连接
     if (!u->request_sent && ngx_http_upstream_test_connect(c) != NGX_OK) {
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
         return;
@@ -1698,19 +1711,23 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     c->log->action = "sending request to upstream";
 
+	// 发送请求
     rc = ngx_output_chain(&u->output, u->request_sent ? NULL : u->request_bufs);
 
     u->request_sent = 1;
 
+	// 发送失败则尝试重新连接
     if (rc == NGX_ERROR) {
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
         return;
     }
 
+	// 写事件如果在定时器中则移除
     if (c->write->timer_set) {
         ngx_del_timer(c->write);
     }
 
+	// 未发送完成则重新将写事件添加到定时器中，然后加入 epoll
     if (rc == NGX_AGAIN) {
         ngx_add_timer(c->write, u->conf->send_timeout);
 
@@ -1725,7 +1742,9 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     /* rc == NGX_OK */
 
+	// 发送完成
     if (c->tcp_nopush == NGX_TCP_NOPUSH_SET) {
+		// 将 socket 设置为 TCP_CORK
         if (ngx_tcp_push(c->fd) == NGX_ERROR) {
             ngx_log_error(NGX_LOG_CRIT, c->log, ngx_socket_errno,
                           ngx_tcp_push_n " failed");
@@ -1737,21 +1756,26 @@ ngx_http_upstream_send_request(ngx_http_request_t *r, ngx_http_upstream_t *u)
         c->tcp_nopush = NGX_TCP_NOPUSH_UNSET;
     }
 
+	// 重设写事件回调
     u->write_event_handler = ngx_http_upstream_dummy_handler;
 
+	// 将写事件加入 epoll
     if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
         ngx_http_upstream_finalize_request(r, u,
                                            NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;
     }
 
+	// 将读事件加入计时器
     ngx_add_timer(c->read, u->conf->read_timeout);
 
+	// 如果套接字缓冲区中有数据可读
+	// 则调用 ngx_http_upstream_process_header 接收响应 HEADER
     if (c->read->ready) {
         ngx_http_upstream_process_header(r, u);
         return;
     }
-}
+} // }}}
 
 
 static void
@@ -3523,6 +3547,10 @@ ngx_http_upstream_dummy_handler(ngx_http_request_t *r, ngx_http_upstream_t *u)
 }
 
 
+// static void
+// ngx_http_upstream_next(ngx_http_request_t *r, ngx_http_upstream_t *u,
+//     ngx_uint_t ft_type)
+// 与上游服务器尝试多次连接 {{{
 static void
 ngx_http_upstream_next(ngx_http_request_t *r, ngx_http_upstream_t *u,
     ngx_uint_t ft_type)
@@ -3650,9 +3678,11 @@ ngx_http_upstream_next(ngx_http_request_t *r, ngx_http_upstream_t *u,
     }
 
     ngx_http_upstream_connect(r, u);
-}
+} // }}}
 
 
+// static void ngx_http_upstream_cleanup(void *data)
+// upstream 清理函数 {{{
 static void
 ngx_http_upstream_cleanup(void *data)
 {
@@ -3662,7 +3692,7 @@ ngx_http_upstream_cleanup(void *data)
                    "cleanup http upstream request: \"%V\"", &r->uri);
 
     ngx_http_upstream_finalize_request(r, r->upstream, NGX_DONE);
-}
+} // }}}
 
 
 static void

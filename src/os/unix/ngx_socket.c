@@ -77,6 +77,8 @@ ngx_tcp_push(ngx_socket_t s)
 #elif (NGX_LINUX)
 
 
+// int ngx_tcp_nopush(ngx_socket_t s)
+// 将 TCP 设置为 TCP_CORK {{{
 int
 ngx_tcp_nopush(ngx_socket_t s)
 {
@@ -86,7 +88,7 @@ ngx_tcp_nopush(ngx_socket_t s)
 
     return setsockopt(s, IPPROTO_TCP, TCP_CORK,
                       (const void *) &cork, sizeof(int));
-}
+} // }}}
 
 
 int

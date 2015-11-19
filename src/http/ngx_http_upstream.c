@@ -1815,6 +1815,10 @@ ngx_http_upstream_send_request_handler(ngx_http_request_t *r,
 }
 
 
+// static void
+// ngx_http_upstream_process_header(ngx_http_request_t *r,
+//     ngx_http_upstream_t *u)
+// 接收上游响应 HEADER {{{
 static void
 ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
 {
@@ -1829,11 +1833,13 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
 
     c->log->action = "reading response header from upstream";
 
+	// 读超时
     if (c->read->timedout) {
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_TIMEOUT);
         return;
     }
 
+	// 尝试连接上游失败
     if (!u->request_sent && ngx_http_upstream_test_connect(c) != NGX_OK) {
         ngx_http_upstream_next(r, u, NGX_HTTP_UPSTREAM_FT_ERROR);
         return;
@@ -1994,7 +2000,7 @@ ngx_http_upstream_process_header(ngx_http_request_t *r, ngx_http_upstream_t *u)
     u->read_event_handler = ngx_http_upstream_process_body_in_memory;
 
     ngx_http_upstream_process_body_in_memory(r, u);
-}
+} // }}}
 
 
 static ngx_int_t

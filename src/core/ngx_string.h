@@ -27,16 +27,18 @@ typedef struct {
 } ngx_keyval_t;
 
 
+// struct ngx_variable_value_t
+// nginx 变量值存储结构 {{{
 typedef struct {
     unsigned    len:28;
 
-    unsigned    valid:1;
+    unsigned    valid:1;		// 是否有效
     unsigned    no_cacheable:1;
-    unsigned    not_found:1;
+    unsigned    not_found:1;	// 变量是否找到
     unsigned    escape:1;
 
     u_char     *data;
-} ngx_variable_value_t;
+} ngx_variable_value_t; // }}}
 
 
 #define ngx_string(str)     { sizeof(str) - 1, (u_char *) str }

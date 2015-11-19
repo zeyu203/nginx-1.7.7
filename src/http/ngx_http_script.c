@@ -732,6 +732,8 @@ ngx_http_script_copy_len_code(ngx_http_script_engine_t *e)
 }
 
 
+// void ngx_http_script_copy_code(ngx_http_script_engine_t *e)
+// 将配置信息放入脚本结构缓冲区 {{{
 void
 ngx_http_script_copy_code(ngx_http_script_engine_t *e)
 {
@@ -752,7 +754,7 @@ ngx_http_script_copy_code(ngx_http_script_engine_t *e)
 
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, e->request->connection->log, 0,
                    "http script copy: \"%*s\"", e->pos - p, p);
-}
+} // }}}
 
 
 static ngx_int_t
@@ -903,6 +905,8 @@ ngx_http_script_start_args_code(ngx_http_script_engine_t *e)
 
 #if (NGX_PCRE)
 
+// void ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
+// 脚本执行 {{{
 void
 ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
 {
@@ -929,8 +933,10 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
         e->line.data = e->sp->data;
     }
 
+	// 解析正则表达式，执行脚本
     rc = ngx_http_regex_exec(r, code->regex, &e->line);
 
+	// 没有命中
     if (rc == NGX_DECLINED) {
         if (e->log || (r->connection->log->log_level & NGX_LOG_DEBUG_HTTP)) {
             ngx_log_error(NGX_LOG_NOTICE, r->connection->log, 0,
@@ -956,10 +962,12 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
             return;
         }
 
+		// 适配下一规则
         e->ip += code->next;
         return;
     }
 
+	// 执行出错
     if (rc == NGX_ERROR) {
         e->ip = ngx_http_script_exit;
         e->status = NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -987,6 +995,7 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
         return;
     }
 
+	// 301、302 跳转
     if (code->status) {
         e->status = code->status;
 
@@ -996,6 +1005,7 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
         }
     }
 
+	// 使用 URI 匹配
     if (code->uri) {
         r->internal = 1;
         r->valid_unparsed_uri = 0;
@@ -1045,6 +1055,7 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
         e->buf.len += r->args.len + 1;
     }
 
+	// 为脚本缓冲区开辟空间
     e->buf.data = ngx_pnalloc(r->pool, e->buf.len);
     if (e->buf.data == NULL) {
         e->ip = ngx_http_script_exit;
@@ -1057,7 +1068,7 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
     e->pos = e->buf.data;
 
     e->ip += sizeof(ngx_http_script_regex_code_t);
-}
+} // }}}
 
 
 void
@@ -1081,6 +1092,7 @@ ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
         dst = e->buf.data;
         src = e->buf.data;
 
+		// 执行 url_decode
         ngx_unescape_uri(&dst, &src, e->pos - e->buf.data,
                          NGX_UNESCAPE_REDIRECT);
 
@@ -1237,6 +1249,8 @@ ngx_http_script_copy_capture_len_code(ngx_http_script_engine_t *e)
 }
 
 
+// void ngx_http_script_copy_capture_code(ngx_http_script_engine_t *e)
+// 复制跳转目标到脚本描述结构缓冲区 {{{
 void
 ngx_http_script_copy_capture_code(ngx_http_script_engine_t *e)
 {
@@ -1274,7 +1288,7 @@ ngx_http_script_copy_capture_code(ngx_http_script_engine_t *e)
 
     ngx_log_debug2(NGX_LOG_DEBUG_HTTP, e->request->connection->log, 0,
                    "http script capture: \"%*s\"", e->pos - pos, pos);
-}
+} // }}}
 
 #endif
 

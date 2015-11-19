@@ -160,11 +160,13 @@ ngx_http_rewrite_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
+	// 创建脚本驱动结构域
     e = ngx_pcalloc(r->pool, sizeof(ngx_http_script_engine_t));
     if (e == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+	// 创建变量值存储结构
     e->sp = ngx_pcalloc(r->pool,
                         rlcf->stack_size * sizeof(ngx_http_variable_value_t));
     if (e->sp == NULL) {
@@ -179,6 +181,10 @@ ngx_http_rewrite_handler(ngx_http_request_t *r)
 
     while (*(uintptr_t *) e->ip) {
         code = *(ngx_http_script_code_pt *) e->ip;
+		// ngx_http_script_regex_start_code
+		// ngx_http_script_copy_code
+		// ngx_http_script_copy_capture_code
+		// ngx_http_script_regex_end_code
         code(e);
     }
 

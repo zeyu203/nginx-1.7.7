@@ -1578,6 +1578,14 @@ ngx_escape_uri(u_char *dst, u_char *src, size_t size, ngx_uint_t type)
 }
 
 
+// void
+// ngx_unescape_uri(u_char **dst, u_char **src, size_t size, ngx_uint_t type)
+// URL decode {{{
+//
+// type:
+// 0									decode src 中全部数据
+// #define NGX_UNESCAPE_URI       1		只 decode URI （到 ? 为止）
+// #define NGX_UNESCAPE_REDIRECT  2		只 decode URI 中的非可见字符
 void
 ngx_unescape_uri(u_char **dst, u_char **src, size_t size, ngx_uint_t type)
 {
@@ -1705,7 +1713,7 @@ done:
 
     *dst = d;
     *src = s;
-}
+} // }}}
 
 
 uintptr_t

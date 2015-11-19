@@ -14,13 +14,15 @@
 #include <ngx_http.h>
 
 
+// struct ngx_http_script_engine_t
+// 脚本引擎描述结构 {{{
 typedef struct {
-    u_char                     *ip;
-    u_char                     *pos;
-    ngx_http_variable_value_t  *sp;
+    u_char                     *ip;				// 脚本执行回调数组
+    u_char                     *pos;			// 指向配置信息待插入位置
+    ngx_http_variable_value_t  *sp;				// 变量存储结构
 
-    ngx_str_t                   buf;
-    ngx_str_t                   line;
+    ngx_str_t                   buf;			// 配置信息（rewrite 目的地）缓冲
+    ngx_str_t                   line;			// rewrite 判断依据信息
 
     /* the start of the rewritten arguments */
     u_char                     *args;
@@ -31,9 +33,9 @@ typedef struct {
     unsigned                    is_args:1;
     unsigned                    log:1;
 
-    ngx_int_t                   status;
-    ngx_http_request_t         *request;
-} ngx_http_script_engine_t;
+    ngx_int_t                   status;			// 状态
+    ngx_http_request_t         *request;		// 对应的请求
+} ngx_http_script_engine_t; // }}}
 
 
 typedef struct {
@@ -113,9 +115,11 @@ typedef struct {
 
 #if (NGX_PCRE)
 
+// struct ngx_http_script_regex_code_t
+// http 脚本描述结构 {{{
 typedef struct {
-    ngx_http_script_code_pt     code;
-    ngx_http_regex_t           *regex;
+    ngx_http_script_code_pt     code;				// 处理回调函数
+    ngx_http_regex_t           *regex;				// 正则表达式描述结构
     ngx_array_t                *lengths;
     uintptr_t                   size;
     uintptr_t                   status;
@@ -123,17 +127,19 @@ typedef struct {
 
     uintptr_t                   test:1;
     uintptr_t                   negative_test:1;
-    uintptr_t                   uri:1;
+    uintptr_t                   uri:1;				// 是否针对请求 URI 判断
     uintptr_t                   args:1;
 
     /* add the r->args to the new arguments */
     uintptr_t                   add_args:1;
 
+	// 执行后是否重定向，对应 rewrite 配置的 redirect（302）、permant（301）
     uintptr_t                   redirect:1;
+	// 执行后是否退出，对应 rewrite 配置的 break
     uintptr_t                   break_cycle:1;
 
-    ngx_str_t                   name;
-} ngx_http_script_regex_code_t;
+    ngx_str_t                   name;				// 脚本代码
+} ngx_http_script_regex_code_t; // }}}
 
 
 typedef struct {

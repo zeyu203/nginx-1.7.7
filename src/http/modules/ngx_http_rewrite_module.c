@@ -134,7 +134,7 @@ ngx_module_t  ngx_http_rewrite_module = {
 
 
 // static ngx_int_t ngx_http_rewrite_handler(ngx_http_request_t *r)
-// NGX_HTTP_SERVER_REWRITE_PHASE 阶段 handler URI rewrite 回调函数 {{{
+// URI rewrite 回调函数 {{{
 static ngx_int_t
 ngx_http_rewrite_handler(ngx_http_request_t *r)
 {
@@ -181,10 +181,10 @@ ngx_http_rewrite_handler(ngx_http_request_t *r)
 
     while (*(uintptr_t *) e->ip) {
         code = *(ngx_http_script_code_pt *) e->ip;
-		// ngx_http_script_regex_start_code
-		// ngx_http_script_copy_code
-		// ngx_http_script_copy_capture_code
-		// ngx_http_script_regex_end_code
+		// ngx_http_script_regex_start_code		// 执行正则表达式
+		// ngx_http_script_copy_code			// 将脚本长度信息保存在 ngx_http_script_copy_code_t 结构中
+		// ngx_http_script_copy_capture_code	// 复制跳转目标到脚本结构缓冲区
+		// ngx_http_script_regex_end_code		// 收尾工作
         code(e);
     }
 

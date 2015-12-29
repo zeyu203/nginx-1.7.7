@@ -17,7 +17,7 @@
 // struct ngx_http_script_engine_t
 // 脚本引擎描述结构 {{{
 typedef struct {
-    u_char                     *ip;				// 脚本执行回调数组
+    u_char                     *ip;				// 脚本描述结构数组
     u_char                     *pos;			// 指向配置信息待插入位置
     ngx_http_variable_value_t  *sp;				// 变量存储结构
 
@@ -29,7 +29,7 @@ typedef struct {
 
     unsigned                    flushed:1;
     unsigned                    skip:1;
-    unsigned                    quote:1;
+    unsigned                    quote:1;		// 是否需要重定向
     unsigned                    is_args:1;
     unsigned                    log:1;
 
@@ -88,10 +88,12 @@ typedef void (*ngx_http_script_code_pt) (ngx_http_script_engine_t *e);
 typedef size_t (*ngx_http_script_len_code_pt) (ngx_http_script_engine_t *e);
 
 
+// struct ngx_http_script_copy_code_t
+// 存储脚本长度 {{{
 typedef struct {
     ngx_http_script_code_pt     code;
     uintptr_t                   len;
-} ngx_http_script_copy_code_t;
+} ngx_http_script_copy_code_t; // }}}
 
 
 typedef struct {

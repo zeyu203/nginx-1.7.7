@@ -733,7 +733,7 @@ ngx_http_script_copy_len_code(ngx_http_script_engine_t *e)
 
 
 // void ngx_http_script_copy_code(ngx_http_script_engine_t *e)
-// 将配置信息放入脚本结构缓冲区 {{{
+// 将脚本长度信息赋值到 ngx_http_script_copy_code_t 结构 {{{
 void
 ngx_http_script_copy_code(ngx_http_script_engine_t *e)
 {
@@ -1071,6 +1071,8 @@ ngx_http_script_regex_start_code(ngx_http_script_engine_t *e)
 } // }}}
 
 
+// void ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
+// 完成解析 {{{
 void
 ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
 {
@@ -1097,6 +1099,8 @@ ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
                          NGX_UNESCAPE_REDIRECT);
 
         if (src < e->pos) {
+			// #define ngx_movemem(dst, src, n)
+			//     (((u_char *) memmove(dst, src, n)) + (n))
             dst = ngx_movemem(dst, src, e->pos - src);
         }
 
@@ -1173,7 +1177,7 @@ ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
     }
 
     e->ip += sizeof(ngx_http_script_regex_end_code_t);
-}
+} // }}}
 
 
 static ngx_int_t

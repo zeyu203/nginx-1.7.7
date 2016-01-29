@@ -63,7 +63,7 @@ struct ngx_event_s {
     unsigned         disabled:1;
 
     /* the ready event; in aio mode 0 means that no operation can be posted */
-	// 用于异步IO，当有请求需要处理时置位
+	// 有请求需要处理时置位
     unsigned         ready:1;
 
 	// 用于 kqueue 和 eventport

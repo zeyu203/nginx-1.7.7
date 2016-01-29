@@ -135,6 +135,7 @@ ngx_http_auth_basic_handler(ngx_http_request_t *r)
                                                  &realm);
     }
 
+	// 用户验证
     rc = ngx_http_auth_basic_user(r);
 
     if (rc == NGX_DECLINED) {

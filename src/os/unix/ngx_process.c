@@ -211,6 +211,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
 
     case 0:
         ngx_pid = ngx_getpid();
+		// ngx_worker_process_cycle
         proc(cycle, data);
         break;
 

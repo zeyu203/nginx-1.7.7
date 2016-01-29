@@ -1170,6 +1170,8 @@ ngx_encode_base64_internal(ngx_str_t *dst, ngx_str_t *src, const u_char *basis,
 }
 
 
+// ngx_int_t ngx_decode_base64(ngx_str_t *dst, ngx_str_t *src)
+// 解码 base64 {{{
 ngx_int_t
 ngx_decode_base64(ngx_str_t *dst, ngx_str_t *src)
 {
@@ -1194,7 +1196,7 @@ ngx_decode_base64(ngx_str_t *dst, ngx_str_t *src)
     };
 
     return ngx_decode_base64_internal(dst, src, basis64);
-}
+} // }}}
 
 
 ngx_int_t

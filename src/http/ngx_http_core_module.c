@@ -1635,7 +1635,7 @@ ngx_http_core_find_location(ngx_http_request_t *r)
 
     pclcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
-	// 静态查找
+	// 静态查找最大前缀匹配
     rc = ngx_http_core_find_static_location(r, pclcf->static_locations);
 
     if (rc == NGX_AGAIN) {
@@ -1701,7 +1701,7 @@ ngx_http_core_find_location(ngx_http_request_t *r)
 
 // static ngx_int_t ngx_http_core_find_static_location(ngx_http_request_t *r,
 //     ngx_http_location_tree_node_t *node)
-// 通过静态配置查找 URI 对应的 location {{{
+// 通过最大前缀匹配查找 URI 对应的 location {{{
 static ngx_int_t
 ngx_http_core_find_static_location(ngx_http_request_t *r,
     ngx_http_location_tree_node_t *node)
@@ -1757,11 +1757,13 @@ ngx_http_core_find_static_location(ngx_http_request_t *r,
 
         if (len == (size_t) node->len) {
 
+			// 完全匹配，不需要继续查找
             if (node->exact) {
                 r->loc_conf = node->exact->loc_conf;
                 return NGX_OK;
 
             } else {
+				// 需递归查询
                 r->loc_conf = node->inclusive->loc_conf;
                 return NGX_AGAIN;
             }
@@ -2199,6 +2201,8 @@ ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *path,
 } // }}}
 
 
+// ngx_int_t ngx_http_auth_basic_user(ngx_http_request_t *r)
+// 用户权限验证 {{{
 ngx_int_t
 ngx_http_auth_basic_user(ngx_http_request_t *r)
 {
@@ -2214,8 +2218,10 @@ ngx_http_auth_basic_user(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
+	// 预设密码
     encoded = r->headers_in.authorization->value;
 
+	// 预设密码错误
     if (encoded.len < sizeof("Basic ") - 1
         || ngx_strncasecmp(encoded.data, (u_char *) "Basic ",
                            sizeof("Basic ") - 1)
@@ -2225,6 +2231,7 @@ ngx_http_auth_basic_user(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
+	// 只保留密码全文
     encoded.len -= sizeof("Basic ") - 1;
     encoded.data += sizeof("Basic ") - 1;
 
@@ -2238,12 +2245,14 @@ ngx_http_auth_basic_user(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
+	// 获取原始密码长度
     auth.len = ngx_base64_decoded_length(encoded.len);
     auth.data = ngx_pnalloc(r->pool, auth.len + 1);
     if (auth.data == NULL) {
         return NGX_ERROR;
     }
 
+	// base64_decode
     if (ngx_decode_base64(&auth, &encoded) != NGX_OK) {
         r->headers_in.user.data = (u_char *) "";
         return NGX_DECLINED;
@@ -2251,6 +2260,7 @@ ngx_http_auth_basic_user(ngx_http_request_t *r)
 
     auth.data[auth.len] = '\0';
 
+	// 将原始用户名、密码保存在请求体 headers_in 结构中
     for (len = 0; len < auth.len; len++) {
         if (auth.data[len] == ':') {
             break;
@@ -2268,7 +2278,7 @@ ngx_http_auth_basic_user(ngx_http_request_t *r)
     r->headers_in.passwd.data = &auth.data[len + 1];
 
     return NGX_OK;
-}
+} // }}}
 
 
 #if (NGX_HTTP_GZIP)

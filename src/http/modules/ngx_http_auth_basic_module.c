@@ -135,7 +135,7 @@ ngx_http_auth_basic_handler(ngx_http_request_t *r)
                                                  &realm);
     }
 
-	// 用户验证
+	// 获取请求中的用户名、密码
     rc = ngx_http_auth_basic_user(r);
 
     if (rc == NGX_DECLINED) {
@@ -150,10 +150,12 @@ ngx_http_auth_basic_handler(ngx_http_request_t *r)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+	// 获取用户配置的密码文件
     if (ngx_http_complex_value(r, &alcf->user_file, &user_file) != NGX_OK) {
         return NGX_ERROR;
     }
 
+	// 打开密码文件
     fd = ngx_open_file(user_file.data, NGX_FILE_RDONLY, NGX_FILE_OPEN, 0);
 
     if (fd == NGX_INVALID_FILE) {
@@ -189,6 +191,7 @@ ngx_http_auth_basic_handler(ngx_http_request_t *r)
     for ( ;; ) {
         i = left;
 
+		// 将文件内容载入内存
         n = ngx_read_file(&file, buf + left, NGX_HTTP_AUTH_BUF_SIZE - left,
                           offset);
 
@@ -201,6 +204,7 @@ ngx_http_auth_basic_handler(ngx_http_request_t *r)
             break;
         }
 
+		// 解析密码文件内容
         for (i = left; i < left + n; i++) {
             switch (state) {
 
@@ -240,6 +244,7 @@ ngx_http_auth_basic_handler(ngx_http_request_t *r)
                     pwd.len = i - passwd;
                     pwd.data = &buf[passwd];
 
+					// 用户名、密码校验
                     return ngx_http_auth_basic_crypt_handler(r, NULL, &pwd,
                                                              &realm);
                 }
@@ -279,6 +284,7 @@ ngx_http_auth_basic_handler(ngx_http_request_t *r)
 
         ngx_cpystrn(pwd.data, &buf[passwd], pwd.len + 1);
 
+		// 返回密码校验结果
         return ngx_http_auth_basic_crypt_handler(r, NULL, &pwd, &realm);
     }
 
@@ -286,10 +292,14 @@ ngx_http_auth_basic_handler(ngx_http_request_t *r)
                   "user \"%V\" was not found in \"%V\"",
                   &r->headers_in.user, &user_file);
 
+	// 返回 401
     return ngx_http_auth_basic_set_realm(r, &realm);
 } // }}}
 
 
+// static ngx_int_t ngx_http_auth_basic_crypt_handler(ngx_http_request_t *r,
+//     ngx_http_auth_basic_ctx_t *ctx, ngx_str_t *passwd, ngx_str_t *realm)
+// 密码校验 {{{
 static ngx_int_t
 ngx_http_auth_basic_crypt_handler(ngx_http_request_t *r,
     ngx_http_auth_basic_ctx_t *ctx, ngx_str_t *passwd, ngx_str_t *realm)
@@ -316,7 +326,8 @@ ngx_http_auth_basic_crypt_handler(ngx_http_request_t *r,
                       "user \"%V\": password mismatch",
                       &r->headers_in.user);
 
-        return ngx_http_auth_basic_set_realm(r, realm);
+		// 设置 401 返回头
+		return ngx_http_auth_basic_set_realm(r, realm);
     }
 
     if (rc == NGX_ERROR) {
@@ -346,9 +357,12 @@ ngx_http_auth_basic_crypt_handler(ngx_http_request_t *r,
     /* TODO: add mutex event */
 
     return rc;
-}
+} // }}}
 
 
+// static ngx_int_t
+// ngx_http_auth_basic_set_realm(ngx_http_request_t *r, ngx_str_t *realm)
+// 设置 401 返回头 {{{
 static ngx_int_t
 ngx_http_auth_basic_set_realm(ngx_http_request_t *r, ngx_str_t *realm)
 {
@@ -377,7 +391,7 @@ ngx_http_auth_basic_set_realm(ngx_http_request_t *r, ngx_str_t *realm)
     r->headers_out.www_authenticate->value.len = len;
 
     return NGX_HTTP_UNAUTHORIZED;
-}
+} // }}}
 
 static void
 ngx_http_auth_basic_close(ngx_file_t *file)

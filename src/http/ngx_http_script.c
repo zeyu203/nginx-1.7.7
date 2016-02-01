@@ -54,6 +54,10 @@ ngx_http_script_flush_complex_value(ngx_http_request_t *r,
 }
 
 
+// ngx_int_t
+// ngx_http_complex_value(ngx_http_request_t *r, ngx_http_complex_value_t *val,
+// ngx_str_t *value)
+// 获取请求相应字段并更新 {{{
 ngx_int_t
 ngx_http_complex_value(ngx_http_request_t *r, ngx_http_complex_value_t *val,
     ngx_str_t *value)
@@ -101,7 +105,7 @@ ngx_http_complex_value(ngx_http_request_t *r, ngx_http_complex_value_t *val,
     *value = e.buf;
 
     return NGX_OK;
-}
+} // }}}
 
 
 ngx_int_t

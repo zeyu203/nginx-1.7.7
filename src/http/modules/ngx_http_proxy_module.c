@@ -743,6 +743,8 @@ static ngx_path_init_t  ngx_http_proxy_temp_path = {
 };
 
 
+// static ngx_int_t ngx_http_proxy_handler(ngx_http_request_t *r)
+// upstream 执行函数 {{{
 static ngx_int_t
 ngx_http_proxy_handler(ngx_http_request_t *r)
 {
@@ -751,6 +753,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
     ngx_http_proxy_ctx_t       *ctx;
     ngx_http_proxy_loc_conf_t  *plcf;
 
+	// 创建并初始化请求描述结构中的 upstream 字段，即创建 upstream 描述结构
     if (ngx_http_upstream_create(r) != NGX_OK) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
@@ -817,6 +820,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
 
     u->accel = 1;
 
+	// upstream 的执行
     rc = ngx_http_read_client_request_body(r, ngx_http_upstream_init);
 
     if (rc >= NGX_HTTP_SPECIAL_RESPONSE) {
@@ -824,7 +828,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
     }
 
     return NGX_DONE;
-}
+} // }}}
 
 
 static ngx_int_t

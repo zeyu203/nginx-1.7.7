@@ -28,6 +28,9 @@ static ngx_int_t ngx_http_request_body_save_filter(ngx_http_request_t *r,
     ngx_chain_t *in);
 
 
+// ngx_int_t ngx_http_read_client_request_body(ngx_http_request_t *r,
+//     ngx_http_client_body_handler_pt post_handler)
+// 通过执行 post_handler 回调函数处理请求 {{{
 ngx_int_t
 ngx_http_read_client_request_body(ngx_http_request_t *r,
     ngx_http_client_body_handler_pt post_handler)
@@ -221,7 +224,7 @@ done:
     }
 
     return rc;
-}
+} // }}}
 
 
 static void

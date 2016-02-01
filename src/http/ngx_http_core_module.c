@@ -1472,6 +1472,7 @@ ngx_http_core_content_phase(ngx_http_request_t *r,
 	// 从而就不会去执行其他的 handler 了
     if (r->content_handler) {
         r->write_event_handler = ngx_http_request_empty_handler;
+		// 对于 upstream，调用 ngx_http_proxy_handler
         ngx_http_finalize_request(r, r->content_handler(r));
         return NGX_OK;
     }
@@ -2202,7 +2203,7 @@ ngx_http_map_uri_to_path(ngx_http_request_t *r, ngx_str_t *path,
 
 
 // ngx_int_t ngx_http_auth_basic_user(ngx_http_request_t *r)
-// 用户权限验证 {{{
+// 获取 header 中的用户名密码 {{{
 ngx_int_t
 ngx_http_auth_basic_user(ngx_http_request_t *r)
 {
@@ -2218,10 +2219,10 @@ ngx_http_auth_basic_user(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-	// 预设密码
+	// 获取 header
     encoded = r->headers_in.authorization->value;
 
-	// 预设密码错误
+	// HEADER 错误
     if (encoded.len < sizeof("Basic ") - 1
         || ngx_strncasecmp(encoded.data, (u_char *) "Basic ",
                            sizeof("Basic ") - 1)
@@ -2245,7 +2246,7 @@ ngx_http_auth_basic_user(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-	// 获取原始密码长度
+	// 获取密码长度
     auth.len = ngx_base64_decoded_length(encoded.len);
     auth.data = ngx_pnalloc(r->pool, auth.len + 1);
     if (auth.data == NULL) {
@@ -2260,7 +2261,7 @@ ngx_http_auth_basic_user(ngx_http_request_t *r)
 
     auth.data[auth.len] = '\0';
 
-	// 将原始用户名、密码保存在请求体 headers_in 结构中
+	// 将用户名、密码保存在请求体 headers_in 结构中
     for (len = 0; len < auth.len; len++) {
         if (auth.data[len] == ':') {
             break;

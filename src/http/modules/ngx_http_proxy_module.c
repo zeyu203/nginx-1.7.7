@@ -769,6 +769,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
 
     u = r->upstream;
 
+	// 将 upstream 上游目标标记复制给 upstream 对应字段（schema）
     if (plcf->proxy_lengths == NULL) {
         ctx->vars = plcf->vars;
         u->schema = plcf->vars.schema;
@@ -777,6 +778,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
 #endif
 
     } else {
+		// 解析上游配置的机器信息
         if (ngx_http_proxy_eval(r, ctx, plcf) != NGX_OK) {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
@@ -786,6 +788,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
 
     u->conf = &plcf->upstream;
 
+	// 注册相关默认回调函数
 #if (NGX_HTTP_CACHE)
     u->create_key = ngx_http_proxy_create_key;
 #endif
@@ -806,15 +809,19 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
 
     u->buffering = plcf->upstream.buffering;
 
+	// 为转发描述结构分配空间
     u->pipe = ngx_pcalloc(r->pool, sizeof(ngx_event_pipe_t));
     if (u->pipe == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
+	// 赋值上游数据处理回调函数
     u->pipe->input_filter = ngx_http_proxy_copy_filter;
     u->pipe->input_ctx = r;
 
+	// 赋值包体处理前的初始化方法
     u->input_filter_init = ngx_http_proxy_input_filter_init;
+	// 赋值原始数据处理的回调函数
     u->input_filter = ngx_http_proxy_non_buffered_copy_filter;
     u->input_filter_ctx = r;
 
@@ -1035,6 +1042,8 @@ ngx_http_proxy_create_key(ngx_http_request_t *r)
 #endif
 
 
+// static ngx_int_t ngx_http_proxy_create_request(ngx_http_request_t *r)
+// 构造发网上游的请求缓冲 {{{
 static ngx_int_t
 ngx_http_proxy_create_request(ngx_http_request_t *r)
 {
@@ -1361,7 +1370,7 @@ ngx_http_proxy_create_request(ngx_http_request_t *r)
     cl->next = NULL;
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t
@@ -1681,6 +1690,9 @@ ngx_http_proxy_input_filter_init(void *data)
 }
 
 
+// static ngx_int_t
+// ngx_http_proxy_copy_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
+// upstream 上游数据处理函数 {{{
 static ngx_int_t
 ngx_http_proxy_copy_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
 {
@@ -1736,7 +1748,7 @@ ngx_http_proxy_copy_filter(ngx_event_pipe_t *p, ngx_buf_t *buf)
     }
 
     return NGX_OK;
-}
+} // }}}
 
 
 static ngx_int_t

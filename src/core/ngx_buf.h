@@ -68,10 +68,12 @@ struct ngx_chain_s {
 }; // }}}
 
 
+// struct ngx_bufs_t
+// buf 描述结构，分配的 buf 大小和数量 {{{
 typedef struct {
     ngx_int_t    num;
     size_t       size;
-} ngx_bufs_t;
+} ngx_bufs_t; // }}}
 
 
 typedef struct ngx_output_chain_ctx_s  ngx_output_chain_ctx_t;

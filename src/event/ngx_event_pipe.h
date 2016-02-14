@@ -22,14 +22,19 @@ typedef ngx_int_t (*ngx_event_pipe_output_filter_pt)(void *data,
                                                      ngx_chain_t *chain);
 
 
+// struct ngx_event_pipe_s
+// 事件转发结构，用于 upstream 过程中上下游转发 {{{
 struct ngx_event_pipe_s {
+	// 上下游连接描述结构
     ngx_connection_t  *upstream;
     ngx_connection_t  *downstream;
 
+	// 保存上游获取的原始数据
     ngx_chain_t       *free_raw_bufs;
     ngx_chain_t       *in;
     ngx_chain_t      **last_in;
 
+	// 保存需要缓存到 tempfile 的数据
     ngx_chain_t       *out;
     ngx_chain_t       *free;
     ngx_chain_t       *busy;
@@ -39,9 +44,11 @@ struct ngx_event_pipe_s {
      * from the raw bufs to an incoming chain
      */
 
+	// 对原始数据进行处理的回调函数
     ngx_event_pipe_input_filter_pt    input_filter;
     void                             *input_ctx;
 
+	// 输出到 client 端前的处理回调函数 ngx_chain_writer
     ngx_event_pipe_output_filter_pt   output_filter;
     void                             *output_ctx;
 
@@ -57,6 +64,7 @@ struct ngx_event_pipe_s {
     unsigned           downstream_error:1;
     unsigned           cyclic_temp_file:1;
 
+	// 已分配的 buf 数
     ngx_int_t          allocated;
     ngx_bufs_t         bufs;
     ngx_buf_tag_t      tag;
@@ -66,7 +74,9 @@ struct ngx_event_pipe_s {
     off_t              read_length;
     off_t              length;
 
+	// 配置的 max_temp_file_size 属性值
     off_t              max_temp_file_size;
+	// buf 映射到 temp_file 的大小
     ssize_t            temp_file_write_size;
 
     ngx_msec_t         read_timeout;
@@ -76,6 +86,7 @@ struct ngx_event_pipe_s {
     ngx_pool_t        *pool;
     ngx_log_t         *log;
 
+	// 从上游预读的 buf
     ngx_chain_t       *preread_bufs;
     size_t             preread_size;
     ngx_buf_t         *buf_to_file;
@@ -83,10 +94,11 @@ struct ngx_event_pipe_s {
     size_t             limit_rate;
     time_t             start_sec;
 
+	// temp_file 描述结构
     ngx_temp_file_t   *temp_file;
 
     /* STUB */ int     num;
-};
+}; // }}}
 
 
 ngx_int_t ngx_event_pipe(ngx_event_pipe_t *p, ngx_int_t do_write);

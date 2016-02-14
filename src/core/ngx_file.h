@@ -61,19 +61,21 @@ typedef struct {
 } ngx_path_init_t;
 
 
+// struct ngx_temp_file_t
+// 临时文件描述结构 {{{
 typedef struct {
-    ngx_file_t                 file;
-    off_t                      offset;
-    ngx_path_t                *path;
-    ngx_pool_t                *pool;
-    char                      *warn;
+    ngx_file_t                 file;			// 文件描述结构
+    off_t                      offset;			// 文件写入偏移
+    ngx_path_t                *path;			// 文件路径
+    ngx_pool_t                *pool;			// 结构所在内存池
+    char                      *warn;			// warning 信息
 
-    ngx_uint_t                 access;
+    ngx_uint_t                 access;			// 访问数
 
-    unsigned                   log_level:8;
-    unsigned                   persistent:1;
-    unsigned                   clean:1;
-} ngx_temp_file_t;
+    unsigned                   log_level:8;		// 日志级别
+    unsigned                   persistent:1;	// 是否持久化
+    unsigned                   clean:1;			// 是否清理
+} ngx_temp_file_t; // }}}
 
 
 typedef struct {

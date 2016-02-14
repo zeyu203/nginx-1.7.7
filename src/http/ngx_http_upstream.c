@@ -419,7 +419,7 @@ ngx_conf_bitmask_t  ngx_http_upstream_ignore_headers_masks[] = {
 
 
 // ngx_int_t ngx_http_upstream_create(ngx_http_request_t *r)
-// 在请求中创建 upstream，初始化 r->upstream {{{
+// 在请求描述结构中创建 upstream 描述结构，初始化 r->upstream {{{
 ngx_int_t
 ngx_http_upstream_create(ngx_http_request_t *r)
 {
@@ -513,6 +513,7 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
     ngx_http_upstream_srv_conf_t   *uscf, **uscfp;
     ngx_http_upstream_main_conf_t  *umcf;
 
+	// 使用 aio 无需初始化
     if (r->aio) {
         return;
     }
@@ -563,7 +564,7 @@ ngx_http_upstream_init_request(ngx_http_request_t *r)
         u->request_bufs = r->request_body->bufs;
     }
 
-	// 构造发往上游服务器的请求
+	// 构造发往上游服务器的请求 ngx_http_proxy_create_request
     if (u->create_request(r) != NGX_OK) {
         ngx_http_finalize_request(r, NGX_HTTP_INTERNAL_SERVER_ERROR);
         return;

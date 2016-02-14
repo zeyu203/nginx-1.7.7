@@ -57,11 +57,13 @@ ngx_http_read_client_request_body(ngx_http_request_t *r,
         return NGX_OK;
     }
 
+	// 处理 expect 请求
     if (ngx_http_test_expect(r) != NGX_OK) {
         rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
         goto done;
     }
 
+	// 创建返回包体描述结构
     rb = ngx_pcalloc(r->pool, sizeof(ngx_http_request_body_t));
     if (rb == NULL) {
         rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -84,6 +86,7 @@ ngx_http_read_client_request_body(ngx_http_request_t *r,
     r->request_body = rb;
 
     if (r->headers_in.content_length_n < 0 && !r->headers_in.chunked) {
+		// 调用传入的函数
         post_handler(r);
         return NGX_OK;
     }

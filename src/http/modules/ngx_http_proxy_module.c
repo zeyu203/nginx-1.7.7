@@ -769,7 +769,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
 
     u = r->upstream;
 
-	// 将 upstream 上游目标标记复制给 upstream 对应字段（schema）
+	// 将 upstream 上游目标标记(http://、https:// 等)复制给 upstream 对应字段
     if (plcf->proxy_lengths == NULL) {
         ctx->vars = plcf->vars;
         u->schema = plcf->vars.schema;
@@ -778,7 +778,7 @@ ngx_http_proxy_handler(ngx_http_request_t *r)
 #endif
 
     } else {
-		// 解析上游配置的机器信息
+		// 解析上游配置的机器信息，获取标记信息
         if (ngx_http_proxy_eval(r, ctx, plcf) != NGX_OK) {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }

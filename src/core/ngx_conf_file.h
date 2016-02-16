@@ -196,9 +196,11 @@ struct ngx_conf_s {
 typedef char *(*ngx_conf_post_handler_pt) (ngx_conf_t *cf,
     void *data, void *conf);
 
+// struct ngx_conf_post_t
+// 用于存储配置解析时的回调函数 {{{
 typedef struct {
     ngx_conf_post_handler_pt  post_handler;
-} ngx_conf_post_t;
+} ngx_conf_post_t; // }}}
 
 
 typedef struct {
